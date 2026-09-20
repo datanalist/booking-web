@@ -11,6 +11,14 @@ function isValidDateString(date: string): boolean {
   return !Number.isNaN(parsed.getTime());
 }
 
+function isValidMaxGuests(value: number): boolean {
+  return Number.isFinite(value) && value >= 1;
+}
+
+function isValidPrice(value: number): boolean {
+  return Number.isFinite(value) && value > 0;
+}
+
 function validateStep1(draft: ListingDraft): Record<string, string> {
   const errors: Record<string, string> = {};
   if (!draft.title.trim()) {
@@ -44,7 +52,7 @@ function validateStep2(draft: ListingDraft): Record<string, string> {
 
 function validateStep4(draft: ListingDraft): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (draft.maxGuests < 1) {
+  if (!isValidMaxGuests(draft.maxGuests)) {
     errors.maxGuests = "Укажите число гостей";
   }
   if (!draft.checkInTime.trim()) {
@@ -72,18 +80,19 @@ function validateStep5(draft: ListingDraft): Record<string, string> {
 
 function validateStep6(draft: ListingDraft): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (draft.priceNight <= 0) {
+  if (!isValidPrice(draft.priceNight)) {
     errors.priceNight = "Укажите цену";
   }
-  if (draft.priceFrom14 <= 0) {
+  if (!isValidPrice(draft.priceFrom14)) {
     errors.priceFrom14 = "Укажите цену";
   }
-  if (draft.priceFrom28 <= 0) {
+  if (!isValidPrice(draft.priceFrom28)) {
     errors.priceFrom28 = "Укажите цену";
   }
   if (draft.uniquePrices.length > 0) {
     const invalid = draft.uniquePrices.some(
-      (entry) => !entry.date.trim() || entry.base <= 0 || !isValidDateString(entry.date),
+      (entry) =>
+        !entry.date.trim() || !isValidPrice(entry.base) || !isValidDateString(entry.date),
     );
     if (invalid) {
       errors.uniquePrices = "Проверьте уникальные цены";

@@ -25,3 +25,20 @@ test("step 6 unique price", () => {
   expect(validateStep(6, { ...priced, uniquePrices: [{ date: "2026-01-01", base: 0 }] }).uniquePrices).toBeTruthy();
   expect(validateStep(6, { ...priced, uniquePrices: [{ date: "2026-01-01", base: 4000 }] })).toEqual({});
 });
+
+test("step 4 rejects non-finite maxGuests", () => {
+  const ok = { ...base, maxGuests: 2, checkInTime: "14:00", checkOutTime: "12:00" };
+  expect(validateStep(4, ok)).toEqual({});
+  expect(validateStep(4, { ...ok, maxGuests: Number.NaN }).maxGuests).toBeTruthy();
+  expect(validateStep(4, { ...ok, maxGuests: Number.POSITIVE_INFINITY }).maxGuests).toBeTruthy();
+});
+
+test("step 6 rejects non-finite prices", () => {
+  const priced = { ...base, priceNight: 3500, priceFrom14: 3000, priceFrom28: 2800 };
+  expect(validateStep(6, { ...priced, priceNight: Number.NaN }).priceNight).toBeTruthy();
+  expect(validateStep(6, { ...priced, priceFrom14: Number.NaN }).priceFrom14).toBeTruthy();
+  expect(validateStep(6, { ...priced, priceFrom28: Number.NaN }).priceFrom28).toBeTruthy();
+  expect(
+    validateStep(6, { ...priced, uniquePrices: [{ date: "2026-01-01", base: Number.NaN }] }).uniquePrices,
+  ).toBeTruthy();
+});
