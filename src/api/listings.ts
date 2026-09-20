@@ -63,6 +63,9 @@ export function createListingsApi(
       if (!userId || draft.ownerId !== userId) {
         throw notFound();
       }
+      if (draft.status === "published") {
+        throw new Error("INVALID_STATUS");
+      }
 
       const listings = readListings();
       const updatedAt = new Date().toISOString();
@@ -79,6 +82,9 @@ export function createListingsApi(
       }
 
       const [existing, index] = findOwned(listings, draft.id);
+      if (existing.status === "published") {
+        throw new Error("INVALID_STATUS");
+      }
       const listing: Listing = {
         ...draft,
         id: existing.id,

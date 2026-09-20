@@ -1,12 +1,13 @@
 import { expect, test } from "vitest";
 import { createListingsApi } from "./listings";
+import { LISTINGS_KEY } from "./keys";
 import { emptyDraft } from "../lib/emptyDraft";
 import { MemoryStorage } from "../lib/memoryStorage";
 
 function setup() {
   const storage = new MemoryStorage();
   const api = createListingsApi(storage, () => "u1");
-  return { api };
+  return { api, storage };
 }
 
 test("step1 draft appears in all, not in moderation", async () => {
@@ -57,6 +58,31 @@ test("never writes published; published tab empty", async () => {
   const { api } = setup();
   await api.saveDraft({ ...emptyDraft("u1"), title: "A", address: "B", housingType: "apartment", description: "C" });
   expect(await api.list({ tab: "published", query: "" })).toHaveLength(0);
+});
+
+test("saveDraft rejects an existing published listing without writing", async () => {
+  const { api, storage } = setup();
+  const published = {
+    ...emptyDraft("u1"),
+    id: "published-1",
+    status: "published" as const,
+    updatedAt: "2026-09-20T00:00:00.000Z",
+  };
+  const stored = JSON.stringify([published]);
+  storage.setItem(LISTINGS_KEY, stored);
+
+  await expect(api.saveDraft({ ...published, status: "draft" })).rejects.toThrow("INVALID_STATUS");
+  expect(storage.getItem(LISTINGS_KEY)).toBe(stored);
+});
+
+test("saveDraft rejects an incoming published status without writing", async () => {
+  const { api, storage } = setup();
+
+  await expect(api.saveDraft({
+    ...emptyDraft("u1"),
+    status: "published",
+  })).rejects.toThrow("INVALID_STATUS");
+  expect(storage.getItem(LISTINGS_KEY)).toBeNull();
 });
 
 test("remove deletes", async () => {
