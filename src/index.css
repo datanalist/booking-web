@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap");
+
+@theme {
+  --color-text: #212121;
+  --color-ink: #1a1b1d;
+  --color-accent: #f88a2a;
+  --color-white: #ffffff;
+  --font-sans: "Noto Sans", sans-serif;
+  --radius-button: 30px;
+  --radius-input: 8px;
+}
+
+html, body, #root { min-height: 100%; }
+body { margin: 0; font-family: var(--font-sans); color: var(--color-text); background: #fffdf8; }

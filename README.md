@@ -2,7 +2,7 @@
 
 Веб-кабинет владельца жилья. Макет — секция «Веб-сайт для владельцев жилья» в [Figma Booking](https://www.figma.com/design/zqPAmK0qrRQtqMp5IP3K5u/Booking?node-id=1-16219). Прод-домен: `website.booking.vallome.ru`.
 
-Сейчас в репозитории документация и согласованный дизайн первого среза. Кода приложения ещё нет.
+Каркас: Vite + React + TypeScript + Vitest + Tailwind CSS v4.
 
 ## Первый срез
 
@@ -18,4 +18,27 @@
 
 ## Запуск
 
-Появится после каркаса приложения (`npm install`, `npm run dev`, `npm run build` → каталог `dist/` на Caddy).
+```bash
+npm install
+npm run dev
+```
+
+Локальная разработка: Vite dev-сервер (порт по умолчанию — 5173).
+
+```bash
+npm test
+```
+
+Однократный прогон Vitest (`vitest run`).
+
+```bash
+npm run build
+```
+
+Сборка: `tsc -b` (проверка типов) и `vite build`. Артефакты — каталог `dist/` (отдаётся Caddy на VPS).
+
+```bash
+npm run preview
+```
+
+Предпросмотр production-сборки локально.
