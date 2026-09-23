@@ -10,6 +10,10 @@
 
 Полная спека: [`docs/superpowers/specs/2026-09-20-owner-cabinet-first-slice-design.md`](docs/superpowers/specs/2026-09-20-owner-cabinet-first-slice-design.md)
 
+План реализации: [`docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md`](docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md)
+
+Сейчас в коде: каркас Vite, конфиг комиссии 9%, моки авторизации и объявлений (без статуса `published`), валидация шагов мастера и гарды маршрутов. Экраны кабинета ещё в работе.
+
 Продуктовое ТЗ (все роли): [`docs/technical spec.md`](docs/technical%20spec.md)
 
 ## Секреты
