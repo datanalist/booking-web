@@ -1,0 +1,97 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { createApi } from "../api";
+import type { AuthApi, ListingsApi, Session } from "../api/types";
+
+type SessionContextValue = {
+  session: Session | null;
+  auth: AuthApi;
+  listings: ListingsApi;
+  reload: () => void;
+};
+
+const SessionContext = createContext<SessionContextValue | null>(null);
+
+type SessionProviderProps = {
+  children: ReactNode;
+};
+
+export function SessionProvider({ children }: SessionProviderProps) {
+  const api = useMemo(() => createApi(localStorage), []);
+  const [session, setSession] = useState<Session | null>(() => {
+    const initial = api.readSession();
+    api.setCurrentUserId(initial?.userId ?? null);
+    return initial;
+  });
+
+  useEffect(() => {
+    api.setCurrentUserId(session?.userId ?? null);
+  }, [api, session]);
+
+  const reload = useCallback((): void => {
+    const next = api.readSession();
+    api.setCurrentUserId(next?.userId ?? null);
+    setSession(next);
+  }, [api]);
+
+  const auth = useMemo(
+    (): AuthApi => ({
+      register: async (email, password) => {
+        const next = await api.auth.register(email, password);
+        api.setCurrentUserId(next.userId);
+        setSession(next);
+        return next;
+      },
+      login: async (email, password) => {
+        const next = await api.auth.login(email, password);
+        api.setCurrentUserId(next.userId);
+        setSession(next);
+        return next;
+      },
+      logout: async () => {
+        await api.auth.logout();
+        api.setCurrentUserId(null);
+        setSession(null);
+      },
+      completeOnboarding: async (input) => {
+        const next = await api.auth.completeOnboarding(input);
+        api.setCurrentUserId(next.userId);
+        setSession(next);
+        return next;
+      },
+      requestPasswordReset: (email) => api.auth.requestPasswordReset(email),
+      confirmPasswordReset: (token, password) =>
+        api.auth.confirmPasswordReset(token, password),
+    }),
+    [api],
+  );
+
+  const value = useMemo(
+    (): SessionContextValue => ({
+      session,
+      auth,
+      listings: api.listings,
+      reload,
+    }),
+    [session, auth, api.listings, reload],
+  );
+
+  return (
+    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+  );
+}
+
+export function useSession(): SessionContextValue {
+  const value = useContext(SessionContext);
+  if (!value) {
+    throw new Error("useSession must be used within SessionProvider");
+  }
+  return value;
+}
