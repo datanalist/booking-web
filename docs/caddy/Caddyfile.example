@@ -1,0 +1,6 @@
+website.booking.vallome.ru {
+    root * /var/www/website.booking.vallome.ru
+    encode gzip
+    try_files {path} /index.html
+    file_server
+}

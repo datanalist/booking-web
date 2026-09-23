@@ -2,23 +2,21 @@
 
 Веб-кабинет владельца жилья. Макет — секция «Веб-сайт для владельцев жилья» в [Figma Booking](https://www.figma.com/design/zqPAmK0qrRQtqMp5IP3K5u/Booking?node-id=1-16219). Прод-домен: `website.booking.vallome.ru`.
 
-Каркас: Vite + React + TypeScript + Vitest + Tailwind CSS v4.
+Стек: Vite + React + TypeScript + React Router + Vitest + Tailwind CSS v4. Статика отдаётся Caddy (nginx нет).
 
 ## Первый срез
 
-Вход / регистрация, список объявлений, мастер создания (6 шагов + предпросмотр + модерация). PocketBase не подключаем: авторизация и объявления хранятся в локальных моках; объявления поддерживают черновик, отправку на модерацию и архивирование, а мок не позволяет сохранять статус `published`. Стек: Vite + React + TypeScript, статика за Caddy на VPS.
+Вход / регистрация / восстановление пароля, онбординг, список объявлений, мастер из 6 шагов, предпросмотр и отправка на модерацию. Заглушки: бронирования, чаты, уведомления, профиль (с выходом). PocketBase не подключаем — моки в `localStorage`. Мок не ставит `published`.
+
+UI-примитивы кабинета — `src/ui/`. Документация среза: [`docs/architecture.md`](docs/architecture.md), [`docs/screens.md`](docs/screens.md), [`docs/data-adapter.md`](docs/data-adapter.md).
 
 Полная спека: [`docs/superpowers/specs/2026-09-20-owner-cabinet-first-slice-design.md`](docs/superpowers/specs/2026-09-20-owner-cabinet-first-slice-design.md)
 
-План реализации: [`docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md`](docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md)
-
-Сейчас в коде: каркас Vite, конфиг комиссии 9%, моки авторизации и объявлений (без статуса `published`), валидация шагов мастера, гарды маршрутов и UI-примитивы кабинета в `src/ui/` (кнопка, инпут, сайдбар, вкладки, поиск, карточка, модалка и др.). Экраны кабинета ещё в работе.
-
-Продуктовое ТЗ (все роли): [`docs/technical spec.md`](docs/technical%20spec.md)
+План: [`docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md`](docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md)
 
 ## Секреты
 
-В репозиторий не кладём `.env`, admin-токен PocketBase, пароли. Публичный URL API можно держать в коде или в `VITE_*` без секретов.
+В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли. Публичный URL API можно держать в коде или в `VITE_*` без секретов.
 
 ## Запуск
 
@@ -27,22 +25,18 @@ npm install
 npm run dev
 ```
 
-Локальная разработка: Vite dev-сервер (порт по умолчанию — 5173).
+Локально: Vite (порт по умолчанию 5173). Viewport < 1280 показывает заглушку «Откройте сайт с компьютера».
 
 ```bash
 npm test
 ```
 
-Однократный прогон Vitest (`vitest run`).
-
 ```bash
 npm run build
 ```
 
-Сборка: `tsc -b` (проверка типов) и `vite build`. Артефакты — каталог `dist/` (отдаётся Caddy на VPS).
+Сборка: `tsc -b` и `vite build` → каталог `dist/` (source maps выключены). Содержимое `dist/` выложить на Caddy; пример конфига: [`docs/caddy/Caddyfile.example`](docs/caddy/Caddyfile.example).
 
 ```bash
 npm run preview
 ```
-
-Предпросмотр production-сборки локально.
