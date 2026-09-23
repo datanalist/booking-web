@@ -18,6 +18,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { OnboardingPage } from "../pages/OnboardingPage";
 import { RegisterPage } from "../pages/RegisterPage";
 import { ResetPasswordPage } from "../pages/ResetPasswordPage";
+import { ProfilePage } from "../pages/ProfilePage";
 import { StubPage } from "../pages/StubPage";
 
 function Guarded({ children }: { children: ReactNode }) {
@@ -100,7 +101,7 @@ export function createAppRouter() {
         { path: "/bookings", element: <StubPage title="Бронирования" /> },
         { path: "/chats", element: <StubPage title="Чаты" /> },
         { path: "/notifications", element: <StubPage title="Уведомления" /> },
-        { path: "/profile", element: <StubPage title="Профиль" /> },
+        { path: "/profile", element: <ProfilePage /> },
       ],
     },
     {
