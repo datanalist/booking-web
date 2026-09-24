@@ -31,14 +31,14 @@ test("onboarding is a cabinet path", () => {
 });
 
 test("logged-in user leaves every public auth path", () => {
-  for (const pathname of ["/register", "/forgot-password", "/reset-password"]) {
+  for (const pathname of ["/register", "/forgot-password", "/reset-password", "/terms", "/privacy"]) {
     expect(resolveLocation({ pathname, session: ready })).toBe("/listings");
     expect(resolveLocation({ pathname, session: raw })).toBe("/onboarding");
   }
 });
 
 test("guest may stay on public auth paths", () => {
-  for (const pathname of ["/login", "/register", "/forgot-password", "/reset-password"]) {
+  for (const pathname of ["/login", "/register", "/forgot-password", "/reset-password", "/terms", "/privacy"]) {
     expect(resolveLocation({ pathname, session: guest })).toBeNull();
   }
 });

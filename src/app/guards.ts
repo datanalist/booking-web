@@ -12,6 +12,8 @@ const publicAuthPaths = new Set([
   "/register",
   "/forgot-password",
   "/reset-password",
+  "/terms",
+  "/privacy",
 ]);
 
 const validSteps = new Set(["1", "2", "3", "4", "5", "6"]);

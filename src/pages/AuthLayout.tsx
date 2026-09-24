@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 type AuthLayoutProps = {
   children: ReactNode;
@@ -20,13 +21,19 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         </div>
         <p className="mx-auto w-[320px] text-center text-[12px] leading-[1.5]">
           <span className="text-[#525353]">Продолжая, Вы соглашаетесь с </span>
-          <span className="text-[var(--color-accent)]">
-            Условиями использования{" "}
-          </span>
-          <span className="text-[#525353]">и </span>
-          <span className="text-[var(--color-accent)]">
+          <Link
+            to="/terms"
+            className="text-[var(--color-accent)] no-underline"
+          >
+            Условиями использования
+          </Link>
+          <span className="text-[#525353]"> и </span>
+          <Link
+            to="/privacy"
+            className="text-[var(--color-accent)] no-underline"
+          >
             Политикой конфиденциальности
-          </span>
+          </Link>
         </p>
       </div>
       <div className="flex flex-1 items-stretch py-[41px] pr-[32px]">

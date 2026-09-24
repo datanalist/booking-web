@@ -95,3 +95,20 @@ test("does not render local disclaimer inside login form", () => {
     within(form as HTMLElement).queryByText(/Продолжая, Вы соглашаетесь/),
   ).not.toBeInTheDocument();
 });
+
+test("email and password fields share auth size", () => {
+  renderLogin();
+  const email = screen.getByPlaceholderText("Введите email");
+  const password = screen.getByPlaceholderText("Введите пароль");
+  expect(email.className).toMatch(/\bw-full\b/);
+  expect(password.className).toMatch(/\bw-full\b/);
+  expect(email.className).toMatch(/h-\[44px\]/);
+  expect(password.className).toMatch(/h-\[44px\]/);
+  const emailWrap = email.parentElement;
+  const passwordWrap = password.parentElement;
+  expect(emailWrap?.className).toMatch(/\bw-full\b/);
+  expect(passwordWrap?.className).toMatch(/\bw-full\b/);
+  const forgot = screen.getByRole("button", { name: "Забыли пароль?" });
+  expect(forgot.className).toMatch(/\bw-full\b/);
+  expect(forgot.className).toMatch(/text-right/);
+});

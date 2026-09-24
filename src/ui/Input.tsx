@@ -61,7 +61,7 @@ export function Input({
     : "text-[14px] font-normal text-[var(--color-text)]";
 
   return (
-    <div className="flex flex-col gap-1 font-sans">
+    <div className="flex w-full flex-col gap-1 font-sans">
       <label htmlFor={id} className={labelClass}>
         {label}
       </label>

@@ -81,6 +81,14 @@ export function createAppRouter() {
         { path: "/register", element: <RegisterPage /> },
         { path: "/forgot-password", element: <ForgotPasswordPage /> },
         { path: "/reset-password", element: <ResetPasswordPage /> },
+        {
+          path: "/terms",
+          element: <StubPage title="Условия использования" />,
+        },
+        {
+          path: "/privacy",
+          element: <StubPage title="Политика конфиденциальности" />,
+        },
       ],
     },
     {

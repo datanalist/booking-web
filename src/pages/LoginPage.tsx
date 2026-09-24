@@ -59,7 +59,7 @@ export function LoginPage() {
           Войти
         </h1>
 
-        <div className="flex w-full flex-col items-start gap-5">
+        <div className="flex w-full flex-col items-stretch gap-5">
           <Input
             label="Email"
             type="email"
@@ -69,7 +69,7 @@ export function LoginPage() {
             variant="auth"
             invalid={invalid}
           />
-          <div className="flex w-full flex-col items-start gap-2">
+          <div className="flex w-full flex-col items-stretch gap-2">
             <Input
               label="Пароль"
               type="password"
