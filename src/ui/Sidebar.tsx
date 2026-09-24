@@ -76,21 +76,23 @@ export function Sidebar({
             <a
               key={item.to}
               href={item.to}
-              className={`flex w-[208px] items-center gap-4 rounded-lg p-4 text-[16px] font-bold leading-[1.2] no-underline ${
+              className={`flex w-[208px] shrink-0 items-center gap-4 rounded-lg p-4 text-[16px] font-bold leading-[1.2] no-underline ${
                 active
                   ? "bg-[var(--color-accent)] text-white"
                   : "text-[var(--color-ink)]"
               }`}
             >
-              <img
-                src={item.iconSrc}
-                alt=""
-                width={24}
-                height={24}
-                className={`size-6 shrink-0 ${active ? "brightness-0 invert" : ""}`}
-              />
-              <span className="flex items-center gap-3">
-                <span>{item.label}</span>
+              <span className="relative size-6 shrink-0">
+                <img
+                  src={item.iconSrc}
+                  alt=""
+                  width={24}
+                  height={24}
+                  className={`size-6 object-contain ${active ? "brightness-0 invert" : ""}`}
+                />
+              </span>
+              <span className="flex min-w-0 items-center gap-3 whitespace-nowrap">
+                <span className="whitespace-nowrap">{item.label}</span>
                 {item.badge != null && item.badge > 0 ? (
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#e34043] text-[10px] font-normal leading-[1.4] text-white">
                     {item.badge}
@@ -106,8 +108,9 @@ export function Sidebar({
         <img
           src="/logo-globalstay.svg"
           alt="GlobalStay"
-          width={181}
-          height={60}
+          width={124}
+          height={29}
+          className="h-[29px] w-auto max-w-full object-contain"
         />
       </footer>
     </aside>
