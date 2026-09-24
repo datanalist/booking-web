@@ -1,7 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { expect, test } from "vitest";
+import { afterEach, expect, test } from "vitest";
 import { Input } from "./Input";
+
+afterEach(() => {
+  cleanup();
+});
 
 test("input shows error not html", () => {
   render(
@@ -48,6 +52,31 @@ test("passwordToggle switches type", async () => {
     screen.getByRole("button", { name: /показать пароль|скрыть пароль/i }),
   );
   expect(field.type).toBe("text");
+});
+
+test("root is full width so passwordToggle stays inside the field box", () => {
+  const { container } = render(
+    <Input
+      label="Пароль"
+      value="secret"
+      onChange={() => {}}
+      type="password"
+      passwordToggle
+      variant="auth"
+    />,
+  );
+  const root = container.firstElementChild;
+  expect(root?.className).toMatch(/\bw-full\b/);
+  const field = screen.getByLabelText("Пароль");
+  expect(field.className).toMatch(/\bw-full\b/);
+  expect(field.className).toMatch(/h-\[44px]/);
+  expect(field.className).toMatch(/\bpr-11\b/);
+  const toggle = screen.getByRole("button", {
+    name: /показать пароль|скрыть пароль/i,
+  });
+  expect(toggle.className).toMatch(/\babsolute\b/);
+  expect(toggle.parentElement?.className).toMatch(/\brelative\b/);
+  expect(toggle.parentElement?.className).toMatch(/\bw-full\b/);
 });
 
 test("invalid draws red border without requiring error text", () => {

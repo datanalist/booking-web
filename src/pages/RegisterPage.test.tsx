@@ -60,6 +60,30 @@ test("password fields expose passwordToggle controls", () => {
   expect(toggles).toHaveLength(2);
 });
 
+test("email and password fields share auth width and height classes", () => {
+  renderRegister();
+
+  const email = screen.getByLabelText("Email");
+  const password = screen.getByLabelText("Пароль");
+  const confirm = screen.getByLabelText("Повторите пароль");
+
+  for (const field of [email, password, confirm]) {
+    expect(field.className).toMatch(/\bw-full\b/);
+    expect(field.className).toMatch(/h-\[44px]/);
+  }
+
+  expect(password.className).toMatch(/\bpr-11\b/);
+  expect(confirm.className).toMatch(/\bpr-11\b/);
+  expect(email.className).not.toMatch(/\bpr-11\b/);
+
+  const emailRoot = email.closest("div.flex.w-full");
+  const passwordRoot = password.closest("div.flex.w-full");
+  const confirmRoot = confirm.closest("div.flex.w-full");
+  expect(emailRoot).not.toBeNull();
+  expect(passwordRoot).not.toBeNull();
+  expect(confirmRoot).not.toBeNull();
+});
+
 test("submit button overrides radius to 8px", () => {
   renderRegister();
 
