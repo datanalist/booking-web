@@ -1,5 +1,5 @@
 export const LISTING_TABS = [
-  { id: "all", label: "Все" },
+  { id: "all", label: "Все объявления" },
   { id: "published", label: "Опубликованы" },
   { id: "moderation", label: "На модерации" },
   { id: "archived", label: "Архив" },
