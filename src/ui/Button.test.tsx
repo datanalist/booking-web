@@ -13,3 +13,12 @@ test("button disabled does not click", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Далее" }));
   expect(onClick).not.toHaveBeenCalled();
 });
+
+test("size sm uses compact pill styles", () => {
+  render(<Button size="sm">Создать объявление</Button>);
+  const button = screen.getByRole("button", { name: "Создать объявление" });
+  expect(button.className).toContain("text-[14px]");
+  expect(button.className).toContain("rounded-[30px]");
+  expect(button.className).toContain("font-normal");
+  expect(button.className).not.toContain("h-[61px]");
+});

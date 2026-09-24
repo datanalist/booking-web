@@ -12,14 +12,18 @@ export function EmptyState({
   illustration,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-16 text-center font-sans">
+    <div className="flex flex-col items-center justify-center gap-6 text-center font-sans">
       {illustration ? <div aria-hidden>{illustration}</div> : null}
-      <h2 className="m-0 text-[20px] font-bold text-[var(--color-text)]">
-        {title}
-      </h2>
-      {description ? (
-        <p className="m-0 max-w-md text-[14px] text-[#757575]">{description}</p>
-      ) : null}
+      <div className="flex flex-col items-center gap-2">
+        <h2 className="m-0 text-[24px] font-bold text-[var(--color-ink)]">
+          {title}
+        </h2>
+        {description ? (
+          <p className="m-0 text-[16px] leading-[1.45] text-[#525353]">
+            {description}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
