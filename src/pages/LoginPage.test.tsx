@@ -79,12 +79,32 @@ test("opens forgot modal when arriving with state.forgot", () => {
   ).toBeInTheDocument();
 });
 
-test("submit button uses 8px radius and footer is centered", () => {
+test("submit button uses rounded-lg padding and footer is centered", () => {
   renderLogin();
   const submit = screen.getByRole("button", { name: "Начать работу" });
-  expect(submit.className).toMatch(/rounded-\[8px\]|!rounded-\[8px\]/);
+  expect(submit.className).toMatch(/rounded-lg|!rounded-lg|rounded-\[8px\]|!rounded-\[8px\]/);
+  expect(submit.className).toMatch(/!px-6|px-6/);
+  expect(submit.className).toMatch(/!py-5|py-5/);
+  expect(submit.className).toMatch(/\bw-full\b/);
   const footer = screen.getByText(/Нет аккаунта\?/).closest("p");
   expect(footer?.className).toMatch(/text-center/);
+});
+
+test("login form uses Figma gaps between title, fields and button", () => {
+  renderLogin();
+  const form = screen.getByRole("heading", { name: "Войти" }).closest("form");
+  expect(form?.className).toMatch(/\bgap-10\b/);
+  expect(form?.className).toMatch(/\bitems-center\b/);
+  const fields = form?.querySelector(".gap-5");
+  expect(fields).not.toBeNull();
+  const passwordGroup = screen
+    .getByRole("button", { name: "Забыли пароль?" })
+    .closest("div");
+  expect(passwordGroup?.className).toMatch(/\bgap-2\b/);
+  const actions = screen
+    .getByRole("button", { name: "Начать работу" })
+    .closest("div");
+  expect(actions?.className).toMatch(/\bgap-6\b/);
 });
 
 test("does not render local disclaimer inside login form", () => {

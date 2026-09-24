@@ -7,19 +7,17 @@ type AuthLayoutProps = {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div className="flex h-screen min-w-[1440px] overflow-hidden bg-white font-sans">
-      <div className="relative flex w-[calc(41.67%+19px)] min-w-0 flex-col px-16 pb-10 pt-10">
+    <div className="flex h-screen justify-center overflow-hidden bg-white font-sans">
+      <div className="relative h-[1020px] w-[1440px] shrink-0 overflow-hidden bg-white">
         <img
           src="/logo-globalstay.svg"
           alt="GlobalStay"
-          width={181}
-          height={60}
-          className="shrink-0"
+          width={176}
+          height={56}
+          className="absolute left-8 top-4 h-14 w-44 object-contain object-left"
         />
-        <div className="flex flex-1 flex-col items-center justify-center">
-          <div className="w-[320px]">{children}</div>
-        </div>
-        <p className="mx-auto w-[320px] text-center text-[12px] leading-[1.5]">
+        <div className="absolute left-[149px] top-[305px] w-80">{children}</div>
+        <p className="absolute left-[149px] top-[942px] m-0 w-80 text-center text-[12px] leading-[1.5]">
           <span className="text-[#525353]">Продолжая, Вы соглашаетесь с </span>
           <Link
             to="/terms"
@@ -35,13 +33,17 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             Политикой конфиденциальности
           </Link>
         </p>
-      </div>
-      <div className="flex flex-1 items-stretch py-[41px] pr-[32px]">
-        <img
-          src="/auth-side.jpg"
-          alt=""
-          className="h-full w-full rounded-[20px] object-cover"
-        />
+        {/*
+          Скругление на обёртке с overflow-hidden: угол 20px не срезается
+          overflow родителя холста, в отличие от border-radius на самом img.
+        */}
+        <div className="absolute left-[619px] top-[41px] h-[938px] w-[789px] overflow-hidden rounded-[20px]">
+          <img
+            src="/auth-side.jpg"
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        </div>
       </div>
     </div>
   );

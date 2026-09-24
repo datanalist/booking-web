@@ -99,7 +99,7 @@ export function LoginPage() {
           <Button
             type="submit"
             disabled={pending}
-            className="w-full !rounded-[8px]"
+            className="h-auto w-full !rounded-lg !px-6 !py-5"
           >
             Начать работу
           </Button>
