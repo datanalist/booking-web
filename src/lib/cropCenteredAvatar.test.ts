@@ -57,6 +57,51 @@ test("draws cover-scaled image into a square jpeg", async () => {
   expect(toDataURL).toHaveBeenCalledWith("image/jpeg", 0.8);
 });
 
+test("applies pan offset when drawing", async () => {
+  const drawImage = vi.fn();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({
+      blob: async () => new Blob(["x"], { type: "image/jpeg" }),
+    })),
+  );
+  vi.stubGlobal(
+    "createImageBitmap",
+    vi.fn(async () => ({
+      width: 100,
+      height: 100,
+      close: vi.fn(),
+    })),
+  );
+  const createElement = document.createElement.bind(document);
+  vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
+    if (tagName === "canvas") {
+      const canvas = {
+        width: 0,
+        height: 0,
+        getContext: () => ({ drawImage }),
+        toDataURL: () => "data:image/jpeg;base64,cropped",
+      };
+      return canvas as unknown as HTMLCanvasElement;
+    }
+    return createElement(tagName);
+  });
+
+  await cropCenteredAvatar("data:image/jpeg;base64,source", {
+    scale: 2,
+    offset: { x: 10, y: -5 },
+    size: 50,
+  });
+
+  expect(drawImage).toHaveBeenCalledWith(
+    expect.objectContaining({ width: 100, height: 100 }),
+    -15,
+    -30,
+    100,
+    100,
+  );
+});
+
 test("uses default crop size", async () => {
   let capturedWidth = 0;
   vi.stubGlobal(

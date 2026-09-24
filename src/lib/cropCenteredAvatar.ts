@@ -1,10 +1,15 @@
-import { clampAvatarPhotoScale } from "./clampAvatarPhotoScale";
 import { centeredCoverDrawRect } from "./centeredCoverDrawRect";
+import {
+  clampAvatarPhotoOffset,
+  type AvatarPhotoOffset,
+} from "./clampAvatarPhotoOffset";
+import { clampAvatarPhotoScale } from "./clampAvatarPhotoScale";
 
 export const AVATAR_CROP_SIZE = 400;
 
 type CropCenteredAvatarOptions = {
   scale: number;
+  offset?: AvatarPhotoOffset;
   size?: number;
 };
 
@@ -17,6 +22,13 @@ export async function cropCenteredAvatar(
   const response = await fetch(sourceDataUrl);
   const blob = await response.blob();
   const bitmap = await createImageBitmap(blob);
+  const image = { width: bitmap.width, height: bitmap.height };
+  const offset = clampAvatarPhotoOffset(
+    image,
+    size,
+    scale,
+    options.offset ?? { x: 0, y: 0 },
+  );
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
@@ -24,11 +36,7 @@ export async function cropCenteredAvatar(
   if (!ctx) {
     throw new Error("canvas");
   }
-  const rect = centeredCoverDrawRect(
-    { width: bitmap.width, height: bitmap.height },
-    size,
-    scale,
-  );
+  const rect = centeredCoverDrawRect(image, size, scale, offset);
   ctx.drawImage(bitmap, rect.dx, rect.dy, rect.dw, rect.dh);
   bitmap.close();
   return canvas.toDataURL("image/jpeg", 0.8);
