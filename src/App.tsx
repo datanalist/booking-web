@@ -24,10 +24,7 @@ function DesktopApp() {
   const router = useMemo(() => createAppRouter(), []);
 
   return (
-    <div
-      className="min-h-screen bg-[#fffdf8]"
-      style={{ minWidth: CANVAS_WIDTH }}
-    >
+    <div className="bg-[#fffdf8]" style={{ minWidth: CANVAS_WIDTH }}>
       <RouterProvider router={router} />
     </div>
   );

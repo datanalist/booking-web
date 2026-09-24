@@ -47,7 +47,7 @@ export function Sidebar({
   const avatarSrc = account.photoUrl ?? "/avatar-placeholder.png";
 
   return (
-    <aside className="flex h-full w-[235px] flex-col gap-5 bg-white font-sans">
+    <aside className="relative flex h-full w-60 shrink-0 flex-col bg-white font-sans">
       <header className="flex h-24 w-full shrink-0 items-center px-8 py-6">
         <div className="flex items-center gap-3">
           <img
@@ -68,7 +68,7 @@ export function Sidebar({
         </div>
       </header>
 
-      <nav className="flex min-h-0 w-full flex-1 flex-col items-center gap-3">
+      <nav className="flex w-full flex-col items-center gap-3">
         {items.map((item) => {
           const active =
             activePath === item.to || activePath.startsWith(`${item.to}/`);
@@ -76,7 +76,7 @@ export function Sidebar({
             <a
               key={item.to}
               href={item.to}
-              className={`flex w-[208px] shrink-0 items-center gap-4 rounded-lg p-4 text-[16px] font-bold leading-[1.2] no-underline ${
+              className={`flex w-52 shrink-0 items-center gap-4 rounded-lg p-4 text-[16px] font-bold leading-[1.2] no-underline ${
                 active
                   ? "bg-[var(--color-accent)] text-white"
                   : "text-[var(--color-ink)]"
@@ -104,13 +104,14 @@ export function Sidebar({
         })}
       </nav>
 
-      <footer className="flex h-[77px] w-full shrink-0 items-center justify-center px-8 py-6">
+      {/* Полоса футера px-8 py-6; логотип по макету left 27 / top 928 в кадре 1020. */}
+      <footer className="absolute inset-x-0 top-[904px] px-8 py-6">
         <img
           src="/logo-globalstay.svg"
           alt="GlobalStay"
-          width={124}
-          height={29}
-          className="h-[29px] w-auto max-w-full object-contain"
+          width={176}
+          height={56}
+          className="absolute left-[27px] top-[928px] h-14 w-44 object-contain"
         />
       </footer>
     </aside>

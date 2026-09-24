@@ -67,16 +67,25 @@ test("footer logo matches mockup size and padding slot", () => {
     />,
   );
 
+  const aside = container.querySelector("aside");
+  expect(aside).not.toBeNull();
+  expect(aside).toHaveClass("w-60");
+  expect(aside).toHaveClass("relative");
+
   const footer = container.querySelector("footer");
   expect(footer).not.toBeNull();
-  expect(footer).toHaveClass("h-[77px]");
   expect(footer).toHaveClass("px-8");
   expect(footer).toHaveClass("py-6");
+  expect(footer).toHaveClass("top-[904px]");
 
   const logo = screen.getByAltText("GlobalStay");
   expect(logo.tagName).toBe("IMG");
-  expect(logo).toHaveAttribute("width", "124");
-  expect(logo).toHaveAttribute("height", "29");
+  expect(logo).toHaveAttribute("width", "176");
+  expect(logo).toHaveAttribute("height", "56");
   expect(logo).toHaveClass("object-contain");
-  expect(logo).toHaveClass("h-[29px]");
+  expect(logo).toHaveClass("h-14");
+  expect(logo).toHaveClass("w-44");
+  expect(logo).toHaveClass("left-[27px]");
+  expect(logo).toHaveClass("top-[928px]");
+  expect(logo).toHaveClass("absolute");
 });

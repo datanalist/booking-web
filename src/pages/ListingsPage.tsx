@@ -39,7 +39,7 @@ export function ListingsPage() {
   const empty = tab === "published" || items.length === 0;
 
   return (
-    <div className="-mx-10 -my-8 flex min-h-[1020px] flex-col gap-8 bg-[rgba(251,192,40,0.06)] px-8 py-8 font-sans">
+    <div className="flex h-full flex-col gap-8 bg-amber-400/5 p-8 font-sans">
       <div className="flex items-center justify-between">
         <h1 className="m-0 text-[24px] font-bold text-[var(--color-ink)]">
           Мои объявления
