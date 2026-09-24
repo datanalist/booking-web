@@ -2,8 +2,14 @@ import { FormEvent, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../app/session";
 import { canSubmitOnboardingProfile } from "../lib/canSubmitOnboardingProfile";
+import {
+  AVATAR_PHOTO_SCALE_DEFAULT,
+  clampAvatarPhotoScale,
+} from "../lib/clampAvatarPhotoScale";
 import { compressImage } from "../lib/compressImage";
+import { cropCenteredAvatar } from "../lib/cropCenteredAvatar";
 import { formatPhoneMask } from "../lib/formatPhoneMask";
+import { AvatarPhotoScaleControl } from "../ui/AvatarPhotoScaleControl";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 
@@ -11,8 +17,11 @@ export function OnboardingPage() {
   const { auth } = useSession();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cropGenerationRef = useRef(0);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+7");
+  const [photoSource, setPhotoSource] = useState<string | undefined>();
+  const [photoScale, setPhotoScale] = useState(AVATAR_PHOTO_SCALE_DEFAULT);
   const [photo, setPhoto] = useState<string | undefined>();
   const [nameError, setNameError] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -21,15 +30,40 @@ export function OnboardingPage() {
 
   const canSubmit = canSubmitOnboardingProfile({ name, phone, photo });
 
+  async function applyCrop(source: string, scale: number): Promise<void> {
+    const generation = ++cropGenerationRef.current;
+    const cropped = await cropCenteredAvatar(source, { scale });
+    if (generation !== cropGenerationRef.current) {
+      return;
+    }
+    setPhoto(cropped);
+  }
+
   async function onPhotoChange(file: File | null): Promise<void> {
     if (!file) {
       return;
     }
-    setPhoto(await compressImage(file));
+    const source = await compressImage(file);
+    const scale = AVATAR_PHOTO_SCALE_DEFAULT;
+    setPhotoSource(source);
+    setPhotoScale(scale);
+    await applyCrop(source, scale);
+  }
+
+  function onPhotoScaleChange(value: number): void {
+    if (!photoSource) {
+      return;
+    }
+    const scale = clampAvatarPhotoScale(value);
+    setPhotoScale(scale);
+    void applyCrop(photoSource, scale);
   }
 
   function clearPhoto(): void {
+    cropGenerationRef.current += 1;
     setPhoto(undefined);
+    setPhotoSource(undefined);
+    setPhotoScale(AVATAR_PHOTO_SCALE_DEFAULT);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -144,11 +178,12 @@ export function OnboardingPage() {
               aria-label="Выбрать фото"
             >
               <span className="absolute inset-0 overflow-hidden rounded-full border border-solid border-[#f88a2a] shadow-[0px_10px_20px_rgba(0,0,0,0.03)]">
-                {photo ? (
+                {photoSource ? (
                   <img
-                    src={photo}
+                    src={photoSource}
                     alt=""
                     className="size-full object-cover object-center"
+                    style={{ transform: `scale(${photoScale})` }}
                   />
                 ) : (
                   <span className="flex size-full items-center justify-center">
@@ -172,14 +207,20 @@ export function OnboardingPage() {
                 />
               </span>
             </button>
-            {photo ? (
-              <button
-                type="button"
-                className="rounded-[30px] py-1 text-[12px] leading-[1.3] text-[#f88a2a] underline"
-                onClick={clearPhoto}
-              >
-                Удалить фото
-              </button>
+            {photoSource ? (
+              <>
+                <AvatarPhotoScaleControl
+                  value={photoScale}
+                  onChange={onPhotoScaleChange}
+                />
+                <button
+                  type="button"
+                  className="rounded-[30px] py-1 text-[12px] leading-[1.3] text-[#f88a2a] underline"
+                  onClick={clearPhoto}
+                >
+                  Удалить фото
+                </button>
+              </>
             ) : null}
           </div>
 

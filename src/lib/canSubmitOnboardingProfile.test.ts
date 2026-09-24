@@ -22,4 +22,11 @@ test("photo does not affect submit readiness", () => {
       photo: undefined,
     }),
   ).toBe(true);
+  expect(
+    canSubmitOnboardingProfile({
+      name: "Анна",
+      phone: "+7 (900) 123-45-67",
+      photo: "data:image/jpeg;base64,cropped",
+    }),
+  ).toBe(true);
 });
