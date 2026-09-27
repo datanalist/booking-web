@@ -109,18 +109,18 @@ export function ListingWizardPriceStep({
         </div>
       ) : null}
 
-      <div className="flex gap-5">
+      <div className="inline-flex items-start gap-5 self-stretch">
         <Button
           variant="outlined"
           disabled={pending}
-          className="h-auto min-h-[61px] flex-1 rounded-[8px] px-6 py-5"
+          className="flex-1 !h-auto !rounded-lg !border-0 !px-6 !py-5 outline outline-1 outline-offset-[-1px] outline-orange-400"
           onClick={onBack}
         >
           Вернуться
         </Button>
         <Button
           disabled={pending}
-          className="h-auto min-h-[61px] flex-1 rounded-[8px] px-6 py-5"
+          className="flex-1 !h-auto !rounded-lg !bg-orange-400 !px-6 !py-5"
           onClick={onNext}
         >
           Далее
