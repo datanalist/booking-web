@@ -11,7 +11,7 @@ type TabsProps = {
 
 export function Tabs({ items, value, onChange }: TabsProps) {
   return (
-    <div className="flex gap-2 font-sans" role="tablist">
+    <div className="flex border-b border-[#ffe4b8] font-sans" role="tablist">
       {items.map((item) => {
         const selected = item.id === value;
         return (
@@ -20,10 +20,10 @@ export function Tabs({ items, value, onChange }: TabsProps) {
             type="button"
             role="tab"
             aria-selected={selected}
-            className={`rounded-full px-4 py-2 text-[14px] font-normal cursor-pointer border-0 ${
+            className={`w-[160px] cursor-pointer border-0 bg-transparent p-[10px] text-[14px] font-normal ${
               selected
-                ? "bg-[var(--color-accent)] text-white"
-                : "bg-transparent text-[var(--color-text)]"
+                ? "border-b-2 border-[var(--color-ink)] text-[var(--color-ink)]"
+                : "text-[#525353]"
             }`}
             onClick={() => onChange(item.id)}
           >

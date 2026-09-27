@@ -8,23 +8,20 @@ import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { ListingCard } from "../ui/ListingCard";
 import { Modal } from "../ui/Modal";
-import { Search } from "../ui/Search";
 import { Tabs } from "../ui/Tabs";
 
 export function ListingsPage() {
   const { listings } = useSession();
   const navigate = useNavigate();
   const [tab, setTab] = useState<ListingTabId>("all");
-  const [query, setQuery] = useState("");
   const [items, setItems] = useState<Listing[]>([]);
-  const [travelOpen, setTravelOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const reload = useCallback(async (): Promise<void> => {
-    const next = await listings.list({ tab, query });
+    const next = await listings.list({ tab, query: "" });
     setItems(next);
-  }, [listings, tab, query]);
+  }, [listings, tab]);
 
   useEffect(() => {
     void reload();
@@ -39,47 +36,44 @@ export function ListingsPage() {
     await reload();
   }
 
-  const empty =
-    tab === "published" || items.length === 0;
+  const empty = tab === "published" || items.length === 0;
 
   return (
-    <div className="font-sans">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <h1 className="text-[28px] font-bold text-[var(--color-ink)]">
+    <div className="flex h-full flex-col gap-8 bg-amber-400/5 p-8 font-sans">
+      <div className="flex items-center justify-between">
+        <h1 className="m-0 text-[24px] font-bold text-[var(--color-ink)]">
           Мои объявления
         </h1>
-        <div className="flex gap-3">
-          <Button variant="outlined" onClick={() => setTravelOpen(true)}>
-            Импорт из TravelLine
-          </Button>
-          <Button onClick={() => navigate("/listings/new")}>
-            Создать объявление
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => navigate("/listings/new")}>
+          Создать объявление
+        </Button>
       </div>
 
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <Tabs
-          items={LISTING_TABS.map((item) => ({
-            id: item.id,
-            label: item.label,
-          }))}
-          value={tab}
-          onChange={(id) => setTab(id as ListingTabId)}
-        />
-        <div className="w-[280px]">
-          <Search value={query} onChange={setQuery} placeholder="Поиск" />
-        </div>
-      </div>
+      <Tabs
+        items={LISTING_TABS.map((item) => ({
+          id: item.id,
+          label: item.label,
+        }))}
+        value={tab}
+        onChange={(id) => setTab(id as ListingTabId)}
+      />
 
       {empty ? (
-        <EmptyState
-          title="Нет объявлений"
-          description="Создайте своё первое объявление о жилье!"
-          illustration={
-            <div className="mb-2 h-40 w-56 rounded-lg bg-[#f5ebe0]" aria-hidden />
-          }
-        />
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-2xl border border-[rgba(251,192,40,0.17)] bg-white">
+          <EmptyState
+            title="Нет объявлений"
+            description="Создайте свое первое объявление о жилье!"
+            illustration={
+              <img
+                src="/listings-empty.svg"
+                alt=""
+                width={214}
+                height={200}
+                className="mb-0"
+              />
+            }
+          />
+        </div>
       ) : (
         <div className="flex flex-col gap-3">
           {items.map((item) => (
@@ -97,16 +91,6 @@ export function ListingsPage() {
           ))}
         </div>
       )}
-
-      <Modal
-        open={travelOpen}
-        title="Импорт из TravelLine"
-        onClose={() => setTravelOpen(false)}
-      >
-        <p className="text-[16px] text-[var(--color-text)]">
-          Импорт появится позже
-        </p>
-      </Modal>
 
       <Modal
         open={publishOpen}

@@ -1,6 +1,7 @@
 export const SERVICE_COMMISSION_RATE = 0.09;
 export const DESKTOP_MIN_WIDTH = 1280;
 export const CANVAS_WIDTH = 1440;
+export const CANVAS_HEIGHT = 1020;
 export const DESCRIPTION_MAX = 500;
 export const PHOTO_MIN = 6;
 export const PHOTO_MAX = 9;

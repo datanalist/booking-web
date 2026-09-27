@@ -1,30 +1,74 @@
+type SidebarAccount = {
+  name: string;
+  email: string;
+  photoUrl?: string;
+};
+
 type SidebarItem = {
   to: string;
   label: string;
+  iconSrc: string;
   badge?: number;
 };
 
 const DEFAULT_ITEMS: SidebarItem[] = [
-  { to: "/listings", label: "Мои объявления" },
-  { to: "/bookings", label: "Бронирования" },
-  { to: "/chats", label: "Чаты" },
-  { to: "/notifications", label: "Уведомления" },
-  { to: "/profile", label: "Профиль" },
+  {
+    to: "/listings",
+    label: "Мои объявления",
+    iconSrc: "/sidebar-icon-listings.svg",
+  },
+  {
+    to: "/bookings",
+    label: "Бронирования",
+    iconSrc: "/sidebar-icon-bookings.svg",
+  },
+  { to: "/chats", label: "Чаты", iconSrc: "/sidebar-icon-chats.svg" },
+  {
+    to: "/notifications",
+    label: "Уведомления",
+    iconSrc: "/sidebar-icon-notifications.svg",
+    badge: 2,
+  },
+  { to: "/profile", label: "Профиль", iconSrc: "/sidebar-icon-profile.svg" },
 ];
 
 type SidebarProps = {
   /** Текущий путь для подсветки без react-router (тесты / SSR). */
   activePath?: string;
+  account: SidebarAccount;
   items?: SidebarItem[];
 };
 
 export function Sidebar({
   activePath = "",
+  account,
   items = DEFAULT_ITEMS,
 }: SidebarProps) {
+  const avatarSrc = account.photoUrl ?? "/avatar-placeholder.png";
+
   return (
-    <aside className="flex h-full w-[235px] flex-col bg-white font-sans">
-      <nav className="flex flex-1 flex-col gap-1 p-3">
+    <aside className="relative flex h-full w-60 shrink-0 flex-col bg-white font-sans">
+      <header className="flex h-24 w-full shrink-0 items-center px-8 py-6">
+        <div className="flex items-center gap-3">
+          <img
+            src={avatarSrc}
+            alt=""
+            width={40}
+            height={40}
+            className="size-10 shrink-0 rounded-full object-cover"
+          />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate text-[14px] font-bold leading-[1.4] text-[var(--color-ink)]">
+              {account.name}
+            </span>
+            <span className="truncate text-[12px] font-normal leading-[1.5] text-[#525353]">
+              {account.email}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <nav className="flex w-full flex-col items-center gap-3">
         {items.map((item) => {
           const active =
             activePath === item.to || activePath.startsWith(`${item.to}/`);
@@ -32,31 +76,44 @@ export function Sidebar({
             <a
               key={item.to}
               href={item.to}
-              className={`flex items-center justify-between rounded-lg px-3 py-2 text-[16px] no-underline ${
+              className={`flex w-52 shrink-0 items-center gap-4 rounded-lg p-4 text-[16px] font-bold leading-[1.2] no-underline ${
                 active
                   ? "bg-[var(--color-accent)] text-white"
-                  : "text-[var(--color-text)] hover:bg-[#f5f5f5]"
+                  : "text-[var(--color-ink)]"
               }`}
             >
-              <span>{item.label}</span>
-              {item.badge != null && item.badge > 0 ? (
-                <span
-                  className={`min-w-5 rounded-full px-1.5 text-center text-[12px] ${
-                    active
-                      ? "bg-white text-[var(--color-accent)]"
-                      : "bg-[var(--color-accent)] text-white"
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              ) : null}
+              <span className="relative size-6 shrink-0">
+                <img
+                  src={item.iconSrc}
+                  alt=""
+                  width={24}
+                  height={24}
+                  className={`size-6 object-contain ${active ? "brightness-0 invert" : ""}`}
+                />
+              </span>
+              <span className="flex min-w-0 items-center gap-3 whitespace-nowrap">
+                <span className="whitespace-nowrap">{item.label}</span>
+                {item.badge != null && item.badge > 0 ? (
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#e34043] text-[10px] font-normal leading-[1.4] text-white">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </span>
             </a>
           );
         })}
       </nav>
-      <div className="p-4 text-[18px] font-bold text-[var(--color-ink)]">
-        GlobalStay
-      </div>
+
+      {/* Полоса футера px-8 py-6; логотип по макету left 27 / top 928 в кадре 1020. */}
+      <footer className="absolute inset-x-0 top-[904px] px-8 py-6">
+        <img
+          src="/logo-globalstay.svg"
+          alt="GlobalStay"
+          width={176}
+          height={56}
+          className="absolute left-[27px] top-[928px] h-14 w-44 object-contain"
+        />
+      </footer>
     </aside>
   );
 }
