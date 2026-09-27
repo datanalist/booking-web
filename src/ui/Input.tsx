@@ -43,10 +43,10 @@ export function Input({
     : type;
 
   const fieldClass = [
-    "box-border w-full rounded-[8px] font-sans text-[16px] text-[var(--color-text)] outline-none",
+    "box-border w-full rounded-[8px] font-sans text-[16px] text-[var(--color-ink)] outline-none",
     isAuth
-      ? "h-[44px] bg-[rgba(251,192,40,0.06)] px-[14px] py-[10px] placeholder:text-[#525353]"
-      : "border border-[#d0d0d0] px-3 py-2 focus:border-[var(--color-accent)]",
+      ? `${multiline ? "min-h-[120px] resize-none" : "h-[44px]"} bg-[rgba(251,192,40,0.06)] px-[14px] py-[10px] placeholder:text-[#525353]`
+      : "border border-[#d0d0d0] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-accent)]",
     isAuth && !showErrorBorder
       ? "border border-[rgba(251,192,40,0.17)]"
       : "",

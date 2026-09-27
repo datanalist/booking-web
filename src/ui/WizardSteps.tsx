@@ -1,3 +1,5 @@
+/** Единая причина изменения: табы шагов мастера создания объявления по макету. */
+
 const STEP_LABELS = [
   "Описание",
   "Фото",
@@ -13,18 +15,23 @@ type WizardStepsProps = {
 
 export function WizardSteps({ current }: WizardStepsProps) {
   return (
-    <ol className="m-0 flex w-full list-none border-b border-[#ffe4b8] p-0 font-sans">
+    <ol className="m-0 flex w-full list-none items-start border-b border-solid border-[#ffe4b8] p-0 font-sans">
       {STEP_LABELS.map((label, index) => {
         const step = (index + 1) as 1 | 2 | 3 | 4 | 5 | 6;
-        const reached = step <= current;
+        const active = step === current;
         return (
           <li
             key={label}
-            className={`flex flex-1 items-center justify-center border-b-2 p-[10px] text-[14px] leading-[1.4] whitespace-nowrap text-[var(--color-ink)] ${
-              reached ? "border-[var(--color-ink)]" : "border-transparent"
-            }`}
+            className={[
+              "flex min-w-0 flex-1 items-center justify-center border-b-2 border-solid p-[10px] text-[14px] leading-[1.4]",
+              active
+                ? "border-[var(--color-ink)] text-[var(--color-ink)]"
+                : "border-transparent text-[#525353]",
+            ].join(" ")}
           >
-            {step}. {label}
+            <span className="whitespace-nowrap">
+              {step}. {label}
+            </span>
           </li>
         );
       })}
