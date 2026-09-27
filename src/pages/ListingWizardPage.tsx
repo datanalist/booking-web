@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSession } from "../app/session";
-import { DESCRIPTION_MAX, PHOTO_MAX } from "../config";
+import { PHOTO_MAX } from "../config";
 import type {
   AmenityId,
   ExtraAmenityId,
@@ -14,8 +14,7 @@ import { isDescriptionStepComplete } from "../lib/parseDescriptionStep";
 import { parseStep } from "../lib/wizardStep";
 import { validateStep } from "../lib/wizardValidation";
 import { AmenitiesStep } from "../ui/AmenitiesStep";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
+import { ListingWizardDetailsStep } from "../ui/ListingWizardDetailsStep";
 import { WizardBackButton } from "../ui/WizardBackButton";
 import { WizardDescriptionForm } from "../ui/WizardDescriptionForm";
 import { WizardPhotosStep } from "../ui/WizardPhotosStep";
@@ -185,6 +184,27 @@ export function ListingWizardPage() {
     return <p className="font-sans">Загрузка…</p>;
   }
 
+  if (step === 5) {
+    return (
+      <ListingWizardDetailsStep
+        values={{
+          accessInfo: draft.accessInfo,
+          houseRules: draft.houseRules,
+          extraInfo: draft.extraInfo,
+        }}
+        errors={errors}
+        pending={pending}
+        onChange={(partial) => patch(partial)}
+        onBack={() => {
+          void goBack();
+        }}
+        onNext={() => {
+          void saveAndGo(6);
+        }}
+      />
+    );
+  }
+
   if (step === 3) {
     return (
       <AmenitiesStep
@@ -289,38 +309,6 @@ export function ListingWizardPage() {
           />
         ) : null}
 
-        {step === 5 ? (
-          <div className="flex w-full max-w-xl flex-col gap-4 py-10">
-            <Input
-              label="Как попасть"
-              value={draft.accessInfo}
-              onChange={(value) => patch({ accessInfo: value })}
-              multiline
-              maxLength={DESCRIPTION_MAX}
-              error={errors.accessInfo}
-              hint={`${draft.accessInfo.length}/${DESCRIPTION_MAX}`}
-            />
-            <Input
-              label="Правила дома"
-              value={draft.houseRules}
-              onChange={(value) => patch({ houseRules: value })}
-              multiline
-              maxLength={DESCRIPTION_MAX}
-              error={errors.houseRules}
-              hint={`${draft.houseRules.length}/${DESCRIPTION_MAX}`}
-            />
-            <Input
-              label="Дополнительная информация"
-              value={draft.extraInfo}
-              onChange={(value) => patch({ extraInfo: value })}
-              multiline
-              maxLength={DESCRIPTION_MAX}
-              error={errors.extraInfo}
-              hint={`${draft.extraInfo.length}/${DESCRIPTION_MAX}`}
-            />
-          </div>
-        ) : null}
-
         {step === 6 ? (
           <ListingWizardPriceStep
             priceNight={draft.priceNight}
@@ -347,28 +335,6 @@ export function ListingWizardPage() {
               void saveAndGo("preview");
             }}
           />
-        ) : null}
-
-        {step === 5 ? (
-          <div className="mt-auto flex w-full max-w-xl gap-5 pb-10">
-            <Button
-              variant="outlined"
-              disabled={pending}
-              className="h-auto min-h-[61px] flex-1 rounded-[8px] px-6 py-5"
-              onClick={() => void goBack()}
-            >
-              Вернуться
-            </Button>
-            <Button
-              disabled={pending}
-              className="h-auto min-h-[61px] flex-1 rounded-[8px] px-6 py-5"
-              onClick={() => {
-                void saveAndGo((step + 1) as WizardStep);
-              }}
-            >
-              Далее
-            </Button>
-          </div>
         ) : null}
       </div>
     </div>
