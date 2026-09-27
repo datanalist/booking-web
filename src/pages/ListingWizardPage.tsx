@@ -3,9 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSession } from "../app/session";
 import {
-  AMENITY_LABELS,
   DESCRIPTION_MAX,
-  EXTRA_AMENITY_LABELS,
   HOUSING_LABELS,
   PHOTO_MAX,
   PHOTO_MIN,
@@ -19,8 +17,10 @@ import type {
 import { emptyDraft } from "../lib/emptyDraft";
 import { compressImage } from "../lib/compressImage";
 import { commissionOf, clientPriceOf } from "../lib/money";
+import { toggleIdInList } from "../lib/toggleIdInList";
 import { parseStep } from "../lib/wizardStep";
 import { validateStep } from "../lib/wizardValidation";
+import { AmenitiesStep } from "../ui/AmenitiesStep";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { WizardSteps } from "../ui/WizardSteps";
@@ -163,32 +163,40 @@ export function ListingWizardPage() {
     if (!draft) {
       return;
     }
-    const has = draft.amenityIds.includes(id);
-    patch({
-      amenityIds: has
-        ? draft.amenityIds.filter((item) => item !== id)
-        : [...draft.amenityIds, id],
-    });
+    patch({ amenityIds: toggleIdInList(draft.amenityIds, id) });
   }
 
   function toggleExtra(id: ExtraAmenityId): void {
     if (!draft) {
       return;
     }
-    const has = draft.extraAmenityIds.includes(id);
-    patch({
-      extraAmenityIds: has
-        ? draft.extraAmenityIds.filter((item) => item !== id)
-        : [...draft.extraAmenityIds, id],
-    });
+    patch({ extraAmenityIds: toggleIdInList(draft.extraAmenityIds, id) });
   }
 
   if (!draft) {
     return <p className="font-sans">Загрузка…</p>;
   }
 
+  if (step === 3) {
+    return (
+      <AmenitiesStep
+        selectedAmenities={new Set(draft.amenityIds)}
+        selectedExtras={new Set(draft.extraAmenityIds)}
+        pending={pending}
+        onToggleAmenity={toggleAmenity}
+        onToggleExtra={toggleExtra}
+        onBack={() => {
+          void goBack();
+        }}
+        onNext={() => {
+          void saveAndGo(4);
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="font-sans">
+    <div className="px-10 py-8 font-sans">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-[28px] font-bold text-[var(--color-ink)]">
           {isNew ? "Новое объявление" : "Редактирование"}
@@ -290,57 +298,6 @@ export function ListingWizardPage() {
                 </button>
               </div>
             ))}
-          </div>
-        </div>
-      ) : null}
-
-      {step === 3 ? (
-        <div className="flex max-w-2xl flex-col gap-6">
-          <div>
-            <h2 className="mb-3 text-[18px] font-bold">Удобства</h2>
-            <div className="flex flex-wrap gap-2">
-              {(Object.keys(AMENITY_LABELS) as AmenityId[]).map((key) => {
-                const on = draft.amenityIds.includes(key);
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`rounded-full border px-3 py-2 text-[14px] cursor-pointer ${
-                      on
-                        ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-                        : "border-[#d0d0d0] bg-white"
-                    }`}
-                    onClick={() => toggleAmenity(key)}
-                  >
-                    {AMENITY_LABELS[key]}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div>
-            <h2 className="mb-3 text-[18px] font-bold">Дополнительно</h2>
-            <div className="flex flex-wrap gap-2">
-              {(Object.keys(EXTRA_AMENITY_LABELS) as ExtraAmenityId[]).map(
-                (key) => {
-                  const on = draft.extraAmenityIds.includes(key);
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`rounded-full border px-3 py-2 text-[14px] cursor-pointer ${
-                        on
-                          ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-                          : "border-[#d0d0d0] bg-white"
-                      }`}
-                      onClick={() => toggleExtra(key)}
-                    >
-                      {EXTRA_AMENITY_LABELS[key]}
-                    </button>
-                  );
-                },
-              )}
-            </div>
           </div>
         </div>
       ) : null}
