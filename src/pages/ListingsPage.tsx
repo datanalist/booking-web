@@ -39,9 +39,9 @@ export function ListingsPage() {
   const empty = tab === "published" || items.length === 0;
 
   return (
-    <div className="flex h-full flex-col gap-8 bg-amber-400/5 p-8 font-sans">
-      <div className="flex items-center justify-between">
-        <h1 className="m-0 text-[24px] font-bold text-[var(--color-ink)]">
+    <div className="flex h-full w-full flex-col gap-8 bg-[rgba(251,192,40,0.06)] p-8 font-sans">
+      <div className="flex w-full shrink-0 items-center justify-between">
+        <h1 className="m-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
           Мои объявления
         </h1>
         <Button size="sm" onClick={() => navigate("/listings/new")}>
@@ -59,7 +59,7 @@ export function ListingsPage() {
       />
 
       {empty ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-2xl border border-[rgba(251,192,40,0.17)] bg-white">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 rounded-2xl border border-[rgba(251,192,40,0.17)] bg-white">
           <EmptyState
             title="Нет объявлений"
             description="Создайте свое первое объявление о жилье!"
