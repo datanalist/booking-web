@@ -21,6 +21,7 @@ import { WizardDescriptionForm } from "../ui/WizardDescriptionForm";
 import { WizardPhotosStep } from "../ui/WizardPhotosStep";
 import { WizardSteps } from "../ui/WizardSteps";
 import { ListingWizardPriceStep } from "./ListingWizardPriceStep";
+import { ListingWizardRulesStep } from "./ListingWizardRulesStep";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -263,49 +264,29 @@ export function ListingWizardPage() {
         ) : null}
 
         {step === 4 ? (
-          <div className="flex w-full max-w-xl flex-col gap-4 py-10">
-            <Input
-              label="Максимум гостей"
-              type="number"
-              value={draft.maxGuests ? String(draft.maxGuests) : ""}
-              onChange={(value) =>
-                patch({ maxGuests: value === "" ? 0 : Number(value) })
-              }
-              error={errors.maxGuests}
-            />
-            <label className="flex items-center gap-2 text-[14px]">
-              <input
-                type="checkbox"
-                checked={draft.petsAllowed}
-                onChange={(event) => patch({ petsAllowed: event.target.checked })}
-              />
-              Можно с питомцами
-            </label>
-            <label className="flex items-center gap-2 text-[14px]">
-              <input
-                type="checkbox"
-                checked={draft.cancellationAllowed}
-                onChange={(event) =>
-                  patch({ cancellationAllowed: event.target.checked })
-                }
-              />
-              Бесплатная отмена
-            </label>
-            <Input
-              label="Время заезда"
-              type="time"
-              value={draft.checkInTime}
-              onChange={(value) => patch({ checkInTime: value })}
-              error={errors.checkInTime}
-            />
-            <Input
-              label="Время выезда"
-              type="time"
-              value={draft.checkOutTime}
-              onChange={(value) => patch({ checkOutTime: value })}
-              error={errors.checkOutTime}
-            />
-          </div>
+          <ListingWizardRulesStep
+            values={{
+              maxGuests: draft.maxGuests,
+              guestsForbidden: draft.guestsForbidden === true,
+              checkInTime: draft.checkInTime,
+              checkOutTime: draft.checkOutTime,
+              petsAllowed: draft.petsAllowed,
+              cancellationAllowed: draft.cancellationAllowed,
+            }}
+            errors={{
+              maxGuests: errors.maxGuests,
+              checkInTime: errors.checkInTime,
+              checkOutTime: errors.checkOutTime,
+            }}
+            pending={pending}
+            onChange={(partial) => patch(partial)}
+            onBack={() => {
+              void goBack();
+            }}
+            onNext={() => {
+              void saveAndGo(5);
+            }}
+          />
         ) : null}
 
         {step === 5 ? (
@@ -368,7 +349,7 @@ export function ListingWizardPage() {
           />
         ) : null}
 
-        {step > 2 && step < 6 ? (
+        {step === 5 ? (
           <div className="mt-auto flex w-full max-w-xl gap-5 pb-10">
             <Button
               variant="outlined"

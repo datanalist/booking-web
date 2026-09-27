@@ -12,6 +12,7 @@ export function emptyDraft(ownerId: string): ListingDraft {
     amenityIds: [],
     extraAmenityIds: [],
     maxGuests: 0,
+    guestsForbidden: false,
     petsAllowed: false,
     cancellationAllowed: false,
     checkInTime: "",

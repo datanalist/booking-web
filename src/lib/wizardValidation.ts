@@ -1,12 +1,10 @@
 import type { ListingDraft } from "../api/types";
 import { DESCRIPTION_MAX, HOUSING_LABELS, PHOTO_MAX, PHOTO_MIN } from "../config";
+import { parseClockTime } from "./clockTime";
 import { parseIsoDate } from "./isoDate";
+import { parseMaxGuests } from "./parseMaxGuests";
 
 const HOUSING_TYPES = new Set<string>(Object.keys(HOUSING_LABELS));
-
-function isValidMaxGuests(value: number): boolean {
-  return Number.isFinite(value) && value >= 1;
-}
 
 function isValidPrice(value: number): boolean {
   return Number.isFinite(value) && value > 0;
@@ -45,14 +43,20 @@ function validateStep2(draft: ListingDraft): Record<string, string> {
 
 function validateStep4(draft: ListingDraft): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (!isValidMaxGuests(draft.maxGuests)) {
-    errors.maxGuests = "Укажите число гостей";
+  if (parseMaxGuests(draft.maxGuests, draft.guestsForbidden === true) === null) {
+    errors.maxGuests = draft.guestsForbidden === true
+      ? "При запрете гостей укажите 0"
+      : "Укажите число гостей";
   }
-  if (!draft.checkInTime.trim()) {
-    errors.checkInTime = "Укажите время заезда";
+  if (!parseClockTime(draft.checkInTime)) {
+    errors.checkInTime = draft.checkInTime.trim()
+      ? "Укажите время в формате ЧЧ:ММ"
+      : "Укажите время заезда";
   }
-  if (!draft.checkOutTime.trim()) {
-    errors.checkOutTime = "Укажите время выезда";
+  if (!parseClockTime(draft.checkOutTime)) {
+    errors.checkOutTime = draft.checkOutTime.trim()
+      ? "Укажите время в формате ЧЧ:ММ"
+      : "Укажите время выезда";
   }
   return errors;
 }
