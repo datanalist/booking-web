@@ -23,6 +23,7 @@ import { parseStep } from "../lib/wizardStep";
 import { validateStep } from "../lib/wizardValidation";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { ListingWizardDetailsStep } from "../ui/ListingWizardDetailsStep";
 import { WizardSteps } from "../ui/WizardSteps";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
@@ -185,6 +186,27 @@ export function ListingWizardPage() {
 
   if (!draft) {
     return <p className="font-sans">Загрузка…</p>;
+  }
+
+  if (step === 5) {
+    return (
+      <ListingWizardDetailsStep
+        values={{
+          accessInfo: draft.accessInfo,
+          houseRules: draft.houseRules,
+          extraInfo: draft.extraInfo,
+        }}
+        errors={errors}
+        pending={pending}
+        onChange={(partial) => patch(partial)}
+        onBack={() => {
+          void goBack();
+        }}
+        onNext={() => {
+          void saveAndGo(6);
+        }}
+      />
+    );
   }
 
   return (
@@ -387,38 +409,6 @@ export function ListingWizardPage() {
             value={draft.checkOutTime}
             onChange={(value) => patch({ checkOutTime: value })}
             error={errors.checkOutTime}
-          />
-        </div>
-      ) : null}
-
-      {step === 5 ? (
-        <div className="flex max-w-xl flex-col gap-4">
-          <Input
-            label="Как попасть"
-            value={draft.accessInfo}
-            onChange={(value) => patch({ accessInfo: value })}
-            multiline
-            maxLength={DESCRIPTION_MAX}
-            error={errors.accessInfo}
-            hint={`${draft.accessInfo.length}/${DESCRIPTION_MAX}`}
-          />
-          <Input
-            label="Правила дома"
-            value={draft.houseRules}
-            onChange={(value) => patch({ houseRules: value })}
-            multiline
-            maxLength={DESCRIPTION_MAX}
-            error={errors.houseRules}
-            hint={`${draft.houseRules.length}/${DESCRIPTION_MAX}`}
-          />
-          <Input
-            label="Дополнительная информация"
-            value={draft.extraInfo}
-            onChange={(value) => patch({ extraInfo: value })}
-            multiline
-            maxLength={DESCRIPTION_MAX}
-            error={errors.extraInfo}
-            hint={`${draft.extraInfo.length}/${DESCRIPTION_MAX}`}
           />
         </div>
       ) : null}

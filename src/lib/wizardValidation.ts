@@ -1,5 +1,6 @@
 import type { ListingDraft } from "../api/types";
 import { DESCRIPTION_MAX, HOUSING_LABELS, PHOTO_MAX, PHOTO_MIN } from "../config";
+import { parseAnnouncementDetails } from "./parseAnnouncementDetails";
 
 const HOUSING_TYPES = new Set<string>(Object.keys(HOUSING_LABELS));
 
@@ -65,17 +66,12 @@ function validateStep4(draft: ListingDraft): Record<string, string> {
 }
 
 function validateStep5(draft: ListingDraft): Record<string, string> {
-  const errors: Record<string, string> = {};
-  if (draft.accessInfo.length > DESCRIPTION_MAX) {
-    errors.accessInfo = `Не более ${DESCRIPTION_MAX} символов`;
-  }
-  if (draft.houseRules.length > DESCRIPTION_MAX) {
-    errors.houseRules = `Не более ${DESCRIPTION_MAX} символов`;
-  }
-  if (draft.extraInfo.length > DESCRIPTION_MAX) {
-    errors.extraInfo = `Не более ${DESCRIPTION_MAX} символов`;
-  }
-  return errors;
+  const parsed = parseAnnouncementDetails({
+    accessInfo: draft.accessInfo,
+    houseRules: draft.houseRules,
+    extraInfo: draft.extraInfo,
+  });
+  return parsed.ok ? {} : parsed.errors;
 }
 
 function validateStep6(draft: ListingDraft): Record<string, string> {

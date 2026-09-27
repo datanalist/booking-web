@@ -18,6 +18,20 @@ test("step 3 always ok", () => {
   expect(validateStep(3, base)).toEqual({});
 });
 
+test("step 5 parses details length", () => {
+  expect(validateStep(5, base)).toEqual({});
+  const tooLong = "x".repeat(501);
+  expect(validateStep(5, { ...base, accessInfo: tooLong }).accessInfo).toBeTruthy();
+  expect(
+    validateStep(5, {
+      ...base,
+      accessInfo: "ok",
+      houseRules: "ok",
+      extraInfo: "ok",
+    }),
+  ).toEqual({});
+});
+
 test("step 6 unique price", () => {
   const priced = { ...base, priceNight: 3500, priceFrom14: 3000, priceFrom28: 2800 };
   expect(validateStep(6, priced)).toEqual({});
