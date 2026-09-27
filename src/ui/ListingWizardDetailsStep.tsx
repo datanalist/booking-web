@@ -45,8 +45,8 @@ export function ListingWizardDetailsStep({
 
       <ListingWizardStepper current={5} />
 
-      <section className="flex min-h-0 w-full flex-1 flex-col items-center rounded-[16px] border border-[rgba(251,192,40,0.17)] bg-white">
-        <div className="flex w-full max-w-[437px] flex-col gap-8 py-10">
+      <section className="flex w-full grow shrink-0 flex-col items-center rounded-[16px] border border-[rgba(251,192,40,0.17)] bg-white">
+        <div className="flex w-full max-w-[437px] shrink-0 flex-col gap-8 py-10">
           <h2 className="w-full text-[18px] font-bold tracking-[0.018px] text-[var(--color-ink)]">
             Укажите дополнительные сведения
           </h2>
@@ -78,7 +78,7 @@ export function ListingWizardDetailsStep({
             />
           </div>
 
-          <div className="inline-flex w-full items-start gap-5 self-stretch">
+          <div className="flex w-full shrink-0 items-start gap-5">
             <button
               type="button"
               disabled={pending}
