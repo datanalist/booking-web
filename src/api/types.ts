@@ -1,3 +1,5 @@
+import type { IsoDate } from "../lib/isoDate";
+
 export type ListingStatus = "draft" | "moderation" | "published" | "archived";
 
 export type HousingType = "apartment" | "apartments" | "studio" | "house" | "room";
@@ -9,6 +11,11 @@ export type AmenityId =
 export type ExtraAmenityId =
   | "breakfast" | "pool" | "fireplace" | "smoking"
   | "gym" | "selfCheckIn" | "sauna" | "parking";
+
+export type UniquePriceEntry = {
+  date: IsoDate | "";
+  base: number;
+};
 
 export interface Session {
   userId: string;
@@ -31,6 +38,7 @@ export interface Listing {
   amenityIds: AmenityId[];
   extraAmenityIds: ExtraAmenityId[];
   maxGuests: number;
+  guestsForbidden: boolean;
   petsAllowed: boolean;
   cancellationAllowed: boolean;
   checkInTime: string;
@@ -41,7 +49,7 @@ export interface Listing {
   priceNight: number;
   priceFrom14: number;
   priceFrom28: number;
-  uniquePrices: { date: string; base: number }[];
+  uniquePrices: UniquePriceEntry[];
   updatedAt: string;
 }
 
