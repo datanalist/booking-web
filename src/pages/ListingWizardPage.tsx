@@ -2,12 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSession } from "../app/session";
-import {
-  AMENITY_LABELS,
-  DESCRIPTION_MAX,
-  EXTRA_AMENITY_LABELS,
-  PHOTO_MAX,
-} from "../config";
+import { DESCRIPTION_MAX, PHOTO_MAX } from "../config";
 import type {
   AmenityId,
   ExtraAmenityId,
@@ -18,6 +13,7 @@ import { compressImage } from "../lib/compressImage";
 import { isDescriptionStepComplete } from "../lib/parseDescriptionStep";
 import { parseStep } from "../lib/wizardStep";
 import { validateStep } from "../lib/wizardValidation";
+import { AmenitiesStep } from "../ui/AmenitiesStep";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { WizardBackButton } from "../ui/WizardBackButton";
@@ -188,6 +184,24 @@ export function ListingWizardPage() {
     return <p className="font-sans">Загрузка…</p>;
   }
 
+  if (step === 3) {
+    return (
+      <AmenitiesStep
+        selectedAmenities={new Set(draft.amenityIds)}
+        selectedExtras={new Set(draft.extraAmenityIds)}
+        pending={pending}
+        onToggleAmenity={toggleAmenity}
+        onToggleExtra={toggleExtra}
+        onBack={() => {
+          void goBack();
+        }}
+        onNext={() => {
+          void saveAndGo(4);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="-mx-10 -my-8 flex h-full flex-col gap-8 overflow-auto bg-[rgba(251,192,40,0.06)] p-8 font-sans">
       <div className="flex items-center gap-5">
@@ -246,57 +260,6 @@ export function ListingWizardPage() {
               void saveAndGo(3);
             }}
           />
-        ) : null}
-
-        {step === 3 ? (
-          <div className="flex w-full max-w-2xl flex-col gap-6 py-10">
-            <div>
-              <h2 className="mb-3 text-[18px] font-bold">Удобства</h2>
-              <div className="flex flex-wrap gap-2">
-                {(Object.keys(AMENITY_LABELS) as AmenityId[]).map((key) => {
-                  const on = draft.amenityIds.includes(key);
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`rounded-full border px-3 py-2 text-[14px] cursor-pointer ${
-                        on
-                          ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-                          : "border-[#d0d0d0] bg-white"
-                      }`}
-                      onClick={() => toggleAmenity(key)}
-                    >
-                      {AMENITY_LABELS[key]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div>
-              <h2 className="mb-3 text-[18px] font-bold">Дополнительно</h2>
-              <div className="flex flex-wrap gap-2">
-                {(Object.keys(EXTRA_AMENITY_LABELS) as ExtraAmenityId[]).map(
-                  (key) => {
-                    const on = draft.extraAmenityIds.includes(key);
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        className={`rounded-full border px-3 py-2 text-[14px] cursor-pointer ${
-                          on
-                            ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-                            : "border-[#d0d0d0] bg-white"
-                        }`}
-                        onClick={() => toggleExtra(key)}
-                      >
-                        {EXTRA_AMENITY_LABELS[key]}
-                      </button>
-                    );
-                  },
-                )}
-              </div>
-            </div>
-          </div>
         ) : null}
 
         {step === 4 ? (
