@@ -78,11 +78,11 @@ export function ListingWizardDetailsStep({
             />
           </div>
 
-          <div className="flex w-full gap-5">
+          <div className="inline-flex w-full items-start gap-5 self-stretch">
             <button
               type="button"
               disabled={pending}
-              className="flex flex-1 cursor-pointer items-center justify-center rounded-[8px] border border-[var(--color-accent)] bg-transparent px-6 py-5 text-[18px] font-bold tracking-[0.018px] text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-transparent px-6 py-5 font-sans text-[18px] font-bold tracking-[0.018px] text-orange-400 outline outline-1 outline-offset-[-1px] outline-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={onBack}
             >
               Вернуться
@@ -90,7 +90,7 @@ export function ListingWizardDetailsStep({
             <button
               type="button"
               disabled={pending}
-              className="flex flex-1 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-[var(--color-accent)] px-6 py-5 text-[18px] font-bold tracking-[0.018px] text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex flex-1 cursor-pointer items-center justify-center rounded-lg border-0 bg-orange-400 px-6 py-5 font-sans text-[18px] font-bold tracking-[0.018px] text-white disabled:cursor-not-allowed disabled:opacity-50"
               onClick={onNext}
             >
               Далее
