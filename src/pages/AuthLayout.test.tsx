@@ -17,26 +17,33 @@ test("renders SVG logo image, not text brand", () => {
 
   const logo = within(container).getByRole("img", { name: "GlobalStay" });
   expect(logo).toHaveAttribute("src", "/logo-globalstay.svg");
-  expect(logo.className).toMatch(/\bw-44\b/);
-  expect(logo.className).toMatch(/\bh-14\b/);
+  expect(logo).toHaveAttribute("width", "181");
+  expect(logo).toHaveAttribute("height", "60");
+  expect(logo.className).toMatch(/w-\[181px\]/);
+  expect(logo.className).toMatch(/h-\[60px\]/);
   expect(logo.className).toMatch(/\bleft-8\b/);
   expect(logo.className).toMatch(/\btop-4\b/);
   expect(within(container).queryByText("GlobalStay")).toBeNull();
 });
 
-test("side photo uses rounded-[20px] on overflow-hidden frame", () => {
+test("side photo is 789x938 with p-16 and rounded-[20px] clip", () => {
   const { container } = renderLayout();
 
   const side = container.querySelector('img[src="/auth-side.jpg"]');
   expect(side).not.toBeNull();
+  expect(side?.className).toMatch(/rounded-\[20px\]/);
+
   const frame = side?.parentElement;
   expect(frame).not.toBeNull();
   expect(frame?.className).toMatch(/rounded-\[20px\]/);
   expect(frame?.className).toMatch(/\boverflow-hidden\b/);
-  expect(frame?.className).toMatch(/left-\[619px\]/);
-  expect(frame?.className).toMatch(/top-\[41px\]/);
   expect(frame?.className).toMatch(/w-\[789px\]/);
   expect(frame?.className).toMatch(/h-\[938px\]/);
+
+  const panel = frame?.parentElement;
+  expect(panel).not.toBeNull();
+  expect(panel?.className).toMatch(/\bp-16\b/);
+  expect(panel?.className).toMatch(/\bright-0\b/);
 });
 
 test("disclaimer links to stub legal pages", () => {
@@ -56,7 +63,7 @@ test("disclaimer links to stub legal pages", () => {
   expect(disclaimer?.className).toMatch(/top-\[942px\]/);
 });
 
-test("root locks viewport scroll; canvas is fixed 1440x1020", () => {
+test("root locks viewport scroll; canvas is fixed 1440x1020 without clipping radius", () => {
   const { container } = renderLayout();
 
   const root = container.firstElementChild;
@@ -68,7 +75,7 @@ test("root locks viewport scroll; canvas is fixed 1440x1020", () => {
   expect(canvas).not.toBeNull();
   expect(canvas?.className).toMatch(/w-\[1440px\]/);
   expect(canvas?.className).toMatch(/h-\[1020px\]/);
-  expect(canvas?.className).toMatch(/\boverflow-hidden\b/);
+  expect(canvas?.className).not.toMatch(/\boverflow-hidden\b/);
   expect(canvas?.className).not.toMatch(/\bw-full\b/);
   expect(canvas?.className).not.toMatch(/\bmin-w-\[1440px\]\b/);
 });
