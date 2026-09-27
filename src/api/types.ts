@@ -31,6 +31,7 @@ export interface Listing {
   amenityIds: AmenityId[];
   extraAmenityIds: ExtraAmenityId[];
   maxGuests: number;
+  guestsForbidden: boolean;
   petsAllowed: boolean;
   cancellationAllowed: boolean;
   checkInTime: string;

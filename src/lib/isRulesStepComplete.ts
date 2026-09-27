@@ -1,15 +1,16 @@
 import { parseClockTime } from "./clockTime";
+import { parseMaxGuests } from "./parseMaxGuests";
 
 export type RulesStepFields = {
   maxGuests: number;
+  guestsForbidden: boolean;
   checkInTime: string;
   checkOutTime: string;
 };
 
 export function isRulesStepComplete(fields: RulesStepFields): boolean {
   return (
-    Number.isFinite(fields.maxGuests) &&
-    fields.maxGuests >= 1 &&
+    parseMaxGuests(fields.maxGuests, fields.guestsForbidden) !== null &&
     parseClockTime(fields.checkInTime) !== null &&
     parseClockTime(fields.checkOutTime) !== null
   );

@@ -33,6 +33,34 @@ test("step 4 rejects non-finite maxGuests", () => {
   expect(validateStep(4, { ...ok, maxGuests: Number.POSITIVE_INFINITY }).maxGuests).toBeTruthy();
 });
 
+test("step 4 allows zero guests when guests forbidden", () => {
+  const times = { checkInTime: "14:00", checkOutTime: "12:00" };
+  expect(
+    validateStep(4, {
+      ...base,
+      ...times,
+      maxGuests: 0,
+      guestsForbidden: true,
+    }),
+  ).toEqual({});
+  expect(
+    validateStep(4, {
+      ...base,
+      ...times,
+      maxGuests: 0,
+      guestsForbidden: false,
+    }).maxGuests,
+  ).toBeTruthy();
+  expect(
+    validateStep(4, {
+      ...base,
+      ...times,
+      maxGuests: 2,
+      guestsForbidden: true,
+    }).maxGuests,
+  ).toBeTruthy();
+});
+
 test("step 4 requires HH:MM clock times", () => {
   const ok = { ...base, maxGuests: 2, checkInTime: "14:00", checkOutTime: "12:00" };
   expect(validateStep(4, ok)).toEqual({});

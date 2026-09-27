@@ -7,6 +7,7 @@ import { WizardCheckbox } from "../ui/WizardCheckbox";
 
 export type ListingWizardRulesValues = {
   maxGuests: number;
+  guestsForbidden: boolean;
   checkInTime: string;
   checkOutTime: string;
   petsAllowed: boolean;
@@ -38,17 +39,19 @@ export function ListingWizardRulesStep({
         Укажите правила жилья
       </h2>
 
-      <Input
-        variant="auth"
-        label="Количество гостей"
-        type="number"
-        placeholder="Введите максимальное количество гостей"
-        value={values.maxGuests > 0 ? String(values.maxGuests) : ""}
-        onChange={(raw) =>
-          onChange({ maxGuests: raw === "" ? 0 : Number(raw) })
-        }
-        error={errors.maxGuests}
-      />
+      {!values.guestsForbidden ? (
+        <Input
+          variant="auth"
+          label="Количество гостей"
+          type="number"
+          placeholder="Введите максимальное количество гостей"
+          value={values.maxGuests > 0 ? String(values.maxGuests) : ""}
+          onChange={(raw) =>
+            onChange({ maxGuests: raw === "" ? 0 : Number(raw) })
+          }
+          error={errors.maxGuests}
+        />
+      ) : null}
 
       <div className="flex w-full gap-8">
         <TimeInput
@@ -68,6 +71,17 @@ export function ListingWizardRulesStep({
       </div>
 
       <div className="flex flex-col gap-4">
+        <WizardCheckbox
+          label="Гости запрещены"
+          checked={values.guestsForbidden}
+          onChange={(checked) =>
+            onChange(
+              checked
+                ? { guestsForbidden: true, maxGuests: 0 }
+                : { guestsForbidden: false },
+            )
+          }
+        />
         <WizardCheckbox
           label="Можно с животными"
           checked={values.petsAllowed}

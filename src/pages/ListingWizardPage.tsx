@@ -361,6 +361,7 @@ export function ListingWizardPage() {
           <ListingWizardRulesStep
             values={{
               maxGuests: draft.maxGuests,
+              guestsForbidden: draft.guestsForbidden === true,
               checkInTime: draft.checkInTime,
               checkOutTime: draft.checkOutTime,
               petsAllowed: draft.petsAllowed,
