@@ -82,7 +82,7 @@ export function WizardDescriptionForm({
       <Button
         disabled={!nextEnabled || pending}
         onClick={onNext}
-        className="h-auto w-full rounded-[8px] px-6 py-5 disabled:opacity-40"
+        className="h-auto w-full !rounded-lg !px-6 !py-5 disabled:opacity-40"
       >
         Далее
       </Button>
