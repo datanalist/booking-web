@@ -19,7 +19,7 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
 
   return (
     <div
-      className="flex overflow-hidden bg-white font-sans"
+      className="flex bg-white font-sans"
       style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
     >
       <Sidebar

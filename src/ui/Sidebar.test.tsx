@@ -70,14 +70,16 @@ test("footer logo matches mockup size and frame position", () => {
   const aside = container.querySelector("aside");
   expect(aside).not.toBeNull();
   expect(aside).toHaveClass("w-[235px]");
-  expect(aside).toHaveClass("relative");
+  expect(aside).toHaveClass("sticky");
+  expect(aside).toHaveClass("top-0");
+  expect(aside).toHaveClass("h-dvh");
+  expect(aside).toHaveClass("max-h-[1020px]");
   expect(aside).toHaveClass("gap-5");
 
   const footer = container.querySelector("footer");
   expect(footer).not.toBeNull();
   expect(footer).toHaveClass("h-[77px]");
-  expect(footer).toHaveClass("px-8");
-  expect(footer).toHaveClass("py-6");
+  expect(footer).toHaveClass("relative");
 
   const logo = screen.getByAltText("GlobalStay");
   expect(logo.tagName).toBe("IMG");
@@ -85,9 +87,10 @@ test("footer logo matches mockup size and frame position", () => {
   expect(logo).toHaveAttribute("height", "60");
   expect(logo).toHaveAttribute("src", "/logo-globalstay.svg");
   expect(logo).toHaveClass("object-contain");
+  expect(logo).toHaveClass("h-[60px]");
+  expect(logo).toHaveClass("w-[181px]");
   expect(logo).toHaveClass("left-[27px]");
-  expect(logo).toHaveClass("top-[928px]");
+  expect(logo).toHaveClass("bottom-[32px]");
   expect(logo).toHaveClass("absolute");
-  expect(aside?.contains(logo)).toBe(true);
-  expect(footer?.contains(logo)).toBe(false);
+  expect(footer?.contains(logo)).toBe(true);
 });

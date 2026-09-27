@@ -47,7 +47,7 @@ export function Sidebar({
   const avatarSrc = account.photoUrl ?? "/avatar-placeholder.png";
 
   return (
-    <aside className="relative flex h-full w-[235px] shrink-0 flex-col gap-5 bg-white font-sans">
+    <aside className="sticky top-0 flex h-dvh max-h-[1020px] w-[235px] shrink-0 flex-col gap-5 self-start bg-white font-sans">
       <header className="flex h-24 w-full shrink-0 items-center px-8 py-6">
         <div className="flex items-center gap-3">
           <img
@@ -104,15 +104,16 @@ export function Sidebar({
         })}
       </nav>
 
-      {/* Слот футера 77px (макет); логотип — картинка 181×60 в left 27 / top 928 кадра. */}
-      <footer className="h-[77px] w-full shrink-0 px-8 py-6" />
-      <img
-        src="/logo-globalstay.svg"
-        alt="GlobalStay"
-        width={181}
-        height={60}
-        className="absolute left-[27px] top-[928px] object-contain"
-      />
+      {/* Слот футера 77px. Логотип 181×60: на кадре 1020px это left 27 / top 928, то есть 32px от низа. */}
+      <footer className="relative h-[77px] w-full shrink-0">
+        <img
+          src="/logo-globalstay.svg"
+          alt="GlobalStay"
+          width={181}
+          height={60}
+          className="absolute bottom-[32px] left-[27px] h-[60px] w-[181px] object-contain object-left"
+        />
+      </footer>
     </aside>
   );
 }
