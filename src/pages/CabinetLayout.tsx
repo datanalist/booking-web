@@ -12,6 +12,10 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
   const location = useLocation();
   const { session } = useSession();
   const isListingsHome = location.pathname === "/listings";
+  const isListingWizard =
+    location.pathname === "/listings/new" ||
+    /^\/listings\/[^/]+\/edit$/.test(location.pathname);
+  const flushMain = isListingsHome || isListingWizard;
 
   return (
     <div
@@ -28,7 +32,7 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
       />
       <main
         className={`flex h-full min-w-0 flex-1 flex-col overflow-hidden ${
-          isListingsHome ? "" : "px-10 py-8"
+          flushMain ? "" : "px-10 py-8"
         }`}
       >
         {children}
