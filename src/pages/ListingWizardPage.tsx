@@ -6,23 +6,24 @@ import {
   AMENITY_LABELS,
   DESCRIPTION_MAX,
   EXTRA_AMENITY_LABELS,
-  HOUSING_LABELS,
   PHOTO_MAX,
   PHOTO_MIN,
 } from "../config";
 import type {
   AmenityId,
   ExtraAmenityId,
-  HousingType,
   ListingDraft,
 } from "../api/types";
 import { emptyDraft } from "../lib/emptyDraft";
 import { compressImage } from "../lib/compressImage";
+import { isDescriptionStepComplete } from "../lib/parseDescriptionStep";
 import { commissionOf, clientPriceOf } from "../lib/money";
 import { parseStep } from "../lib/wizardStep";
 import { validateStep } from "../lib/wizardValidation";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { WizardBackButton } from "../ui/WizardBackButton";
+import { WizardDescriptionForm } from "../ui/WizardDescriptionForm";
 import { WizardSteps } from "../ui/WizardSteps";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
@@ -187,66 +188,64 @@ export function ListingWizardPage() {
     return <p className="font-sans">Загрузка…</p>;
   }
 
+  if (step === 1) {
+    const nextEnabled = isDescriptionStepComplete({
+      title: draft.title,
+      address: draft.address,
+      housingType: draft.housingType,
+      housingChosen,
+      description: draft.description,
+    });
+
+    return (
+      <div className="flex h-full flex-col gap-8 overflow-auto bg-[rgba(251,192,40,0.06)] p-8 font-sans">
+        <header className="flex items-center gap-5">
+          <WizardBackButton
+            disabled={pending}
+            onClick={() => void goBack()}
+          />
+          <h1 className="m-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
+            Создание объявления
+          </h1>
+        </header>
+
+        <WizardSteps current={1} />
+
+        <div className="flex min-h-0 flex-1 flex-col items-center rounded-2xl border border-solid border-[rgba(251,192,40,0.17)] bg-white">
+          <WizardDescriptionForm
+            title={draft.title}
+            address={draft.address}
+            housingType={housingChosen ? draft.housingType : ""}
+            description={draft.description}
+            errors={errors}
+            nextEnabled={nextEnabled}
+            pending={pending}
+            onTitleChange={(value) => patch({ title: value })}
+            onAddressChange={(value) => patch({ address: value })}
+            onHousingChange={(value) => {
+              if (!value) {
+                setHousingChosen(false);
+                return;
+              }
+              setHousingChosen(true);
+              patch({ housingType: value });
+            }}
+            onDescriptionChange={(value) => patch({ description: value })}
+            onNext={() => void saveAndGo(2)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="font-sans">
+    <div className="px-10 py-8 font-sans">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-[28px] font-bold text-[var(--color-ink)]">
           {isNew ? "Новое объявление" : "Редактирование"}
         </h1>
         <WizardSteps current={step} />
       </div>
-
-      {step === 1 ? (
-        <div className="flex max-w-xl flex-col gap-4">
-          <Input
-            label="Название"
-            value={draft.title}
-            onChange={(value) => patch({ title: value })}
-            error={errors.title}
-          />
-          <Input
-            label="Адрес"
-            value={draft.address}
-            onChange={(value) => patch({ address: value })}
-            error={errors.address}
-          />
-          <label className="flex flex-col gap-1 text-[14px]">
-            Вид жилья
-            <select
-              className="rounded-[8px] border border-[#d0d0d0] px-3 py-2 text-[16px]"
-              value={housingChosen ? draft.housingType : ""}
-              onChange={(event) => {
-                const value = event.target.value as HousingType | "";
-                if (!value) {
-                  setHousingChosen(false);
-                  return;
-                }
-                setHousingChosen(true);
-                patch({ housingType: value });
-              }}
-            >
-              <option value="">Выберите</option>
-              {(Object.keys(HOUSING_LABELS) as HousingType[]).map((key) => (
-                <option key={key} value={key}>
-                  {HOUSING_LABELS[key]}
-                </option>
-              ))}
-            </select>
-            {errors.housingType ? (
-              <span className="text-red-600">{errors.housingType}</span>
-            ) : null}
-          </label>
-          <Input
-            label="Описание"
-            value={draft.description}
-            onChange={(value) => patch({ description: value })}
-            multiline
-            maxLength={DESCRIPTION_MAX}
-            error={errors.description}
-            hint={`${draft.description.length}/${DESCRIPTION_MAX}`}
-          />
-        </div>
-      ) : null}
 
       {step === 2 ? (
         <div className="flex max-w-2xl flex-col gap-4">
