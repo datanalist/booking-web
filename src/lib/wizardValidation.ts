@@ -1,5 +1,6 @@
 import type { ListingDraft } from "../api/types";
 import { DESCRIPTION_MAX, HOUSING_LABELS, PHOTO_MAX, PHOTO_MIN } from "../config";
+import { parseClockTime } from "./clockTime";
 
 const HOUSING_TYPES = new Set<string>(Object.keys(HOUSING_LABELS));
 
@@ -55,11 +56,15 @@ function validateStep4(draft: ListingDraft): Record<string, string> {
   if (!isValidMaxGuests(draft.maxGuests)) {
     errors.maxGuests = "Укажите число гостей";
   }
-  if (!draft.checkInTime.trim()) {
-    errors.checkInTime = "Укажите время заезда";
+  if (!parseClockTime(draft.checkInTime)) {
+    errors.checkInTime = draft.checkInTime.trim()
+      ? "Укажите время в формате ЧЧ:ММ"
+      : "Укажите время заезда";
   }
-  if (!draft.checkOutTime.trim()) {
-    errors.checkOutTime = "Укажите время выезда";
+  if (!parseClockTime(draft.checkOutTime)) {
+    errors.checkOutTime = draft.checkOutTime.trim()
+      ? "Укажите время в формате ЧЧ:ММ"
+      : "Укажите время выезда";
   }
   return errors;
 }

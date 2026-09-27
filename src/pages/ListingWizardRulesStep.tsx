@@ -2,6 +2,7 @@
 import { isRulesStepComplete } from "../lib/isRulesStepComplete";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { TimeInput } from "../ui/TimeInput";
 import { WizardCheckbox } from "../ui/WizardCheckbox";
 
 export type ListingWizardRulesValues = {
@@ -50,19 +51,15 @@ export function ListingWizardRulesStep({
       />
 
       <div className="flex w-full gap-8">
-        <Input
-          variant="auth"
+        <TimeInput
           label="Время заселения"
-          type="text"
           placeholder="Введите время"
           value={values.checkInTime}
           onChange={(raw) => onChange({ checkInTime: raw })}
           error={errors.checkInTime}
         />
-        <Input
-          variant="auth"
+        <TimeInput
           label="Время выселения"
-          type="text"
           placeholder="Введите время"
           value={values.checkOutTime}
           onChange={(raw) => onChange({ checkOutTime: raw })}
@@ -88,14 +85,14 @@ export function ListingWizardRulesStep({
           variant="outlined"
           disabled={pending}
           onClick={onBack}
-          className="h-auto min-h-[61px] flex-1 rounded-[8px] px-6 py-5"
+          className="flex-1 !h-auto !rounded-lg !border-0 px-6 py-5 outline outline-1 outline-offset-[-1px] outline-orange-400"
         >
           Вернуться
         </Button>
         <Button
           disabled={!canNext}
           onClick={onNext}
-          className="h-auto min-h-[61px] flex-1 rounded-[8px] px-6 py-5 disabled:opacity-40"
+          className="flex-1 !h-auto !rounded-lg bg-orange-400 px-6 py-5 disabled:!opacity-40"
         >
           Далее
         </Button>

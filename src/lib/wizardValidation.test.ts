@@ -33,6 +33,14 @@ test("step 4 rejects non-finite maxGuests", () => {
   expect(validateStep(4, { ...ok, maxGuests: Number.POSITIVE_INFINITY }).maxGuests).toBeTruthy();
 });
 
+test("step 4 requires HH:MM clock times", () => {
+  const ok = { ...base, maxGuests: 2, checkInTime: "14:00", checkOutTime: "12:00" };
+  expect(validateStep(4, ok)).toEqual({});
+  expect(validateStep(4, { ...ok, checkInTime: "14:0" }).checkInTime).toMatch(/ЧЧ:ММ/);
+  expect(validateStep(4, { ...ok, checkOutTime: "25:00" }).checkOutTime).toMatch(/ЧЧ:ММ/);
+  expect(validateStep(4, { ...ok, checkInTime: "" }).checkInTime).toMatch(/заезда/);
+});
+
 test("step 6 rejects non-finite prices", () => {
   const priced = { ...base, priceNight: 3500, priceFrom14: 3000, priceFrom28: 2800 };
   expect(validateStep(6, { ...priced, priceNight: Number.NaN }).priceNight).toBeTruthy();
