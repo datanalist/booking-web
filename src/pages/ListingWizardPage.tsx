@@ -7,7 +7,6 @@ import {
   DESCRIPTION_MAX,
   EXTRA_AMENITY_LABELS,
   PHOTO_MAX,
-  PHOTO_MIN,
 } from "../config";
 import type {
   AmenityId,
@@ -23,6 +22,7 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { WizardBackButton } from "../ui/WizardBackButton";
 import { WizardDescriptionForm } from "../ui/WizardDescriptionForm";
+import { WizardPhotosStep } from "../ui/WizardPhotosStep";
 import { WizardSteps } from "../ui/WizardSteps";
 import { ListingWizardPriceStep } from "./ListingWizardPriceStep";
 
@@ -231,49 +231,21 @@ export function ListingWizardPage() {
         ) : null}
 
         {step === 2 ? (
-          <div className="flex w-full max-w-2xl flex-col gap-4 py-10">
-            <p className="text-[16px]">
-              Добавьте от {PHOTO_MIN} до {PHOTO_MAX} фото
-            </p>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              onChange={(event) => {
-                void onPhotosSelected(event.target.files);
-                event.target.value = "";
-              }}
-            />
-            {errors.photos ? (
-              <p className="text-red-600">{errors.photos}</p>
-            ) : draft.photos.length < PHOTO_MIN ? (
-              <p className="text-[var(--color-text)]">
-                Добавьте ещё {PHOTO_MIN - draft.photos.length} фото
-              </p>
-            ) : null}
-            <div className="grid grid-cols-3 gap-3">
-              {draft.photos.map((src, index) => (
-                <div key={`${index}-${src.slice(0, 24)}`} className="relative">
-                  <img
-                    src={src}
-                    alt=""
-                    className="h-32 w-full rounded-md object-cover"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-1 top-1 rounded bg-white/90 px-2 text-[12px]"
-                    onClick={() =>
-                      patch({
-                        photos: draft.photos.filter((_, i) => i !== index),
-                      })
-                    }
-                  >
-                    Удалить
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+          <WizardPhotosStep
+            photos={draft.photos}
+            error={errors.photos}
+            pending={pending}
+            onPhotosChange={(photos) => patch({ photos })}
+            onFilesSelected={(files) => {
+              void onPhotosSelected(files);
+            }}
+            onBack={() => {
+              void goBack();
+            }}
+            onNext={() => {
+              void saveAndGo(3);
+            }}
+          />
         ) : null}
 
         {step === 3 ? (
@@ -433,7 +405,7 @@ export function ListingWizardPage() {
           />
         ) : null}
 
-        {step !== 1 && step !== 6 ? (
+        {step > 2 && step < 6 ? (
           <div className="mt-auto flex w-full max-w-xl gap-5 pb-10">
             <Button
               variant="outlined"
