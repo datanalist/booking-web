@@ -1,15 +1,8 @@
 import type { ListingDraft } from "../api/types";
 import { DESCRIPTION_MAX, HOUSING_LABELS, PHOTO_MAX, PHOTO_MIN } from "../config";
+import { parseIsoDate } from "./isoDate";
 
 const HOUSING_TYPES = new Set<string>(Object.keys(HOUSING_LABELS));
-
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-function isValidDateString(date: string): boolean {
-  if (!DATE_RE.test(date)) return false;
-  const parsed = new Date(`${date}T00:00:00`);
-  return !Number.isNaN(parsed.getTime());
-}
 
 function isValidMaxGuests(value: number): boolean {
   return Number.isFinite(value) && value >= 1;
@@ -92,7 +85,7 @@ function validateStep6(draft: ListingDraft): Record<string, string> {
   if (draft.uniquePrices.length > 0) {
     const invalid = draft.uniquePrices.some(
       (entry) =>
-        !entry.date.trim() || !isValidPrice(entry.base) || !isValidDateString(entry.date),
+        parseIsoDate(entry.date) === null || !isValidPrice(entry.base),
     );
     if (invalid) {
       errors.uniquePrices = "Проверьте уникальные цены";

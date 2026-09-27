@@ -1,9 +1,11 @@
 /** UI шага «6. Стоимость» мастера объявления (макет Figma 1:19966 / 1:20276). */
+import type { UniquePriceEntry } from "../api/types";
 import { commissionOf, clientPriceOf, formatRub, rub } from "../lib/money";
 import { Button } from "../ui/Button";
+import { DateField } from "../ui/DateField";
 import { Switch } from "../ui/Switch";
 
-export type UniquePriceRow = { date: string; base: number };
+export type UniquePriceRow = UniquePriceEntry;
 
 type ListingWizardPriceStepProps = {
   priceNight: number;
@@ -255,27 +257,12 @@ function UniquePriceBlock({
         </button>
       </div>
       <div className="flex flex-wrap items-start gap-8">
-        <div className="flex w-[140px] flex-col gap-1">
-          <label className="text-[14px] font-normal leading-[1.4] text-[#525353]">
-            Дата
-          </label>
-          <div className="relative box-border flex h-11 items-center rounded-[8px] border border-[rgba(251,192,40,0.17)] bg-[rgba(251,192,40,0.06)] px-[14px] py-2.5">
-            <input
-              type="date"
-              className="min-w-0 flex-1 border-0 bg-transparent font-sans text-[16px] leading-[1.45] text-[var(--color-ink)] outline-none [-webkit-calendar-picker-indicator]:absolute [-webkit-calendar-picker-indicator]:inset-0 [-webkit-calendar-picker-indicator]:h-full [-webkit-calendar-picker-indicator]:w-full [-webkit-calendar-picker-indicator]:cursor-pointer [-webkit-calendar-picker-indicator]:opacity-0"
-              value={row.date}
-              aria-label={`Дата ${index + 1}`}
-              onChange={(event) => onChange({ date: event.target.value })}
-            />
-            <img
-              src="/icon-calendar.svg"
-              alt=""
-              width={16}
-              height={18}
-              className="pointer-events-none shrink-0"
-            />
-          </div>
-        </div>
+        <DateField
+          label="Дата"
+          value={row.date}
+          aria-label={`Дата ${index + 1}`}
+          onChange={(date) => onChange({ date })}
+        />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <MoneyField
             label="Аренда за сутки"
