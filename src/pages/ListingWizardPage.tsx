@@ -224,7 +224,7 @@ export function ListingWizardPage() {
   }
 
   return (
-    <div className="-mx-10 -my-8 flex h-full flex-col gap-8 overflow-auto bg-[rgba(251,192,40,0.06)] p-8 font-sans">
+    <div className="flex h-full flex-col gap-8 overflow-auto bg-[rgba(251,192,40,0.06)] p-8 font-sans">
       <div className="flex items-center gap-5">
         <WizardBackButton disabled={pending} onClick={() => void goBack()} />
         <h1 className="m-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
