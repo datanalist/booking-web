@@ -1,62 +1,69 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../app/session";
+import { canSubmitOnboardingProfile } from "../lib/canSubmitOnboardingProfile";
 import { compressImage } from "../lib/compressImage";
+import { formatPhoneMask } from "../lib/formatPhoneMask";
+import { AvatarCropDialog } from "../ui/AvatarCropDialog";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-
-function formatPhoneMask(digits: string): string {
-  const d = digits.replace(/\D/g, "").slice(0, 11);
-  const local = d.startsWith("7") ? d.slice(1) : d.startsWith("8") ? d.slice(1) : d;
-  const parts = [
-    local.slice(0, 3),
-    local.slice(3, 6),
-    local.slice(6, 8),
-    local.slice(8, 10),
-  ].filter(Boolean);
-  if (parts.length === 0) {
-    return "+7";
-  }
-  let result = "+7";
-  if (parts[0]) {
-    result += ` (${parts[0]}`;
-  }
-  if (parts[0]?.length === 3) {
-    result += ")";
-  }
-  if (parts[1]) {
-    result += ` ${parts[1]}`;
-  }
-  if (parts[2]) {
-    result += `-${parts[2]}`;
-  }
-  if (parts[3]) {
-    result += `-${parts[3]}`;
-  }
-  return result;
-}
 
 export function OnboardingPage() {
   const { auth } = useSession();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+7");
   const [photo, setPhoto] = useState<string | undefined>();
+  const [cropSource, setCropSource] = useState<string | undefined>();
   const [nameError, setNameError] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
 
+  const canSubmit = canSubmitOnboardingProfile({ name, phone, photo });
+
   async function onPhotoChange(file: File | null): Promise<void> {
     if (!file) {
-      setPhoto(undefined);
       return;
     }
-    setPhoto(await compressImage(file));
+    const source = await compressImage(file);
+    setCropSource(source);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function clearPhoto(): void {
+    setPhoto(undefined);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function openFilePicker(): void {
+    fileInputRef.current?.click();
+  }
+
+  function onCropCancel(): void {
+    setCropSource(undefined);
+  }
+
+  function onCropConfirm(croppedDataUrl: string): void {
+    setPhoto(croppedDataUrl);
+    setCropSource(undefined);
+  }
+
+  async function onClose(): Promise<void> {
+    await auth.logout();
+    navigate("/login");
   }
 
   async function onSubmit(event: FormEvent): Promise<void> {
     event.preventDefault();
+    if (!canSubmit || pending) {
+      return;
+    }
     setNameError("");
     setPhoneError("");
     setPending(true);
@@ -83,65 +90,158 @@ export function OnboardingPage() {
 
   if (done) {
     return (
-      <div className="flex min-h-screen min-w-[1440px] flex-col items-center justify-center gap-6 bg-white font-sans">
-        <h1 className="text-[32px] font-bold text-[var(--color-ink)]">
-          Профиль создан
-        </h1>
-        <p className="text-[16px] text-[var(--color-text)]">
-          Можно переходить к объявлениям
-        </p>
-        <Button onClick={() => navigate("/listings")}>К объявлениям</Button>
+      <div className="relative flex min-h-screen min-w-[1440px] items-center justify-center bg-white font-sans">
+        <img
+          src="/onboarding/logo.svg"
+          alt="GlobalStay"
+          width={181}
+          height={60}
+          className="absolute left-[calc(8.33%+2.5px)] top-8 h-[60px] w-[181px]"
+        />
+        <div className="flex w-[438px] flex-col items-center gap-10 rounded-[12px] bg-white p-6">
+          <div className="flex w-full flex-col items-start gap-4">
+            <h1 className="text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
+              Профиль создан
+            </h1>
+            <p className="w-full text-[16px] leading-[1.45] text-[var(--color-ink)]">
+              Создайте свое первое объявление!
+            </p>
+          </div>
+          <Button
+            className="w-full !rounded-[8px]"
+            onClick={() => navigate("/listings")}
+          >
+            Продолжить
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen min-w-[1440px] bg-white font-sans">
-      <div className="mx-auto flex w-[320px] flex-col justify-center gap-4 py-10">
-        <div className="mb-8 text-[28px] font-bold text-[var(--color-ink)]">
-          GlobalStay
-        </div>
-        <h1 className="text-[32px] font-bold text-[var(--color-ink)]">
-          Расскажите о себе
-        </h1>
-        <form className="flex flex-col gap-4" onSubmit={onSubmit}>
-          <label className="flex flex-col gap-2 text-[14px]">
-            Фото (необязательно)
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(event) => {
-                void onPhotoChange(event.target.files?.[0] ?? null);
+    <div className="flex min-h-screen min-w-[1440px] items-center justify-center bg-[#525353] font-sans">
+      <form
+        className="flex w-[438px] flex-col items-center gap-10 rounded-[12px] bg-white p-6 shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08),0px_8px_8px_-4px_rgba(16,24,40,0.03)]"
+        role="dialog"
+        aria-labelledby="onboarding-title"
+        onSubmit={onSubmit}
+      >
+        <div className="flex w-full flex-col items-center gap-6">
+          <div className="flex w-full items-center justify-between">
+            <h1
+              id="onboarding-title"
+              className="text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]"
+            >
+              Заполните данные
+            </h1>
+            <button
+              type="button"
+              aria-label="Закрыть"
+              onClick={() => {
+                void onClose();
               }}
-            />
-            {photo ? (
+              className="flex items-center justify-center rounded-[8px] p-[10px]"
+            >
               <img
-                src={photo}
+                src="/onboarding/close.svg"
                 alt=""
-                className="h-24 w-24 rounded-full object-cover"
+                width={20}
+                height={20}
               />
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center gap-1">
+            <button
+              type="button"
+              onClick={openFilePicker}
+              className="relative size-[100px] shrink-0 cursor-pointer border-0 bg-transparent p-0"
+              aria-label="Выбрать фото"
+            >
+              <span className="absolute inset-0 overflow-hidden rounded-full border border-solid border-[#f88a2a] shadow-[0px_10px_20px_rgba(0,0,0,0.03)]">
+                {photo ? (
+                  <img
+                    src={photo}
+                    alt=""
+                    className="size-full object-cover object-center"
+                  />
+                ) : (
+                  <span className="flex size-full items-center justify-center">
+                    <img
+                      src="/onboarding/avatar-placeholder.svg"
+                      alt=""
+                      width={41}
+                      height={49}
+                      className="h-[49px] w-[41px]"
+                    />
+                  </span>
+                )}
+              </span>
+              <span className="pointer-events-none absolute bottom-0 right-0 size-6 overflow-visible">
+                <img
+                  src="/onboarding/photo-edit.svg"
+                  alt=""
+                  width={104}
+                  height={104}
+                  className="absolute inset-[-125%_-166.67%_-208.33%_-166.67%] max-w-none"
+                />
+              </span>
+            </button>
+            {photo ? (
+              <button
+                type="button"
+                className="rounded-[30px] py-1 text-[12px] leading-[1.3] text-[#f88a2a] underline"
+                onClick={clearPhoto}
+              >
+                Удалить фото
+              </button>
             ) : null}
-          </label>
-          <Input
-            label="Имя"
-            value={name}
-            onChange={setName}
-            placeholder="Как к вам обращаться"
-            error={nameError}
-            maxLength={50}
-          />
-          <Input
-            label="Телефон"
-            value={phone}
-            onChange={(value) => setPhone(formatPhoneMask(value))}
-            placeholder="+7 (___) ___-__-__"
-            error={phoneError}
-          />
-          <Button type="submit" disabled={pending} className="w-full">
-            Продолжить
-          </Button>
-        </form>
-      </div>
+          </div>
+
+          <div className="flex w-full flex-col gap-5">
+            <Input
+              label="Имя"
+              value={name}
+              onChange={setName}
+              placeholder="Введите имя"
+              error={nameError}
+              maxLength={50}
+            />
+            <Input
+              label="Номер телефона"
+              value={phone}
+              onChange={(value) => setPhone(formatPhoneMask(value))}
+              placeholder="Введите номер телефона"
+              error={phoneError}
+            />
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={pending || !canSubmit}
+          className="w-full !rounded-[8px]"
+        >
+          Продолжить
+        </Button>
+      </form>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(event) => {
+          void onPhotoChange(event.target.files?.[0] ?? null);
+        }}
+      />
+      {cropSource ? (
+        <AvatarCropDialog
+          open
+          source={cropSource}
+          onConfirm={onCropConfirm}
+          onCancel={onCropCancel}
+        />
+      ) : null}
     </div>
   );
 }
