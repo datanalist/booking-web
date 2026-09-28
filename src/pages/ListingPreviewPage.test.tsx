@@ -255,6 +255,31 @@ test("published preview shows badge and header actions", async () => {
   );
 });
 
+test("calendar button opens booking alert and Escape closes it", async () => {
+  const user = userEvent.setup();
+  seedSession();
+  seedListing(
+    completeListing({
+      status: "published",
+      title: "Опубликованная студия",
+    }),
+  );
+  renderPreview();
+
+  expect(await screen.findByRole("heading", { name: "Объявление" })).toBeInTheDocument();
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+
+  await user.click(
+    screen.getByRole("button", { name: "Перейти в календарь бронирования" }),
+  );
+
+  const dialog = await screen.findByRole("alertdialog");
+  expect(dialog).toHaveAccessibleName("Календарь бронирования");
+
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+});
+
 test("moderation preview shows only delete action", async () => {
   seedSession();
   seedListing(

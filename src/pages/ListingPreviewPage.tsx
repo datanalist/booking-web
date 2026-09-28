@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSession } from "../app/session";
 import type { Listing } from "../api/types";
 import {
+  BookingCalendarAlert,
   DeleteAnnouncementDialog,
   listingFromTableRow,
   listingTableRowFromListing,
@@ -28,6 +29,7 @@ export function ListingPreviewPage() {
   const [moderationOpen, setModerationOpen] = useState(false);
   const [unpublishOpen, setUnpublishOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [bookingCalendarOpen, setBookingCalendarOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -171,7 +173,7 @@ export function ListingPreviewPage() {
   }
 
   function onOpenBookingCalendar(): void {
-    // Заглушка: алерт календаря подключат отдельной задачей.
+    setBookingCalendarOpen(true);
   }
 
   if (!listing || !display || tableStatus === null) {
@@ -221,6 +223,10 @@ export function ListingPreviewPage() {
         open={publishOpen}
         onClose={() => setPublishOpen(false)}
         onConfirm={confirmPublish}
+      />
+      <BookingCalendarAlert
+        open={bookingCalendarOpen}
+        onOpenChange={setBookingCalendarOpen}
       />
     </div>
   );
