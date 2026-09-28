@@ -11,6 +11,7 @@ export const MOCK_ALL_LISTINGS: readonly ListingTableRow[] = [
     address: "Москва, ул. Невская 48",
     housingType: "apartment",
     status: "moderation",
+    coverUrl: "/listings/cover-studio.jpg",
   },
   {
     id: "mock-2",
@@ -18,6 +19,7 @@ export const MOCK_ALL_LISTINGS: readonly ListingTableRow[] = [
     address: "Лесной, ул. Летняя 3",
     housingType: "house",
     status: "published",
+    coverUrl: "/listings/cover-house.jpg",
   },
   {
     id: "mock-3",
@@ -25,6 +27,7 @@ export const MOCK_ALL_LISTINGS: readonly ListingTableRow[] = [
     address: "Москва, ул. Невская 48",
     housingType: "apartment",
     status: "unpublished",
+    coverUrl: "/listings/cover-apartment.jpg",
   },
   {
     id: "mock-4",
@@ -32,6 +35,7 @@ export const MOCK_ALL_LISTINGS: readonly ListingTableRow[] = [
     address: "Лесной, ул. Летняя 3",
     housingType: "house",
     status: "published",
+    coverUrl: "/listings/cover-house-2.jpg",
   },
   {
     id: "mock-5",
@@ -39,6 +43,7 @@ export const MOCK_ALL_LISTINGS: readonly ListingTableRow[] = [
     address: "Лесной, ул. Летняя 3",
     housingType: "apartment",
     status: "published",
+    coverUrl: "/listings/cover-studio-2.jpg",
   },
   {
     id: "mock-6",
@@ -46,6 +51,7 @@ export const MOCK_ALL_LISTINGS: readonly ListingTableRow[] = [
     address: "Лесной, ул. Летняя 3",
     housingType: "apartment",
     status: "moderation",
+    coverUrl: "/listings/cover-apartment.jpg",
   },
   {
     id: "mock-7",
@@ -53,6 +59,7 @@ export const MOCK_ALL_LISTINGS: readonly ListingTableRow[] = [
     address: "Москва, ул. Невская 48",
     housingType: "apartment",
     status: "unpublished",
+    coverUrl: "/listings/cover-studio.jpg",
   },
   {
     id: "mock-8",
@@ -60,5 +67,6 @@ export const MOCK_ALL_LISTINGS: readonly ListingTableRow[] = [
     address: "Лесной, ул. Летняя 3",
     housingType: "house",
     status: "published",
+    coverUrl: "/listings/cover-house.jpg",
   },
 ];

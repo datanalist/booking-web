@@ -27,7 +27,7 @@ export function AllListingsTableRow({
         role="cell"
         className="flex min-w-0 items-center gap-3 px-6 py-2.5 text-[14px] leading-[1.4] text-[var(--color-ink)]"
       >
-        <ListingThumb />
+        <ListingThumb src={item.coverUrl} alt={item.title} />
         <span className="min-w-0">{item.title}</span>
       </div>
       <div

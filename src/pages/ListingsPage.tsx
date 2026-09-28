@@ -1,16 +1,21 @@
 import { useState, type ReactElement } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   AllListingsTable,
   DeleteAnnouncementDialog,
   filterListingsByQuery,
-  MOCK_ALL_LISTINGS,
   PublishAnnouncementDialog,
   UnpublishAnnouncementDialog,
+  useAllListings,
   type ListingRowMenuActionId,
   type ListingTableRow,
 } from "../features/listings";
-import { LISTING_TABS, type ListingTabId } from "../lib/listingTabs";
+import {
+  isListingTabId,
+  LISTING_TABS,
+  type ListingTabId,
+  type ListingsLocationState,
+} from "../lib/listingTabs";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { Search } from "../ui/Search";
@@ -41,11 +46,13 @@ function itemsForTab(
 
 export function ListingsPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<ListingTabId>("all");
+  const location = useLocation();
+  const { items, remove, setStatus } = useAllListings();
+  const [tab, setTab] = useState<ListingTabId>(() => {
+    const state = location.state as ListingsLocationState | null;
+    return isListingTabId(state?.tab) ? state.tab : "all";
+  });
   const [query, setQuery] = useState("");
-  const [items, setItems] = useState<ListingTableRow[]>(() => [
-    ...MOCK_ALL_LISTINGS,
-  ]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [unpublishId, setUnpublishId] = useState<string | null>(null);
@@ -58,7 +65,7 @@ export function ListingsPage() {
     actionId: ListingRowMenuActionId,
   ): void {
     if (actionId === "edit") {
-      navigate(`/listings/${listingId}/edit`);
+      navigate(`/listings/${listingId}/edit?step=1`);
       return;
     }
     if (actionId === "calendar") {
@@ -81,7 +88,7 @@ export function ListingsPage() {
     if (deleteId === null) {
       return;
     }
-    setItems((prev) => prev.filter((item) => item.id !== deleteId));
+    remove(deleteId);
     setDeleteId(null);
   }
 
@@ -89,13 +96,7 @@ export function ListingsPage() {
     if (unpublishId === null) {
       return;
     }
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === unpublishId
-          ? { ...item, status: "unpublished" as const }
-          : item,
-      ),
-    );
+    setStatus(unpublishId, "unpublished");
     setUnpublishId(null);
   }
 
@@ -103,13 +104,7 @@ export function ListingsPage() {
     if (publishId === null) {
       return;
     }
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === publishId
-          ? { ...item, status: "published" as const }
-          : item,
-      ),
-    );
+    setStatus(publishId, "published");
     setPublishId(null);
   }
 

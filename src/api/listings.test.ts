@@ -91,3 +91,25 @@ test("remove deletes", async () => {
   await api.remove(saved.id);
   await expect(api.get(saved.id)).rejects.toThrow();
 });
+
+test("ensureForEdit creates draft with given id and is idempotent", async () => {
+  const { api } = setup();
+  const seeded = await api.ensureForEdit({
+    id: "mock-2",
+    title: "Частный дом",
+    address: "Лесной",
+    housingType: "house",
+  });
+  expect(seeded.id).toBe("mock-2");
+  expect(seeded.status).toBe("draft");
+  expect(seeded.title).toBe("Частный дом");
+  expect(await api.get("mock-2")).toEqual(seeded);
+
+  const again = await api.ensureForEdit({
+    id: "mock-2",
+    title: "Другое",
+    address: "Иное",
+    housingType: "apartment",
+  });
+  expect(again).toEqual(seeded);
+});

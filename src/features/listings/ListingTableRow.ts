@@ -7,4 +7,6 @@ export type ListingTableRow = {
   address: string;
   housingType: HousingType;
   status: ListingTableStatus;
+  /** Главное фото объявления — первый кадр галереи. */
+  coverUrl?: string;
 };

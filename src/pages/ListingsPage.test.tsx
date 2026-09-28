@@ -1,7 +1,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
+import { AllListingsProvider } from "../features/listings";
 import { ListingsPage } from "./ListingsPage";
 
 afterEach(() => {
@@ -11,13 +12,20 @@ afterEach(() => {
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/listings"]}>
-      <Routes>
-        <Route path="/listings" element={<ListingsPage />} />
-        <Route
-          path="/listings/:id/edit"
-          element={<div data-testid="edit-flow">Редактирование</div>}
-        />
-      </Routes>
+      <AllListingsProvider>
+        <Routes>
+          <Route path="/listings" element={<ListingsPage />} />
+          <Route
+            path="/listings/:id/edit"
+            element={
+              <div data-testid="edit-flow">
+                <p>Редактирование</p>
+                <Link to="/listings">Назад к списку</Link>
+              </div>
+            }
+          />
+        </Routes>
+      </AllListingsProvider>
     </MemoryRouter>,
   );
 }
@@ -198,6 +206,49 @@ test("edit navigates to listing edit flow", async () => {
   await user.click(screen.getByRole("menuitem", { name: "Редактировать" }));
   expect(screen.getByTestId("edit-flow")).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "Мои объявления" }),
+  ).not.toBeInTheDocument();
+});
+
+test("edit after delete keeps deleted row gone on return", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  const deletedTitle = "Апартаменты для семьи";
+  const editTitle = "Частный дом в 10 км от Москвы";
+
+  const deleteButton = screen.getByRole("button", {
+    name: `Действия для «${deletedTitle}»`,
+  });
+  await user.click(deleteButton);
+  await user.click(screen.getByRole("menuitem", { name: "Удалить" }));
+  await user.click(screen.getByRole("button", { name: "Да, удалить" }));
+
+  const table = screen.getByRole("table", { name: "Все объявления" });
+  expect(within(table).getAllByRole("row")).toHaveLength(8);
+  expect(within(table).queryByText(deletedTitle)).not.toBeInTheDocument();
+
+  const editButton = screen.getAllByRole("button", {
+    name: `Действия для «${editTitle}»`,
+  })[0];
+  if (!editButton) {
+    throw new Error("Edit menu button not found");
+  }
+  await user.click(editButton);
+  await user.click(screen.getByRole("menuitem", { name: "Редактировать" }));
+  expect(screen.getByTestId("edit-flow")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "Мои объявления" }),
+  ).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("link", { name: "Назад к списку" }));
+  const tableAfter = screen.getByRole("table", { name: "Все объявления" });
+  expect(within(tableAfter).getAllByRole("row")).toHaveLength(8);
+  expect(within(tableAfter).queryByText(deletedTitle)).not.toBeInTheDocument();
+  expect(
+    within(tableAfter).getAllByText(editTitle).length,
+  ).toBeGreaterThanOrEqual(1);
 });
 
 test("row menu is portaled left of trigger with 3px gap", async () => {
@@ -292,6 +343,10 @@ test("delete dialog cancels without removing and confirms removes row", async ()
   expect(
     within(table).getAllByText("Уютная студия в центре Москвы").length,
   ).toBeGreaterThanOrEqual(1);
+  expect(within(table).getAllByRole("img")[0]).toHaveAttribute(
+    "src",
+    "/listings/cover-studio.jpg",
+  );
 
   await openMenuAt(0);
   await user.click(screen.getByRole("menuitem", { name: "Удалить" }));

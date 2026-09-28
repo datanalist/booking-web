@@ -8,6 +8,7 @@ import type {
   ExtraAmenityId,
   ListingDraft,
 } from "../api/types";
+import { useAllListings } from "../features/listings";
 import { emptyDraft } from "../lib/emptyDraft";
 import { compressImage } from "../lib/compressImage";
 import { isDescriptionStepComplete } from "../lib/parseDescriptionStep";
@@ -26,6 +27,7 @@ type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export function ListingWizardPage() {
   const { session, listings } = useSession();
+  const { items: tableItems } = useAllListings();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [params, setParams] = useSearchParams();
@@ -53,7 +55,20 @@ export function ListingWizardPage() {
         return;
       }
       try {
-        const listing = await listings.get(id);
+        let listing = await listings.get(id).catch(() => null);
+        if (!listing) {
+          const row = tableItems.find((item) => item.id === id);
+          if (!row) {
+            navigate("/listings");
+            return;
+          }
+          listing = await listings.ensureForEdit({
+            id: row.id,
+            title: row.title,
+            address: row.address,
+            housingType: row.housingType,
+          });
+        }
         if (!cancelled) {
           setDraft(listing);
           setHousingChosen(true);
@@ -67,7 +82,7 @@ export function ListingWizardPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, isNew, listings, navigate, session]);
+  }, [id, isNew, listings, navigate, session, tableItems]);
 
   function setStep(next: WizardStep): void {
     const nextParams = new URLSearchParams(params);

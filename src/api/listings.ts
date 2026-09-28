@@ -1,6 +1,12 @@
 import { createId } from "../lib/id";
+import { emptyDraft } from "../lib/emptyDraft";
 import { LISTINGS_KEY } from "./keys";
-import type { Listing, ListingDraft, ListingsApi } from "./types";
+import type {
+  Listing,
+  ListingDraft,
+  ListingEditSeed,
+  ListingsApi,
+} from "./types";
 
 type ListingsError = Error & { code: "NOT_FOUND" };
 
@@ -55,6 +61,32 @@ export function createListingsApi(
 
     async get(id) {
       const [listing] = findOwned(readListings(), id);
+      return listing;
+    },
+
+    async ensureForEdit(input: ListingEditSeed) {
+      const userId = getUserId();
+      if (!userId) {
+        throw notFound();
+      }
+      const listings = readListings();
+      const existing = listings.find(
+        (listing) => listing.id === input.id && listing.ownerId === userId,
+      );
+      if (existing) {
+        return existing;
+      }
+      const listing: Listing = {
+        ...emptyDraft(userId),
+        id: input.id,
+        ownerId: userId,
+        title: input.title,
+        address: input.address,
+        housingType: input.housingType,
+        status: "draft",
+        updatedAt: new Date().toISOString(),
+      };
+      writeListings([...listings, listing]);
       return listing;
     },
 

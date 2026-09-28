@@ -64,12 +64,21 @@ export interface AuthApi {
   confirmPasswordReset(token: string, password: string): Promise<void>;
 }
 
+export type ListingEditSeed = {
+  id: string;
+  title: string;
+  address: string;
+  housingType: HousingType;
+};
+
 export interface ListingsApi {
   list(filter: {
     tab: "all" | "published" | "moderation" | "archived";
     query: string;
   }): Promise<Listing[]>;
   get(id: string): Promise<Listing>;
+  /** Создаёт draft с заданным id, если объявления ещё нет (мок-строки таблицы → мастер). */
+  ensureForEdit(input: ListingEditSeed): Promise<Listing>;
   saveDraft(listing: ListingDraft): Promise<Listing>;
   submitForModeration(id: string): Promise<Listing>;
   archive(id: string): Promise<Listing>;
