@@ -91,13 +91,14 @@ export function ListingPreviewPage() {
     }
     setPending(true);
     try {
+      const wasDraft = listing.status === "draft";
       const updated = await listings.archive(listing.id);
       upsert({
         id: updated.id,
         title: updated.title,
         address: updated.address,
         housingType: updated.housingType,
-        status: "unpublished",
+        status: wasDraft ? "draft" : "unpublished",
         coverUrl: updated.photos[0],
       });
       goToListings("archived");

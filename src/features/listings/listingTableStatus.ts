@@ -4,6 +4,7 @@ export const LISTING_TABLE_STATUSES = [
   "moderation",
   "published",
   "unpublished",
+  "draft",
 ] as const;
 
 export type ListingTableStatus = (typeof LISTING_TABLE_STATUSES)[number];
@@ -12,6 +13,7 @@ export const LISTING_TABLE_STATUS_LABELS: Record<ListingTableStatus, string> = {
   moderation: "На модерации",
   published: "Опубликовано",
   unpublished: "Снято с публикации",
+  draft: "Черновик",
 };
 
 export const LISTING_TABLE_STATUS_BADGE_CLASS: Record<
@@ -21,4 +23,5 @@ export const LISTING_TABLE_STATUS_BADGE_CLASS: Record<
   moderation: "bg-indigo-600/25",
   published: "bg-green-500/30",
   unpublished: "bg-amber-400/20",
+  draft: "bg-neutral-200",
 };

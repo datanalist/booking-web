@@ -40,7 +40,9 @@ function itemsForTab(
     case "moderation":
       return items.filter((item) => item.status === "moderation");
     case "archived":
-      return items.filter((item) => item.status === "unpublished");
+      return items.filter(
+        (item) => item.status === "unpublished" || item.status === "draft",
+      );
   }
 }
 

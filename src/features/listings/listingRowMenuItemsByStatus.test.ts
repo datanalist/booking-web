@@ -70,6 +70,10 @@ test("each status excludes foreign menu actions", () => {
       present: ["Редактировать", "Опубликовать", "Удалить"],
       absent: ["Календарь бронирования", "Снять с публикации"],
     },
+    draft: {
+      present: ["Редактировать", "Удалить"],
+      absent: ["Календарь бронирования", "Снять с публикации", "Опубликовать"],
+    },
   };
 
   for (const status of Object.keys(cases) as ListingTableStatus[]) {

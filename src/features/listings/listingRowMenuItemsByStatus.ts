@@ -66,5 +66,7 @@ export function listingRowMenuItemsByStatus(
       return [DELETE_ITEM];
     case "unpublished":
       return [EDIT_ITEM, PUBLISH_ITEM, DELETE_ITEM];
+    case "draft":
+      return [EDIT_ITEM, DELETE_ITEM];
   }
 }

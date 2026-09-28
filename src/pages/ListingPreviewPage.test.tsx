@@ -129,7 +129,7 @@ test("preview shows guests forbidden instead of demo count", async () => {
   expect(screen.queryByText("4 человека")).not.toBeInTheDocument();
 });
 
-test("save to archive upserts unpublished row and opens archive tab", async () => {
+test("save to archive opens archive tab with draft status and no publish", async () => {
   const user = userEvent.setup();
   seedSession();
   seedListing(completeListing({ title: "Архивный черновик XYZ" }));
@@ -150,9 +150,17 @@ test("save to archive upserts unpublished row and opens archive tab", async () =
   expect(
     within(archiveTable).getByRole("img", { name: "Архивный черновик XYZ" }),
   ).toHaveAttribute("src", "data:image/png;base64,0");
-  expect(
-    within(archiveTable).getAllByText("Снято с публикации").length,
-  ).toBeGreaterThanOrEqual(1);
+  const draftTitle = within(archiveTable).getByText("Архивный черновик XYZ");
+  const draftRow = draftTitle.closest("[role='row']");
+  expect(draftRow).not.toBeNull();
+  expect(within(draftRow as HTMLElement).getByText("Черновик")).toBeInTheDocument();
+
+  await user.click(
+    within(draftRow as HTMLElement).getByRole("button", { name: /Действия для/ }),
+  );
+  const menu = screen.getByRole("menu", { name: "Действия с объявлением" });
+  expect(within(menu).getByRole("menuitem", { name: "Редактировать" })).toBeInTheDocument();
+  expect(within(menu).queryByRole("menuitem", { name: "Опубликовать" })).toBeNull();
 });
 
 test("delete removes listing and navigates to list", async () => {
