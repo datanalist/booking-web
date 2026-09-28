@@ -5,6 +5,7 @@ import type { Listing } from "../api/types";
 import {
   DeleteAnnouncementDialog,
   listingFromTableRow,
+  listingTableRowFromListing,
   ListingPreviewHeader,
   ListingPreviewView,
   listingTableStatusFromApi,
@@ -101,14 +102,7 @@ export function ListingPreviewPage() {
     try {
       const updated = await listings.submitForModeration(listing.id);
       setListing(updated);
-      upsert({
-        id: updated.id,
-        title: updated.title,
-        address: updated.address,
-        housingType: updated.housingType,
-        status: "moderation",
-        coverUrl: updated.photos[0],
-      });
+      upsert(listingTableRowFromListing(updated));
       setModerationOpen(true);
     } finally {
       setPending(false);
@@ -123,13 +117,10 @@ export function ListingPreviewPage() {
     try {
       const wasDraft = listing.status === "draft";
       const updated = await listings.archive(listing.id);
+      const row = listingTableRowFromListing(updated);
       upsert({
-        id: updated.id,
-        title: updated.title,
-        address: updated.address,
-        housingType: updated.housingType,
+        ...row,
         status: wasDraft ? "draft" : "unpublished",
-        coverUrl: updated.photos[0],
       });
       goToListings("archived");
     } finally {

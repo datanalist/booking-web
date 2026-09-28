@@ -1,14 +1,19 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test } from "vitest";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { SessionProvider } from "../app/session";
 import { AllListingsProvider } from "../features/listings";
 import { ListingPreviewPage } from "./ListingPreviewPage";
 import { ListingsPage } from "./ListingsPage";
 
+beforeEach(() => {
+  localStorage.clear();
+});
+
 afterEach(() => {
   cleanup();
+  localStorage.clear();
 });
 
 function renderPage() {
