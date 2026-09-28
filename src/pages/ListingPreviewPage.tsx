@@ -4,23 +4,29 @@ import { useSession } from "../app/session";
 import type { Listing } from "../api/types";
 import {
   DeleteAnnouncementDialog,
+  listingFromTableRow,
   ListingPreviewHeader,
   ListingPreviewView,
+  listingTableStatusFromApi,
   ModerationSentDialog,
+  PublishAnnouncementDialog,
   toListingPreviewDisplay,
+  UnpublishAnnouncementDialog,
   useAllListings,
 } from "../features/listings";
 import { firstInvalidStep } from "../lib/canSubmit";
 import type { ListingsLocationState } from "../lib/listingTabs";
 
 export function ListingPreviewPage() {
-  const { listings } = useSession();
-  const { upsert, remove: removeFromTable } = useAllListings();
+  const { listings, session } = useSession();
+  const { items, upsert, remove: removeFromTable, setStatus } = useAllListings();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [listing, setListing] = useState<Listing | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moderationOpen, setModerationOpen] = useState(false);
+  const [unpublishOpen, setUnpublishOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -30,12 +36,21 @@ export function ListingPreviewPage() {
       if (!id) {
         return;
       }
+      const tableRow = items.find((item) => item.id === id);
       try {
         const next = await listings.get(id);
         if (!cancelled) {
           setListing(next);
         }
       } catch {
+        if (tableRow) {
+          if (!cancelled) {
+            setListing(
+              listingFromTableRow(tableRow, session?.userId ?? "local-preview"),
+            );
+          }
+          return;
+        }
         navigate("/listings");
       }
     }
@@ -43,17 +58,32 @@ export function ListingPreviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, listings, navigate]);
+  }, [id, items, listings, navigate, session]);
 
   const display = useMemo(
     () => (listing ? toListingPreviewDisplay(listing) : null),
     [listing],
   );
 
+  const tableStatus = listing
+    ? listingTableStatusFromApi(listing.status)
+    : null;
+
   function goToListings(tab?: ListingsLocationState["tab"]): void {
     const state: ListingsLocationState | undefined =
       tab === undefined ? undefined : { tab };
     navigate("/listings", { state });
+  }
+
+  function onBack(): void {
+    if (!listing) {
+      return;
+    }
+    if (listing.status === "draft") {
+      navigate(`/listings/${listing.id}/edit?step=6`);
+      return;
+    }
+    goToListings();
   }
 
   async function onSubmit(): Promise<void> {
@@ -113,7 +143,11 @@ export function ListingPreviewPage() {
     }
     setPending(true);
     try {
-      await listings.remove(listing.id);
+      try {
+        await listings.remove(listing.id);
+      } catch {
+        // Мок-строка могла не существовать в listings API.
+      }
       removeFromTable(listing.id);
       goToListings();
     } finally {
@@ -127,15 +161,38 @@ export function ListingPreviewPage() {
     goToListings("moderation");
   }
 
-  if (!listing || !display) {
+  function confirmUnpublish(): void {
+    if (!listing) {
+      return;
+    }
+    setStatus(listing.id, "unpublished");
+    setListing({ ...listing, status: "archived" });
+    setUnpublishOpen(false);
+  }
+
+  function confirmPublish(): void {
+    if (!listing) {
+      return;
+    }
+    setStatus(listing.id, "published");
+    setListing({ ...listing, status: "published" });
+    setPublishOpen(false);
+  }
+
+  function onOpenBookingCalendar(): void {
+    // Заглушка: алерт календаря подключат отдельной задачей.
+  }
+
+  if (!listing || !display || tableStatus === null) {
     return <p className="font-sans">Загрузка…</p>;
   }
 
   return (
     <div className="flex h-full w-full flex-col gap-8 overflow-auto bg-amber-400/5 p-8 font-sans">
       <ListingPreviewHeader
+        status={tableStatus}
         pending={pending}
-        onBack={() => navigate(`/listings/${listing.id}/edit?step=6`)}
+        onBack={onBack}
         onEdit={() => navigate(`/listings/${listing.id}/edit?step=1`)}
         onDelete={() => setDeleteOpen(true)}
         onArchive={() => {
@@ -144,6 +201,9 @@ export function ListingPreviewPage() {
         onSubmit={() => {
           void onSubmit();
         }}
+        onUnpublish={() => setUnpublishOpen(true)}
+        onPublish={() => setPublishOpen(true)}
+        onOpenBookingCalendar={onOpenBookingCalendar}
       />
 
       {submitError ? <p className="m-0 text-red-600">{submitError}</p> : null}
@@ -160,6 +220,16 @@ export function ListingPreviewPage() {
       <ModerationSentDialog
         open={moderationOpen}
         onClose={onModerationClose}
+      />
+      <UnpublishAnnouncementDialog
+        open={unpublishOpen}
+        onClose={() => setUnpublishOpen(false)}
+        onConfirm={confirmUnpublish}
+      />
+      <PublishAnnouncementDialog
+        open={publishOpen}
+        onClose={() => setPublishOpen(false)}
+        onConfirm={confirmPublish}
       />
     </div>
   );

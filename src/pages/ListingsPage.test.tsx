@@ -2,7 +2,9 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test } from "vitest";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
+import { SessionProvider } from "../app/session";
 import { AllListingsProvider } from "../features/listings";
+import { ListingPreviewPage } from "./ListingPreviewPage";
 import { ListingsPage } from "./ListingsPage";
 
 afterEach(() => {
@@ -11,22 +13,28 @@ afterEach(() => {
 
 function renderPage() {
   return render(
-    <MemoryRouter initialEntries={["/listings"]}>
-      <AllListingsProvider>
-        <Routes>
-          <Route path="/listings" element={<ListingsPage />} />
-          <Route
-            path="/listings/:id/edit"
-            element={
-              <div data-testid="edit-flow">
-                <p>Редактирование</p>
-                <Link to="/listings">Назад к списку</Link>
-              </div>
-            }
-          />
-        </Routes>
-      </AllListingsProvider>
-    </MemoryRouter>,
+    <SessionProvider>
+      <MemoryRouter initialEntries={["/listings"]}>
+        <AllListingsProvider>
+          <Routes>
+            <Route path="/listings" element={<ListingsPage />} />
+            <Route
+              path="/listings/:id/edit"
+              element={
+                <div data-testid="edit-flow">
+                  <p>Редактирование</p>
+                  <Link to="/listings">Назад к списку</Link>
+                </div>
+              }
+            />
+            <Route
+              path="/listings/:id/preview"
+              element={<ListingPreviewPage />}
+            />
+          </Routes>
+        </AllListingsProvider>
+      </MemoryRouter>
+    </SessionProvider>,
   );
 }
 
@@ -480,4 +488,62 @@ test("edit from archive tab navigates to edit flow", async () => {
   await user.click(buttons[0]!);
   await user.click(screen.getByRole("menuitem", { name: "Редактировать" }));
   expect(screen.getByTestId("edit-flow")).toBeInTheDocument();
+});
+
+test("row click on each tab opens listing preview", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  const allTable = screen.getByRole("table", { name: "Все объявления" });
+  const moderationRows = within(allTable).getAllByRole("row", {
+    name: /Открыть объявление Уютная студия в центре Москвы/,
+  });
+  await user.click(moderationRows[0]!);
+  expect(await screen.findByRole("heading", { name: "Объявление" })).toBeInTheDocument();
+  expect(screen.getByText("На модерации")).toBeInTheDocument();
+  expect(screen.getByTestId("listing-preview-extra-photos")).toHaveTextContent(
+    "+6 фото",
+  );
+
+  await user.click(screen.getByRole("button", { name: "Назад" }));
+  expect(
+    await screen.findByRole("heading", { name: "Мои объявления" }),
+  ).toBeInTheDocument();
+
+  await user.click(screen.getByRole("tab", { name: "Опубликованы" }));
+  const publishedTable = screen.getByRole("table", { name: "Опубликованы" });
+  await user.click(
+    within(publishedTable).getByRole("row", {
+      name: /Открыть объявление Апартаменты для семьи/,
+    }),
+  );
+  expect(await screen.findByRole("heading", { name: "Объявление" })).toBeInTheDocument();
+  expect(screen.getByText("Опубликовано")).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Перейти в календарь бронирования" }),
+  ).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Назад" }));
+  await user.click(screen.getByRole("tab", { name: "На модерации" }));
+  const moderationTable = screen.getByRole("table", { name: "На модерации" });
+  await user.click(
+    within(moderationTable).getByRole("row", {
+      name: /Открыть объявление Уютная студия в центре Москвы/,
+    }),
+  );
+  expect(await screen.findByRole("heading", { name: "Объявление" })).toBeInTheDocument();
+  expect(screen.getByText("На модерации")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Редактировать" })).toBeNull();
+
+  await user.click(screen.getByRole("button", { name: "Назад" }));
+  await user.click(screen.getByRole("tab", { name: "Архив" }));
+  const archiveTable = screen.getByRole("table", { name: "Архив" });
+  await user.click(
+    within(archiveTable).getByRole("row", {
+      name: /Открыть объявление Квартира в старом городе/,
+    }),
+  );
+  expect(await screen.findByRole("heading", { name: "Объявление" })).toBeInTheDocument();
+  expect(screen.getByText("Снято с публикации")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Опубликовать" })).toBeInTheDocument();
 });

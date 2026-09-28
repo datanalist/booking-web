@@ -141,6 +141,7 @@ export function ListingsPage() {
         openMenuId={openMenuId}
         onOpenMenuChange={setOpenMenuId}
         onMenuAction={handleMenuAction}
+        onOpenListing={(listingId) => navigate(`/listings/${listingId}/preview`)}
       />
     );
   }

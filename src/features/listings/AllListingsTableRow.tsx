@@ -10,6 +10,7 @@ type AllListingsTableRowProps = {
   menuOpen: boolean;
   onMenuOpenChange: (listingId: string | null) => void;
   onMenuAction: (actionId: ListingRowMenuActionId) => void;
+  onOpen: (listingId: string) => void;
 };
 
 export function AllListingsTableRow({
@@ -17,11 +18,21 @@ export function AllListingsTableRow({
   menuOpen,
   onMenuOpenChange,
   onMenuAction,
+  onOpen,
 }: AllListingsTableRowProps) {
   return (
     <div
       role="row"
-      className="grid min-h-[76px] grid-cols-[minmax(0,2.2fr)_minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_56px] items-center border-b border-amber-400/20 bg-white last:border-b-0"
+      tabIndex={0}
+      aria-label={`Открыть объявление ${item.title}`}
+      onClick={() => onOpen(item.id)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen(item.id);
+        }
+      }}
+      className="grid min-h-[76px] cursor-pointer grid-cols-[minmax(0,2.2fr)_minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_56px] items-center border-b border-amber-400/20 bg-white last:border-b-0"
     >
       <div
         role="cell"
@@ -45,7 +56,16 @@ export function AllListingsTableRow({
       <div role="cell" className="px-6 py-2.5">
         <ListingStatusBadge status={item.status} />
       </div>
-      <div role="cell" className="flex items-center justify-center px-4 py-2.5">
+      <div
+        role="cell"
+        className="flex items-center justify-center px-4 py-2.5"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.stopPropagation();
+          }
+        }}
+      >
         <ListingRowMenuButton
           listingId={item.id}
           listingTitle={item.title}

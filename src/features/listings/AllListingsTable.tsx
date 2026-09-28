@@ -7,6 +7,7 @@ type AllListingsTableProps = {
   openMenuId: string | null;
   onOpenMenuChange: (id: string | null) => void;
   onMenuAction: (listingId: string, actionId: ListingRowMenuActionId) => void;
+  onOpenListing: (listingId: string) => void;
   ariaLabel?: string;
 };
 
@@ -23,6 +24,7 @@ export function AllListingsTable({
   openMenuId,
   onOpenMenuChange,
   onMenuAction,
+  onOpenListing,
   ariaLabel = "Все объявления",
 }: AllListingsTableProps) {
   return (
@@ -54,6 +56,7 @@ export function AllListingsTable({
           menuOpen={openMenuId === item.id}
           onMenuOpenChange={onOpenMenuChange}
           onMenuAction={(actionId) => onMenuAction(item.id, actionId)}
+          onOpen={onOpenListing}
         />
       ))}
     </div>
