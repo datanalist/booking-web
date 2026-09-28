@@ -227,3 +227,76 @@ test("submit for moderation shows alert then lands on moderation tab", async () 
     1,
   );
 });
+
+test("published preview shows badge and header actions", async () => {
+  seedSession();
+  seedListing(
+    completeListing({
+      status: "published",
+      title: "Опубликованная студия",
+      photos: Array.from({ length: 10 }, (_, i) => `data:image/png;base64,${i}`),
+    }),
+  );
+  renderPreview();
+
+  expect(await screen.findByRole("heading", { name: "Объявление" })).toBeInTheDocument();
+  expect(screen.getByText("Опубликовано")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Редактировать" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Удалить" })).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Снять с публикации" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Перейти в календарь бронирования" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Опубликовать" })).toBeNull();
+  expect(screen.getByTestId("listing-preview-extra-photos")).toHaveTextContent(
+    "+6 фото",
+  );
+});
+
+test("moderation preview shows only delete action", async () => {
+  seedSession();
+  seedListing(
+    completeListing({
+      status: "moderation",
+      title: "На проверке",
+    }),
+  );
+  renderPreview();
+
+  expect(await screen.findByRole("heading", { name: "Объявление" })).toBeInTheDocument();
+  expect(screen.getByText("На модерации")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Удалить" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Редактировать" })).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Снять с публикации" }),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Перейти в календарь бронирования" }),
+  ).toBeNull();
+  expect(screen.queryByRole("button", { name: "Опубликовать" })).toBeNull();
+});
+
+test("unpublished preview shows edit delete and publish", async () => {
+  seedSession();
+  seedListing(
+    completeListing({
+      status: "archived",
+      title: "Снятая студия",
+    }),
+  );
+  renderPreview();
+
+  expect(await screen.findByRole("heading", { name: "Объявление" })).toBeInTheDocument();
+  expect(screen.getByText("Снято с публикации")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Редактировать" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Удалить" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Опубликовать" })).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Снять с публикации" }),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Перейти в календарь бронирования" }),
+  ).toBeNull();
+});

@@ -8,7 +8,10 @@ import type {
   ExtraAmenityId,
   ListingDraft,
 } from "../api/types";
-import { useAllListings } from "../features/listings";
+import {
+  listingTableRowFromListing,
+  useAllListings,
+} from "../features/listings";
 import { emptyDraft } from "../lib/emptyDraft";
 import { compressImage } from "../lib/compressImage";
 import { isDescriptionStepComplete } from "../lib/parseDescriptionStep";
@@ -27,7 +30,7 @@ type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export function ListingWizardPage() {
   const { session, listings } = useSession();
-  const { items: tableItems } = useAllListings();
+  const { items: tableItems, upsert } = useAllListings();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [params, setParams] = useSearchParams();
@@ -119,6 +122,7 @@ export function ListingWizardPage() {
     try {
       const saved = await listings.saveDraft(draft);
       setDraft(saved);
+      upsert(listingTableRowFromListing(saved));
       setTouched(false);
       if (nextStep === "preview") {
         navigate(`/listings/${saved.id}/preview`);
@@ -149,6 +153,7 @@ export function ListingWizardPage() {
       try {
         const saved = await listings.saveDraft(draft);
         setDraft(saved);
+        upsert(listingTableRowFromListing(saved));
         setTouched(false);
       } finally {
         setPending(false);
