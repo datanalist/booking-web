@@ -38,6 +38,7 @@ export function BookingCalendarDayButton({
   return (
     <button
       type="button"
+      data-calendar-cell=""
       aria-label={label}
       aria-pressed={selected}
       onClick={onSelect}

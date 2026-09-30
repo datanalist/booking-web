@@ -29,6 +29,36 @@ test("декабрь 2024 начинается в воскресенье и со
   expect(markOf(weeks, 31)).toEqual({ kind: "unavailable" });
 });
 
+test("сетка всегда из 6 недель и 42 ячеек", () => {
+  const months = [
+    { year: 2021, month: 2 },
+    { year: 2024, month: 2 },
+    { year: 2024, month: 11 },
+    { year: 2024, month: 12 },
+    { year: 2025, month: 1 },
+    { year: 2025, month: 2 },
+    { year: 2026, month: 3 },
+  ];
+  const lengths = new Set<number>();
+  for (const month of months) {
+    const weeks = buildCalendarWeeks(month);
+    const cells = weeks.flat();
+    expect(weeks).toHaveLength(6);
+    expect(cells).toHaveLength(42);
+    expect(cells.filter((cell) => cell.kind === "day")).toHaveLength(
+      daysInYearMonth(month),
+    );
+    lengths.add(weeks.length * 7);
+  }
+  expect(lengths.size).toBe(1);
+  expect(daysInYearMonth({ year: 2021, month: 2 })).toBe(28);
+  expect(daysInYearMonth({ year: 2024, month: 2 })).toBe(29);
+  expect(daysInYearMonth({ year: 2024, month: 11 })).toBe(30);
+  expect(daysInYearMonth({ year: 2024, month: 12 })).toBe(31);
+  expect(mondayIndexOfMonthStart({ year: 2021, month: 2 })).toBe(0);
+  expect(mondayIndexOfMonthStart({ year: 2024, month: 12 })).toBe(6);
+});
+
 test("месяц без демо-броней целиком доступен", () => {
   expect(daysInYearMonth({ year: 2025, month: 1 })).toBe(31);
   expect(mondayIndexOfMonthStart({ year: 2025, month: 1 })).toBe(2);

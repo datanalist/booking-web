@@ -93,7 +93,7 @@ function GridCell({
   onSelectDay: (day: number) => void;
 }): ReactElement {
   if (cell.kind === "pad") {
-    return <span className="h-9" />;
+    return <span data-calendar-cell="" className="h-9" />;
   }
   return (
     <BookingCalendarDayButton
