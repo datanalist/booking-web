@@ -1,5 +1,4 @@
 /** Единая причина изменения: UI шага «3. Удобства» мастера объявления по макету. */
-import { ChevronLeft } from "lucide-react";
 import type { AmenityId, ExtraAmenityId } from "../api/types";
 import { AMENITY_LABELS, EXTRA_AMENITY_LABELS } from "../config";
 import {
@@ -8,15 +7,8 @@ import {
 } from "../lib/amenityIconMap";
 import { AmenityChip } from "./AmenityChip";
 import { Button } from "./Button";
-
-const STEP_LABELS = [
-  "Описание",
-  "Фото",
-  "Удобства",
-  "Правила",
-  "Дополнительное",
-  "Стоимость",
-] as const;
+import { WizardBackButton } from "./WizardBackButton";
+import { WizardSteps } from "./WizardSteps";
 
 type AmenitiesStepProps = {
   selectedAmenities: ReadonlySet<AmenityId>;
@@ -24,6 +16,9 @@ type AmenitiesStepProps = {
   pending: boolean;
   onToggleAmenity: (id: AmenityId) => void;
   onToggleExtra: (id: ExtraAmenityId) => void;
+  /** Стрелка в шапке: выход в список объявлений. */
+  onExit: () => void;
+  /** Кнопка «Вернуться»: предыдущий шаг мастера. */
   onBack: () => void;
   onNext: () => void;
 };
@@ -34,52 +29,20 @@ export function AmenitiesStep({
   pending,
   onToggleAmenity,
   onToggleExtra,
+  onExit,
   onBack,
   onNext,
 }: AmenitiesStepProps) {
   return (
     <div className="flex h-full min-h-0 flex-col gap-8 overflow-auto bg-[rgba(251,192,40,0.06)] p-8 font-sans">
       <header className="flex items-center gap-5">
-        <button
-          type="button"
-          aria-label="Назад"
-          onClick={onBack}
-          className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[30px] border border-solid border-[#ffe4b8] bg-white p-2"
-        >
-          <ChevronLeft className="size-6 text-[var(--color-ink)]" strokeWidth={1.75} />
-        </button>
+        <WizardBackButton disabled={pending} onClick={onExit} />
         <h1 className="m-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
           Создание объявления
         </h1>
       </header>
 
-      <nav
-        aria-label="Шаги создания объявления"
-        className="flex w-full items-start border-b border-solid border-[#ffe4b8]"
-      >
-        {STEP_LABELS.map((label, index) => {
-          const step = index + 1;
-          const reached = step <= 3;
-          return (
-            <div
-              key={label}
-              className={`flex flex-1 items-center justify-center p-2.5 ${
-                reached
-                  ? "border-b-2 border-solid border-[var(--color-ink)]"
-                  : ""
-              }`}
-            >
-              <span
-                className={`whitespace-nowrap text-[14px] leading-[1.4] ${
-                  reached ? "text-[var(--color-ink)]" : "text-[#525353]"
-                }`}
-              >
-                {step}. {label}
-              </span>
-            </div>
-          );
-        })}
-      </nav>
+      <WizardSteps current={3} />
 
       <section className="flex min-h-0 flex-1 flex-col items-center rounded-2xl border border-solid border-[rgba(251,192,40,0.17)] bg-white">
         <div className="flex w-full max-w-[437px] flex-col gap-8 py-10">

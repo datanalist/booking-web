@@ -1,6 +1,11 @@
 /** Единая причина изменения: UI мастера создания и редактирования объявления (6 шагов). */
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useSession } from "../app/session";
 import { PHOTO_MAX } from "../config";
 import type {
@@ -10,10 +15,13 @@ import type {
 } from "../api/types";
 import {
   deleteRemovedWizardPhotos,
+  listingsLocationStateFromOrigin,
   listingTableRowFromListing,
+  parseListingOriginState,
   PHOTO_UPLOAD_IDLE,
   processWizardPhotoSelection,
   useAllListings,
+  type ListingPreviewLocationState,
   type PhotoUploadStatus,
 } from "../features/listings";
 import { emptyDraft } from "../lib/emptyDraft";
@@ -26,20 +34,26 @@ import { ListingWizardDetailsStep } from "../ui/ListingWizardDetailsStep";
 import { WizardBackButton } from "../ui/WizardBackButton";
 import { WizardDescriptionForm } from "../ui/WizardDescriptionForm";
 import { WizardPhotosStep } from "../ui/WizardPhotosStep";
+import type { WizardStepNumber } from "../ui/WizardStepNumber";
 import { WizardSteps } from "../ui/WizardSteps";
 import { ListingWizardPriceStep } from "./ListingWizardPriceStep";
 import { ListingWizardRulesStep } from "./ListingWizardRulesStep";
 
-type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
+type WizardStep = WizardStepNumber;
 
 export function ListingWizardPage() {
   const { session, listings } = useSession();
   const { items: tableItems, upsert } = useAllListings();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const [params, setParams] = useSearchParams();
   const step = parseStep(params.get("step"));
   const isNew = !id;
+  /** Вкладка списка, откуда пришли в мастер: переживает все переходы между шагами. */
+  const origin: ListingPreviewLocationState = parseListingOriginState(
+    location.state,
+  );
 
   const [draft, setDraft] = useState<ListingDraft | null>(null);
   const [housingChosen, setHousingChosen] = useState(false);
@@ -96,7 +110,7 @@ export function ListingWizardPage() {
   function setStep(next: WizardStep): void {
     const nextParams = new URLSearchParams(params);
     nextParams.set("step", String(next));
-    setParams(nextParams, { replace: true });
+    setParams(nextParams, { replace: true, state: origin });
   }
 
   function patch(partial: Partial<ListingDraft>): void {
@@ -131,11 +145,17 @@ export function ListingWizardPage() {
       upsert(listingTableRowFromListing(saved));
       setTouched(false);
       if (nextStep === "preview") {
-        navigate(`/listings/${saved.id}/preview`, { replace: true });
+        navigate(`/listings/${saved.id}/preview`, {
+          replace: true,
+          state: origin,
+        });
         return;
       }
       if (isNew) {
-        navigate(`/listings/${saved.id}/edit?step=${nextStep}`, { replace: true });
+        navigate(`/listings/${saved.id}/edit?step=${nextStep}`, {
+          replace: true,
+          state: origin,
+        });
       } else {
         setStep(nextStep);
       }
@@ -153,9 +173,25 @@ export function ListingWizardPage() {
     }
   }
 
+  /** Стрелка «Назад» в шапке: в «Мои объявления» на вкладку-источник, а не на шаг назад. */
+  async function exitToListings(): Promise<void> {
+    if (draft && draft.id && touched) {
+      setPending(true);
+      try {
+        const saved = await listings.saveDraft(draft);
+        upsert(listingTableRowFromListing(saved));
+      } catch {
+        // Выход важнее сохранения: частично заполненный черновик не должен блокировать уход.
+      } finally {
+        setPending(false);
+      }
+    }
+    navigate("/listings", { state: listingsLocationStateFromOrigin(origin) });
+  }
+
   async function goBack(): Promise<void> {
     if (!draft || step === 1) {
-      navigate("/listings");
+      await exitToListings();
       return;
     }
     if (touched) {
@@ -253,6 +289,9 @@ export function ListingWizardPage() {
         errors={errors}
         pending={pending}
         onChange={(partial) => patch(partial)}
+        onExit={() => {
+          void exitToListings();
+        }}
         onBack={() => {
           void goBack();
         }}
@@ -271,6 +310,9 @@ export function ListingWizardPage() {
         pending={pending}
         onToggleAmenity={toggleAmenity}
         onToggleExtra={toggleExtra}
+        onExit={() => {
+          void exitToListings();
+        }}
         onBack={() => {
           void goBack();
         }}
@@ -284,7 +326,10 @@ export function ListingWizardPage() {
   return (
     <div className="flex h-full flex-col gap-8 overflow-auto bg-[rgba(251,192,40,0.06)] p-8 font-sans">
       <div className="flex items-center gap-5">
-        <WizardBackButton disabled={pending} onClick={() => void goBack()} />
+        <WizardBackButton
+          disabled={pending}
+          onClick={() => void exitToListings()}
+        />
         <h1 className="m-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
           Создание объявления
         </h1>

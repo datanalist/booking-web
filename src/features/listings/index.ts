@@ -9,6 +9,8 @@ export { listingFromTableRow } from "./listingFromTableRow";
 export { listingPreviewActionsByStatus } from "./listingPreviewActionsByStatus";
 export { ListingPreviewHeader } from "./ListingPreviewHeader";
 export type { ListingPreviewLocationState } from "./ListingPreviewLocationState";
+export { listingsLocationStateFromOrigin } from "./listingsLocationStateFromOrigin";
+export { parseListingOriginState } from "./parseListingOriginState";
 export { ListingPreviewView } from "./ListingPreviewView";
 export { listingTableRowFromListing } from "./listingTableRowFromListing";
 export { listingTableStatusFromApi } from "./listingTableStatusFromApi";

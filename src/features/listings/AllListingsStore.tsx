@@ -36,6 +36,12 @@ function persist(
   return next;
 }
 
+/** Обновлённая строка целиком заменяет поля; без `coverUrl` старая обложка не остаётся. */
+function mergeRow(current: ListingTableRow, next: ListingTableRow): ListingTableRow {
+  const { coverUrl: _staleCover, ...rest } = current;
+  return { ...rest, ...next };
+}
+
 /** Список «Мои объявления» с персистентностью в Storage (статусы и upsert переживают reload). */
 export function AllListingsProvider({
   children,
@@ -67,7 +73,7 @@ export function AllListingsProvider({
           }
           return persist(
             storage,
-            prev.map((item, i) => (i === index ? { ...item, ...row } : item)),
+            prev.map((item, i) => (i === index ? mergeRow(item, row) : item)),
           );
         });
       },

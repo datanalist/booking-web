@@ -1,13 +1,14 @@
 import type { Listing } from "../../api/types";
 import { listingFromTableRow } from "./listingFromTableRow";
-import { listingPreviewPhotosWithCover } from "./listingPreviewPhotosWithCover";
+import { resolveListingPhotos } from "./resolveListingPhotos";
 import { listingStatusFromTableStatus } from "./listingStatusFromTableStatus";
 import type { ListingTableRow } from "./ListingTableRow";
 import { listingTableStatusFromApi } from "./listingTableStatusFromApi";
 
 /**
  * Предпросмотр: строка AllListingsStore — источник истины для статуса и полей строки.
- * Детали API подмешиваются только если статус API совпадает со статусом строки.
+ * Детали API подмешиваются только если статус API совпадает со статусом строки;
+ * фото всегда берутся из сохранённого объявления, а не из демо-данных строки.
  */
 export function resolveListingForPreview(
   tableRow: ListingTableRow | undefined,
@@ -34,6 +35,10 @@ export function resolveListingForPreview(
     address: tableRow.address,
     housingType: tableRow.housingType,
     status: listingStatusFromTableStatus(tableRow.status),
-    photos: listingPreviewPhotosWithCover(tableRow.coverUrl, base.photos),
+    photos: resolveListingPhotos(
+      apiListing?.photos ?? [],
+      tableRow.coverUrl,
+      base.photos,
+    ),
   };
 }
