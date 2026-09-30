@@ -20,10 +20,10 @@ export function RejectedBookingRow({ booking }: RejectedBookingRowProps) {
           className="size-12 shrink-0 rounded-full object-cover"
         />
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate text-sm leading-5 text-[var(--color-ink)]">
+          <span className="truncate text-sm font-normal leading-5 text-[var(--color-ink)]">
             {booking.guestName}
           </span>
-          <span className="truncate text-xs leading-4 text-neutral-600">
+          <span className="truncate text-xs font-normal leading-4 text-neutral-600">
             {booking.guestPhone}
           </span>
         </div>
@@ -44,13 +44,13 @@ export function RejectedBookingRow({ booking }: RejectedBookingRowProps) {
           alt=""
           width={48}
           height={48}
-          className="size-12 shrink-0 rounded-lg object-cover"
+          className="size-12 shrink-0 rounded-lg object-cover p-1"
         />
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate text-sm leading-5 text-[var(--color-ink)]">
+          <span className="truncate text-sm font-normal leading-5 text-[var(--color-ink)]">
             {booking.listingTitle}
           </span>
-          <span className="truncate text-xs leading-4 text-neutral-600">
+          <span className="truncate text-xs font-normal leading-4 text-neutral-600">
             {booking.listingAddress}
           </span>
         </div>
