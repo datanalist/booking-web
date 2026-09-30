@@ -2,6 +2,7 @@ import type { HousingType } from "../../api/types";
 import { HOUSING_LABELS } from "../../config";
 import type { ListingTableRow } from "./ListingTableRow";
 import { parseListingTableStatus } from "./parseListingTableStatus";
+import { parsePersistedCoverUrl } from "./parsePersistedCoverUrl";
 
 const HOUSING_TYPES: ReadonlySet<string> = new Set(Object.keys(HOUSING_LABELS));
 
@@ -31,8 +32,7 @@ export function parseListingTableRow(value: unknown): ListingTableRow | null {
   if (status === null) {
     return null;
   }
-  const coverUrl =
-    typeof record.coverUrl === "string" ? record.coverUrl : undefined;
+  const coverUrl = parsePersistedCoverUrl(record.coverUrl);
   return {
     id: record.id,
     title: record.title,

@@ -9,6 +9,8 @@ export function loadAllListingsInitial(
 ): ListingTableRow[] {
   const stored = readAllListingsFromStorage(storage);
   if (stored !== null) {
+    // Парсер уже отбросил data-URL — перезаписываем лёгкий формат, освобождая квоту.
+    writeAllListingsToStorage(storage, stored);
     return stored;
   }
   const seeded = [...MOCK_ALL_LISTINGS];
