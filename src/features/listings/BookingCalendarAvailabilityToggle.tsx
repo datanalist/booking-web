@@ -14,10 +14,12 @@ export function BookingCalendarAvailabilityToggle({
   label,
   onToggle,
 }: BookingCalendarAvailabilityToggleProps): ReactElement {
-  const track = checked ? "bg-[#f88a2a]" : "bg-[#e4e4e4]";
+  const track = checked
+    ? "border-0 bg-[#f88a2a]"
+    : "border-2 border-solid border-[#f88a2a] bg-white";
   const knob = checked
-    ? "left-5 border-[#f88a2a]"
-    : "left-0 border-[#e4e4e4]";
+    ? "top-0 left-5 border-[#f88a2a]"
+    : "top-[-2px] left-[-2px] border-[#f88a2a]";
   return (
     <button
       type="button"
@@ -26,13 +28,13 @@ export function BookingCalendarAvailabilityToggle({
       aria-label={label}
       disabled={disabled}
       onClick={onToggle}
-      className={`relative h-6 w-[44px] shrink-0 overflow-hidden rounded-[1000px] border-0 p-0 ${track} ${
+      className={`relative box-border h-6 w-[44px] shrink-0 rounded-[1000px] p-0 ${track} ${
         disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
       }`}
     >
       <span
         aria-hidden
-        className={`absolute top-0 size-6 rounded-[1000px] border-2 border-solid bg-white ${knob}`}
+        className={`absolute size-6 rounded-[1000px] border-2 border-solid bg-white ${knob}`}
       />
     </button>
   );
