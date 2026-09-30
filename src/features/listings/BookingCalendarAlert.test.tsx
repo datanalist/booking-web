@@ -1,10 +1,16 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { BookingCalendarAlert } from "./BookingCalendarAlert";
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2024, 11, 15, 12, 0, 0));
+});
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
 });
 
 test("при open показывает заголовок, тексты и кнопки из макета", () => {
@@ -210,6 +216,27 @@ test("переключатель доступности не меняет выб
   );
   expect(screen.getByRole("button", { name: "5 декабря" })).toHaveClass(
     "bg-[rgba(77,56,232,0.23)]",
+  );
+});
+
+test("открывается на текущей дате и показывает демо-брони этого месяца", () => {
+  vi.setSystemTime(new Date(2026, 9, 1, 8, 30, 0));
+  render(<BookingCalendarAlert open onOpenChange={() => undefined} />);
+
+  expect(screen.getByText("Октябрь 2026")).toBeInTheDocument();
+  expect(screen.getByText("1 октября")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "1 октября" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByText("5-10 октября")).toBeInTheDocument();
+  expect(screen.getByText("13-14 октября")).toBeInTheDocument();
+  expect(screen.getByText("21-23 октября")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "5 октября" })).toHaveClass(
+    "bg-[rgba(77,56,232,0.23)]",
+  );
+  expect(screen.getByRole("button", { name: "16 октября" })).toHaveClass(
+    "line-through",
   );
 });
 

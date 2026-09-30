@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactElement } from "react";
+import type { BookingCalendarMonthMarks } from "./bookingCalendarDemo";
 import { BookingCalendarAvailabilityToggle } from "./BookingCalendarAvailabilityToggle";
 import { BookingCalendarMonthGrid } from "./BookingCalendarMonthGrid";
 import type { BookingCalendarView } from "./BookingCalendarView";
@@ -9,6 +10,7 @@ import { formatYearMonthLabel } from "./formatYearMonthLabel";
 
 type BookingCalendarMonthCardProps = {
   view: BookingCalendarView;
+  marks: BookingCalendarMonthMarks;
   onSelectDay: (day: number) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
@@ -17,11 +19,12 @@ type BookingCalendarMonthCardProps = {
 /** Карточка месяца, сетки дней и подписи выбранной даты (Figma 1:22281). */
 export function BookingCalendarMonthCard({
   view,
+  marks,
   onSelectDay,
   onPrevMonth,
   onNextMonth,
 }: BookingCalendarMonthCardProps): ReactElement {
-  const weeks = buildCalendarWeeks(view.month);
+  const weeks = buildCalendarWeeks(view.month, marks);
   return (
     <div className="flex flex-col gap-10 rounded-2xl border border-solid border-[rgba(251,192,40,0.17)] bg-white p-6">
       <MonthHeader

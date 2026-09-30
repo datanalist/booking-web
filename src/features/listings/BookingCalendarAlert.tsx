@@ -1,15 +1,10 @@
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { useState, type ReactElement } from "react";
-import {
-  BOOKING_CALENDAR_DEMO,
-  type BookingCalendarDemo,
-} from "./bookingCalendarDemo";
+import type { ReactElement } from "react";
+import { bookingCalendarDemoFor } from "./bookingCalendarDemoFor";
+import type { BookingCalendarDemo } from "./bookingCalendarDemo";
+import { bookingCalendarMarksFor } from "./bookingCalendarMarksFor";
 import { BookingCalendarAlertBody } from "./BookingCalendarAlertBody";
-import {
-  INITIAL_BOOKING_CALENDAR_VIEW,
-  type BookingCalendarView,
-} from "./BookingCalendarView";
-import { shiftBookingCalendarView } from "./shiftBookingCalendarView";
+import { useBookingCalendarView } from "./useBookingCalendarView";
 
 const CARD_SHADOW =
   "shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08),0px_8px_8px_-4px_rgba(16,24,40,0.03)]";
@@ -22,6 +17,7 @@ export type BookingCalendarAlertProps = {
   onDeleteBooking?: (guestId: string) => void;
   onPrevMonth?: () => void;
   onNextMonth?: () => void;
+  today?: Date;
   demo?: BookingCalendarDemo;
 };
 
@@ -37,11 +33,12 @@ export function BookingCalendarAlert({
   onDeleteBooking,
   onPrevMonth,
   onNextMonth,
-  demo = BOOKING_CALENDAR_DEMO,
+  today = new Date(),
+  demo,
 }: BookingCalendarAlertProps): ReactElement {
-  const [view, setView] = useState<BookingCalendarView>(
-    INITIAL_BOOKING_CALENDAR_VIEW,
-  );
+  const resolvedDemo = demo ?? bookingCalendarDemoFor(today);
+  const marks = bookingCalendarMarksFor(today);
+  const { view, selectDay, shiftMonth } = useBookingCalendarView(open, today);
 
   function handleOpenChange(next: boolean): void {
     onOpenChange(next);
@@ -51,17 +48,13 @@ export function BookingCalendarAlert({
   }
 
   function handlePrevMonth(): void {
-    setView((current) => shiftBookingCalendarView(current, -1));
+    shiftMonth(-1);
     onPrevMonth?.();
   }
 
   function handleNextMonth(): void {
-    setView((current) => shiftBookingCalendarView(current, 1));
+    shiftMonth(1);
     onNextMonth?.();
-  }
-
-  function handleSelectDay(day: number): void {
-    setView((current) => ({ month: current.month, selectedDay: day }));
   }
 
   return (
@@ -79,9 +72,10 @@ export function BookingCalendarAlert({
             Календарь занятости объявления и список бронирований
           </AlertDialog.Description>
           <BookingCalendarAlertBody
-            demo={demo}
+            demo={resolvedDemo}
+            marks={marks}
             view={view}
-            onSelectDay={handleSelectDay}
+            onSelectDay={selectDay}
             onPrevMonth={handlePrevMonth}
             onNextMonth={handleNextMonth}
             onMessageGuest={(guestId) => onMessageGuest?.(guestId)}

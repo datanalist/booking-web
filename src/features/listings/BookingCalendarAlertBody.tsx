@@ -1,5 +1,8 @@
 import type { ReactElement } from "react";
-import type { BookingCalendarDemo } from "./bookingCalendarDemo";
+import type {
+  BookingCalendarDemo,
+  BookingCalendarMonthMarks,
+} from "./bookingCalendarDemo";
 import { BookingCalendarGuestCard } from "./BookingCalendarGuestCard";
 import { BookingCalendarLegend } from "./BookingCalendarLegend";
 import { BookingCalendarMonthCard } from "./BookingCalendarMonthCard";
@@ -7,6 +10,7 @@ import type { BookingCalendarView } from "./BookingCalendarView";
 
 type BookingCalendarAlertBodyProps = {
   demo: BookingCalendarDemo;
+  marks: BookingCalendarMonthMarks;
   view: BookingCalendarView;
   onSelectDay: (day: number) => void;
   onPrevMonth: () => void;
@@ -18,6 +22,7 @@ type BookingCalendarAlertBodyProps = {
 /** Тело алерта: календарь слева, объявление и гости справа. */
 export function BookingCalendarAlertBody({
   demo,
+  marks,
   view,
   onSelectDay,
   onPrevMonth,
@@ -30,6 +35,7 @@ export function BookingCalendarAlertBody({
       <div className="flex flex-col gap-6">
         <BookingCalendarMonthCard
           view={view}
+          marks={marks}
           onSelectDay={onSelectDay}
           onPrevMonth={onPrevMonth}
           onNextMonth={onNextMonth}

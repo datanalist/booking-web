@@ -1,3 +1,4 @@
+import type { BookingCalendarMonthMarks } from "./bookingCalendarDemo";
 import type { CalendarGridCell } from "./CalendarGridCell";
 import { daysInYearMonth } from "./daysInYearMonth";
 import { mondayIndexOfMonthStart } from "./mondayIndexOfMonthStart";
@@ -7,6 +8,7 @@ import type { YearMonth } from "./YearMonth";
 /** Шесть недель (42 ячейки): пустые дни вне месяца невидимы, высота сетки постоянна. */
 export function buildCalendarWeeks(
   month: YearMonth,
+  marks: BookingCalendarMonthMarks,
 ): readonly (readonly CalendarGridCell[])[] {
   const cells: CalendarGridCell[] = [];
   const leading = mondayIndexOfMonthStart(month);
@@ -18,7 +20,7 @@ export function buildCalendarWeeks(
     cells.push({
       kind: "day",
       day,
-      mark: resolveCalendarDayMark(month, day),
+      mark: resolveCalendarDayMark(month, day, marks),
     });
   }
   while (cells.length % 7 !== 0) {

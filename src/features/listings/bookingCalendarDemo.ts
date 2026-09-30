@@ -30,32 +30,27 @@ export type BookingCalendarDemo = {
   guests: readonly BookingCalendarGuest[];
 };
 
-/**
- * Отметки декабря 2024 с макета: брони 5–10, 13–14, 21–23
- * и недоступные 16–18, 27–31. Другие месяцы отметок не имеют.
- */
-export const BOOKING_CALENDAR_MONTH_MARKS: BookingCalendarMonthMarks = {
-  year: 2024,
-  month: 12,
-  unavailableDays: [16, 17, 18, 27, 28, 29, 30, 31],
-  ranges: [
-    { fromDay: 5, toDay: 10, tone: "purple" },
-    { fromDay: 13, toDay: 14, tone: "green" },
-    { fromDay: 21, toDay: 23, tone: "blue" },
-  ],
+/** Шаблон гостя: дни месяца общие с отметками сетки, подпись месяца подставляется от «сегодня». */
+export type BookingCalendarGuestTemplate = {
+  readonly id: string;
+  readonly name: string;
+  readonly phone: string;
+  readonly fromDay: number;
+  readonly toDay: number;
+  readonly nights: string;
+  readonly avatarUrl: string;
+  readonly tone: BookingCalendarGuestTone;
 };
 
-/** Демо-данные алерта по макету Figma 1:22281. */
-export const BOOKING_CALENDAR_DEMO: BookingCalendarDemo = {
-  listingTitle: "Уютная студия в центре Москвы",
-  listingAddress: "Москва, ул. Невская 48",
-  listingCoverUrl: "/listings/cover-studio.jpg",
-  guests: [
+/** Дни броней и блокировок с макета, без привязки к декабрю 2024. */
+export const BOOKING_CALENDAR_GUEST_TEMPLATES: readonly BookingCalendarGuestTemplate[] =
+  [
     {
       id: "anna",
       name: "Анна Иваненко",
       phone: "+7 (900) 123-45-67",
-      dates: "5-10 декабря",
+      fromDay: 5,
+      toDay: 10,
       nights: "5 ночей",
       avatarUrl: "/avatar-placeholder.png",
       tone: "purple",
@@ -64,7 +59,8 @@ export const BOOKING_CALENDAR_DEMO: BookingCalendarDemo = {
       id: "leonid",
       name: "Леонид Фролов",
       phone: "+7 (900) 123-45-67",
-      dates: "13-14 декабря",
+      fromDay: 13,
+      toDay: 14,
       nights: "1 ночь",
       avatarUrl: "/avatar-placeholder.png",
       tone: "green",
@@ -73,10 +69,14 @@ export const BOOKING_CALENDAR_DEMO: BookingCalendarDemo = {
       id: "alexandra",
       name: "Александра Павловская",
       phone: "+7 (900) 123-45-67",
-      dates: "21-23 декабря",
+      fromDay: 21,
+      toDay: 23,
       nights: "2 ночи",
       avatarUrl: "/avatar-placeholder.png",
       tone: "blue",
     },
-  ],
-};
+  ];
+
+export const BOOKING_CALENDAR_DEMO_UNAVAILABLE_DAYS: readonly number[] = [
+  16, 17, 18, 27, 28, 29, 30, 31,
+];
