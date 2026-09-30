@@ -92,13 +92,19 @@ test("confirmed tab shows status table", async () => {
   expect(screen.getByText("Проживание")).toBeInTheDocument();
 });
 
-test("other tabs show their empty copy", async () => {
+test("rejected tab shows table without accept buttons", async () => {
   const user = userEvent.setup();
   renderBookings();
   await user.click(screen.getByRole("tab", { name: "Отклонены" }));
   expect(
-    screen.getByText("Отклонённые заявки на бронирования появятся здесь!"),
+    screen.getByRole("table", { name: "Отклонённые бронирования" }),
   ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Принять" })).not.toBeInTheDocument();
+});
+
+test("cancelled tab shows empty copy", async () => {
+  const user = userEvent.setup();
+  renderBookings();
   await user.click(screen.getByRole("tab", { name: "Отменены" }));
   expect(
     screen.getByText(
