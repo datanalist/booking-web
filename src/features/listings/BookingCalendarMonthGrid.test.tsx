@@ -45,3 +45,32 @@ test("рендер сетки держит 42 ячейки одной высот
   }
   expect(heights.size).toBe(1);
 });
+
+test("смена месяца не копит лишние недели", () => {
+  const october: YearMonth = { year: 2026, month: 10 };
+  const february: YearMonth = { year: 2027, month: 2 };
+  const view = render(
+    <BookingCalendarMonthGrid
+      month={october}
+      weeks={buildCalendarWeeks(october, MARKS)}
+      selectedDay={1}
+      onSelectDay={() => undefined}
+    />,
+  );
+  expect(view.container.querySelectorAll("[data-calendar-cell]")).toHaveLength(
+    42,
+  );
+  view.rerender(
+    <BookingCalendarMonthGrid
+      month={february}
+      weeks={buildCalendarWeeks(february, MARKS)}
+      selectedDay={1}
+      onSelectDay={() => undefined}
+    />,
+  );
+  expect(view.container.querySelectorAll("[data-calendar-cell]")).toHaveLength(
+    42,
+  );
+  expect(view.container.textContent).not.toContain("октября");
+  expect(view.getAllByRole("button", { name: /февраля$/ })).toHaveLength(28);
+});
