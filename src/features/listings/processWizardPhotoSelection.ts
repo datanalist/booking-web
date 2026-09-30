@@ -8,15 +8,17 @@ export type ProcessWizardPhotoSelectionResult = {
   status: PhotoUploadStatus;
 };
 
-type CompressFn = (file: File) => Promise<string>;
+type CompressFn = (file: File) => Promise<Blob>;
+type UploadFn = (blob: Blob) => Promise<string>;
 
 /**
- * Обрабатывает выбор файлов: сжимает, считает ошибки, никогда не бросает.
+ * Обрабатывает выбор файлов: сжимает, загружает на /api/files, считает ошибки, никогда не бросает.
  */
 export async function processWizardPhotoSelection(
   files: readonly File[],
   currentPhotoCount: number,
   compress?: CompressFn,
+  upload?: UploadFn,
 ): Promise<ProcessWizardPhotoSelectionResult> {
   const remaining = PHOTO_MAX - currentPhotoCount;
   if (remaining <= 0 || files.length === 0) {
@@ -27,6 +29,7 @@ export async function processWizardPhotoSelection(
   const { photos, failedCount } = await compressWizardPhotoFiles(
     selected,
     compress,
+    upload,
   );
 
   if (failedCount === 0) {

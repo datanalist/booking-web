@@ -28,6 +28,11 @@ export type { ProcessWizardPhotoSelectionResult } from "./processWizardPhotoSele
 export type { PhotoUploadStatus } from "./PhotoUploadStatus";
 export { PHOTO_UPLOAD_IDLE } from "./PhotoUploadStatus";
 export { isWizardPhotosNextDisabled } from "./isWizardPhotosNextDisabled";
+export { uploadPhoto } from "./uploadPhoto";
+export { deletePhoto } from "./deletePhoto";
+export { deleteRemovedWizardPhotos } from "./deleteRemovedWizardPhotos";
+export { parsePhotoUrl } from "./PhotoUrl";
+export type { PhotoUrl } from "./PhotoUrl";
 export {
   LISTING_TABLE_STATUS_LABELS,
   LISTING_TABLE_STATUSES,

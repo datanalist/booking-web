@@ -9,6 +9,7 @@ import type {
   ListingDraft,
 } from "../api/types";
 import {
+  deleteRemovedWizardPhotos,
   listingTableRowFromListing,
   PHOTO_UPLOAD_IDLE,
   processWizardPhotoSelection,
@@ -328,7 +329,11 @@ export function ListingWizardPage() {
             error={errors.photos}
             pending={pending}
             uploadStatus={photoUpload}
-            onPhotosChange={(photos) => patch({ photos })}
+            onPhotosChange={(photos) => {
+              const previous = draft.photos;
+              patch({ photos });
+              void deleteRemovedWizardPhotos(previous, photos);
+            }}
             onFilesSelected={(files) => {
               void onPhotosSelected(files);
             }}

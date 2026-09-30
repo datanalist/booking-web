@@ -2,7 +2,8 @@ import { isDataUrl } from "./isDataUrl";
 import type { ListingTableRow } from "./ListingTableRow";
 
 /**
- * Лёгкая строка для Storage: без data-URL обложек (base64 раздувает квоту ~5 МБ).
+ * Лёгкая строка для Storage: data-URL обложки отбрасываются (base64 ~квота 5 МБ),
+ * пути `/data/...` и прочие URL сохраняются.
  */
 export function toPersistedListingTableRow(
   row: ListingTableRow,
