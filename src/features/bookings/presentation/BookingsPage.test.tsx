@@ -82,14 +82,19 @@ test("reject submit removes request", async () => {
   expect(screen.queryByText("Полякова Кристина")).not.toBeInTheDocument();
 });
 
-test("other tabs show their empty copy", async () => {
+test("confirmed tab shows status table", async () => {
   const user = userEvent.setup();
   renderBookings();
   await user.click(screen.getByRole("tab", { name: "Подтверждены" }));
-  expect(screen.getByRole("heading", { name: "Нет бронирований" })).toBeInTheDocument();
-  expect(
-    screen.getByText("Подтверждённые заявки на бронирования появятся здесь!"),
-  ).toBeInTheDocument();
+  expect(screen.getByText("Ожидание предоплаты")).toBeInTheDocument();
+  expect(screen.getByText("Предоплата внесена")).toBeInTheDocument();
+  expect(screen.getByText("Аренда завершилась")).toBeInTheDocument();
+  expect(screen.getByText("Проживание")).toBeInTheDocument();
+});
+
+test("other tabs show their empty copy", async () => {
+  const user = userEvent.setup();
+  renderBookings();
   await user.click(screen.getByRole("tab", { name: "Отклонены" }));
   expect(
     screen.getByText("Отклонённые заявки на бронирования появятся здесь!"),

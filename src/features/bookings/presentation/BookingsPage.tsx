@@ -7,6 +7,7 @@ import {
   type BookingTabId,
 } from "../domain/BookingTabId";
 import { BookingsEmptyPanel } from "./BookingsEmptyPanel";
+import { ConfirmedBookingsPanel } from "./confirmed/ConfirmedBookingsPanel";
 import { RequestsPanel } from "./requests/RequestsPanel";
 
 const EMPTY_COPY: Record<
@@ -47,6 +48,8 @@ export function BookingsPage() {
 
       {tab === "requests" ? (
         <RequestsPanel query={query} forceEmpty={forceEmpty} />
+      ) : tab === "confirmed" ? (
+        <ConfirmedBookingsPanel query={query} forceEmpty={forceEmpty} />
       ) : (
         <BookingsEmptyPanel
           title={EMPTY_COPY[tab].title}
