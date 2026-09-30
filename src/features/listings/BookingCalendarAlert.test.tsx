@@ -126,6 +126,99 @@ test("подложка алерта серая #525353, карточка бел�
   expect(screen.getByRole("alertdialog")).toHaveClass("bg-white");
 });
 
+test("переключение месяца меняет заголовок и число дней", async () => {
+  const user = userEvent.setup();
+  render(
+    <BookingCalendarAlert open onOpenChange={() => undefined} />,
+  );
+
+  expect(screen.getByText("Декабрь 2024")).toBeInTheDocument();
+  expect(dayButtons("декабря")).toHaveLength(31);
+
+  await user.click(screen.getByRole("button", { name: "Следующий месяц" }));
+  expect(screen.getByText("Январь 2025")).toBeInTheDocument();
+  expect(screen.queryByText("Декабрь 2024")).not.toBeInTheDocument();
+  const january = dayButtons("января");
+  expect(january).toHaveLength(31);
+  for (const day of january) {
+    expect(day).not.toHaveClass("line-through");
+  }
+
+  await user.click(screen.getByRole("button", { name: "Предыдущий месяц" }));
+  expect(screen.getByText("Декабрь 2024")).toBeInTheDocument();
+  expect(dayButtons("декабря")).toHaveLength(31);
+
+  await user.click(screen.getByRole("button", { name: "Предыдущий месяц" }));
+  expect(screen.getByText("Ноябрь 2024")).toBeInTheDocument();
+  expect(dayButtons("ноября")).toHaveLength(30);
+});
+
+test("клик по дню меняет выбранный день и подпись", async () => {
+  const user = userEvent.setup();
+  render(
+    <BookingCalendarAlert open onOpenChange={() => undefined} />,
+  );
+
+  expect(screen.getByRole("button", { name: "15 декабря" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByText("15 декабря")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "20 декабря" }));
+  expect(screen.getByRole("button", { name: "20 декабря" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByRole("button", { name: "15 декабря" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  expect(screen.getByText("20 декабря")).toBeInTheDocument();
+  expect(screen.queryByText("15 декабря")).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "16 декабря" }));
+  const unavailable = screen.getByRole("button", { name: "16 декабря" });
+  expect(unavailable).toHaveAttribute("aria-pressed", "true");
+  expect(unavailable).toHaveClass("line-through");
+  expect(screen.getByText("16 декабря")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "5 декабря" })).toHaveClass(
+    "bg-[rgba(77,56,232,0.23)]",
+  );
+});
+
+test("переключатель доступности не меняет выбор и отметки дней", async () => {
+  const user = userEvent.setup();
+  render(
+    <BookingCalendarAlert open onOpenChange={() => undefined} />,
+  );
+
+  await user.click(screen.getByRole("button", { name: "20 декабря" }));
+  const toggle = screen.getByRole("switch", {
+    name: "доступно для бронирования",
+  });
+  await user.click(toggle);
+
+  expect(toggle).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByRole("button", { name: "20 декабря" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByText("20 декабря")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "16 декабря" })).toHaveClass(
+    "line-through",
+  );
+  expect(screen.getByRole("button", { name: "5 декабря" })).toHaveClass(
+    "bg-[rgba(77,56,232,0.23)]",
+  );
+});
+
+function dayButtons(genitiveMonth: string): HTMLElement[] {
+  return screen.getAllByRole("button", {
+    name: new RegExp(`^\\d+ ${genitiveMonth}$`),
+  });
+}
+
 test("при open=false алерт не в документе", () => {
   render(
     <BookingCalendarAlert open={false} onOpenChange={() => undefined} />,
