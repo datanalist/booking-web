@@ -19,6 +19,7 @@ import { OnboardingPage } from "../pages/OnboardingPage";
 import { RegisterPage } from "../pages/RegisterPage";
 import { ResetPasswordPage } from "../pages/ResetPasswordPage";
 import { ProfilePage } from "../pages/ProfilePage";
+import { BookingsPage } from "../features/bookings";
 import { StubPage } from "../pages/StubPage";
 
 function Guarded({ children }: { children: ReactNode }) {
@@ -106,7 +107,7 @@ export function createAppRouter() {
         { path: "/listings/new", element: <ListingWizardPage /> },
         { path: "/listings/:id/edit", element: <ListingWizardPage /> },
         { path: "/listings/:id/preview", element: <ListingPreviewPage /> },
-        { path: "/bookings", element: <StubPage title="Бронирования" /> },
+        { path: "/bookings", element: <BookingsPage /> },
         { path: "/chats", element: <StubPage title="Чаты" /> },
         { path: "/notifications", element: <StubPage title="Уведомления" /> },
         { path: "/profile", element: <ProfilePage /> },
