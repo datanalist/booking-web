@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search } from "../../../ui/Search";
-import { Tabs } from "../../../ui/Tabs";
+import { BookingsGuestSearch } from "../BookingsGuestSearch";
+import { BookingsTabs } from "../BookingsTabs";
 import {
-  BOOKING_TABS,
   DEFAULT_BOOKING_TAB,
   type BookingTabId,
 } from "../domain/BookingTabId";
@@ -29,10 +28,6 @@ const EMPTY_COPY: Record<
   },
 };
 
-function isBookingTabId(value: string): value is BookingTabId {
-  return BOOKING_TABS.some((tab) => tab.id === value);
-}
-
 export function BookingsPage() {
   const [params] = useSearchParams();
   const forceEmpty = params.get("empty") === "1";
@@ -41,31 +36,14 @@ export function BookingsPage() {
 
   return (
     <div className="flex h-full w-full flex-col gap-8 bg-[rgba(251,192,40,0.06)] p-8 font-sans">
-      <div className="flex w-full shrink-0 items-center justify-between gap-4">
-        <h1 className="m-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
-          Бронирования
-        </h1>
-        <div className="w-[320px] shrink-0">
-          <Search
-            value={query}
-            onChange={setQuery}
-            placeholder="Введите имя или номер гостя"
-          />
-        </div>
-      </div>
+      <h1 className="m-0 shrink-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
+        Бронирования
+      </h1>
 
-      <Tabs
-        items={BOOKING_TABS.map((item) => ({
-          id: item.id,
-          label: item.label,
-        }))}
-        value={tab}
-        onChange={(id) => {
-          if (isBookingTabId(id)) {
-            setTab(id);
-          }
-        }}
-      />
+      <div className="flex w-full shrink-0 items-start justify-between">
+        <BookingsTabs value={tab} onChange={setTab} />
+        <BookingsGuestSearch value={query} onChange={setQuery} />
+      </div>
 
       {tab === "requests" ? (
         <RequestsPanel query={query} forceEmpty={forceEmpty} />
