@@ -5,13 +5,13 @@ import type { Listing } from "../api/types";
 import {
   BookingCalendarAlert,
   DeleteAnnouncementDialog,
-  listingFromTableRow,
   listingTableRowFromListing,
   ListingPreviewHeader,
   ListingPreviewView,
   listingTableStatusFromApi,
   ModerationSentDialog,
   PublishAnnouncementDialog,
+  resolveListingForPreview,
   toListingPreviewDisplay,
   UnpublishAnnouncementDialog,
   useAllListings,
@@ -40,22 +40,25 @@ export function ListingPreviewPage() {
         return;
       }
       const tableRow = items.find((item) => item.id === id);
+      let apiListing: Listing | null = null;
       try {
-        const next = await listings.get(id);
-        if (!cancelled) {
-          setListing(next);
-        }
+        apiListing = await listings.get(id);
       } catch {
-        if (tableRow) {
-          if (!cancelled) {
-            setListing(
-              listingFromTableRow(tableRow, session?.userId ?? "local-preview"),
-            );
-          }
-          return;
-        }
-        navigate("/listings");
+        apiListing = null;
       }
+      const resolved = resolveListingForPreview(
+        tableRow,
+        apiListing,
+        session?.userId ?? "local-preview",
+      );
+      if (cancelled) {
+        return;
+      }
+      if (resolved === null) {
+        navigate("/listings");
+        return;
+      }
+      setListing(resolved);
     }
     void load();
     return () => {
@@ -68,9 +71,14 @@ export function ListingPreviewPage() {
     [listing],
   );
 
-  const tableStatus = listing
-    ? listingTableStatusFromApi(listing.status)
-    : null;
+  const tableRow = listing
+    ? items.find((item) => item.id === listing.id)
+    : undefined;
+  const tableStatus = tableRow
+    ? tableRow.status
+    : listing
+      ? listingTableStatusFromApi(listing.status)
+      : null;
 
   function goToListings(tab?: ListingsLocationState["tab"]): void {
     const state: ListingsLocationState | undefined =

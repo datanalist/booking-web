@@ -14,6 +14,7 @@ export { listingTableStatusFromApi } from "./listingTableStatusFromApi";
 export { MOCK_ALL_LISTINGS } from "./mockAllListings";
 export { ModerationSentDialog } from "./ModerationSentDialog";
 export { PublishAnnouncementDialog } from "./PublishAnnouncementDialog";
+export { resolveListingForPreview } from "./resolveListingForPreview";
 export { toListingPreviewDisplay } from "./toListingPreviewDisplay";
 export { UnpublishAnnouncementDialog } from "./UnpublishAnnouncementDialog";
 export type { ListingTableRow } from "./ListingTableRow";

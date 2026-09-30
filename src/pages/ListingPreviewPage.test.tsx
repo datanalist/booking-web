@@ -5,7 +5,10 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { SESSION_KEY, LISTINGS_KEY, USERS_KEY } from "../api/keys";
 import type { Listing, Session } from "../api/types";
 import { SessionProvider } from "../app/session";
-import { AllListingsProvider } from "../features/listings";
+import {
+  ALL_LISTINGS_STORAGE_KEY,
+  AllListingsProvider,
+} from "../features/listings";
 import { ListingPreviewPage } from "./ListingPreviewPage";
 import { ListingsPage } from "./ListingsPage";
 
@@ -325,3 +328,105 @@ test("unpublished preview shows edit delete and publish", async () => {
     screen.queryByRole("button", { name: "Перейти в календарь бронирования" }),
   ).toBeNull();
 });
+
+function seedAllListingsRow(
+  row: {
+    id: string;
+    title: string;
+    address: string;
+    housingType: Listing["housingType"];
+    status: "published" | "moderation" | "unpublished" | "draft";
+    coverUrl?: string;
+  },
+): void {
+  localStorage.setItem(ALL_LISTINGS_STORAGE_KEY, JSON.stringify([row]));
+}
+
+test.each([
+  {
+    status: "published" as const,
+    title: "Частный дом в 10 км от Москвы",
+    address: "Лесной, ул. Летняя 3",
+    housingType: "house" as const,
+    badge: "Опубликовано",
+    expectedActions: [
+      "Редактировать",
+      "Удалить",
+      "Снять с публикации",
+      "Перейти в календарь бронирования",
+    ],
+    unexpectedActions: ["Опубликовать"],
+  },
+  {
+    status: "moderation" as const,
+    title: "Уютная студия в центре Москвы",
+    address: "Москва, ул. Невская 48",
+    housingType: "apartment" as const,
+    badge: "На модерации",
+    expectedActions: ["Удалить"],
+    unexpectedActions: [
+      "Редактировать",
+      "Снять с публикации",
+      "Опубликовать",
+      "Перейти в календарь бронирования",
+    ],
+  },
+  {
+    status: "unpublished" as const,
+    title: "Квартира в старом городе",
+    address: "Москва, ул. Невская 48",
+    housingType: "apartment" as const,
+    badge: "Снято с публикации",
+    expectedActions: ["Редактировать", "Удалить", "Опубликовать"],
+    unexpectedActions: [
+      "Снять с публикации",
+      "Перейти в календарь бронирования",
+    ],
+  },
+])(
+  "preview matches AllListingsStore row for $status despite divergent API",
+  async ({
+    status,
+    title,
+    address,
+    housingType,
+    badge,
+    expectedActions,
+    unexpectedActions,
+  }) => {
+    seedSession();
+    seedAllListingsRow({
+      id: LISTING_ID,
+      title,
+      address,
+      housingType,
+      status,
+      coverUrl: "/listings/cover-from-row.jpg",
+    });
+    seedListing(
+      completeListing({
+        status: "draft",
+        title: "Чужой заголовок API",
+        address: "Чужой адрес API",
+        housingType: "studio",
+        description: "test-api-only",
+        amenityIds: ["wifi", "hairdryer"],
+        photos: ["/api-only-photo.jpg"],
+      }),
+    );
+    renderPreview();
+
+    expect(await screen.findByRole("heading", { name: title })).toBeInTheDocument();
+    expect(screen.getByText(address)).toBeInTheDocument();
+    expect(screen.getByText(badge)).toBeInTheDocument();
+    expect(screen.queryByText("test-api-only")).not.toBeInTheDocument();
+    expect(screen.queryByText("Чужой заголовок API")).not.toBeInTheDocument();
+
+    for (const name of expectedActions) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+    for (const name of unexpectedActions) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+  },
+);
