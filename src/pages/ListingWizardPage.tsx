@@ -125,7 +125,7 @@ export function ListingWizardPage() {
       upsert(listingTableRowFromListing(saved));
       setTouched(false);
       if (nextStep === "preview") {
-        navigate(`/listings/${saved.id}/preview`);
+        navigate(`/listings/${saved.id}/preview`, { replace: true });
         return;
       }
       if (isNew) {

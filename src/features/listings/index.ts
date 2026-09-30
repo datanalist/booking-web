@@ -8,6 +8,7 @@ export { filterListingsByQuery } from "./filterListingsByQuery";
 export { listingFromTableRow } from "./listingFromTableRow";
 export { listingPreviewActionsByStatus } from "./listingPreviewActionsByStatus";
 export { ListingPreviewHeader } from "./ListingPreviewHeader";
+export type { ListingPreviewLocationState } from "./ListingPreviewLocationState";
 export { ListingPreviewView } from "./ListingPreviewView";
 export { listingTableRowFromListing } from "./listingTableRowFromListing";
 export { listingTableStatusFromApi } from "./listingTableStatusFromApi";

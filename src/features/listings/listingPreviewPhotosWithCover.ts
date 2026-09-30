@@ -1,5 +1,5 @@
 /**
- * Первое фото галереи — обложка строки таблицы; остальные без дубля обложки.
+ * Первое фото галереи — обложка строки таблицы; остальные без дубля этой обложки.
  */
 export function listingPreviewPhotosWithCover(
   coverUrl: string | undefined,
@@ -8,6 +8,10 @@ export function listingPreviewPhotosWithCover(
   if (coverUrl === undefined || coverUrl.trim().length === 0) {
     return [...photos];
   }
-  const rest = photos.filter((photo) => photo !== coverUrl);
+  const rest = [...photos];
+  const coverIndex = rest.indexOf(coverUrl);
+  if (coverIndex >= 0) {
+    rest.splice(coverIndex, 1);
+  }
   return [coverUrl, ...rest];
 }

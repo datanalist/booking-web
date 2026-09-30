@@ -7,6 +7,7 @@ import {
   PublishAnnouncementDialog,
   UnpublishAnnouncementDialog,
   useAllListings,
+  type ListingPreviewLocationState,
   type ListingRowMenuActionId,
   type ListingTableRow,
 } from "../features/listings";
@@ -141,7 +142,10 @@ export function ListingsPage() {
         openMenuId={openMenuId}
         onOpenMenuChange={setOpenMenuId}
         onMenuAction={handleMenuAction}
-        onOpenListing={(listingId) => navigate(`/listings/${listingId}/preview`)}
+        onOpenListing={(listingId) => {
+          const state: ListingPreviewLocationState = { fromTab: tab };
+          navigate(`/listings/${listingId}/preview`, { state });
+        }}
       />
     );
   }

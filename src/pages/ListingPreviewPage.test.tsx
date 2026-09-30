@@ -430,3 +430,99 @@ test.each([
     }
   },
 );
+
+test("back from draft preview goes to listings not wizard", async () => {
+  const user = userEvent.setup();
+  seedSession();
+  seedListing(completeListing({ title: "Черновик для назад" }));
+
+  render(
+    <SessionProvider>
+      <MemoryRouter
+        initialEntries={[
+          "/listings",
+          `/listings/${LISTING_ID}/edit?step=6`,
+          `/listings/${LISTING_ID}/preview`,
+        ]}
+        initialIndex={2}
+      >
+        <AllListingsProvider>
+          <Routes>
+            <Route path="/listings" element={<ListingsPage />} />
+            <Route
+              path="/listings/:id/edit"
+              element={<div data-testid="edit-page">Мастер редактирования</div>}
+            />
+            <Route
+              path="/listings/:id/preview"
+              element={<ListingPreviewPage />}
+            />
+          </Routes>
+        </AllListingsProvider>
+      </MemoryRouter>
+    </SessionProvider>,
+  );
+
+  expect(
+    await screen.findByRole("heading", { name: "Создание объявления" }),
+  ).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Назад" }));
+
+  expect(
+    await screen.findByRole("heading", { name: "Мои объявления" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByTestId("edit-page")).not.toBeInTheDocument();
+  expect(screen.queryByText("Мастер редактирования")).not.toBeInTheDocument();
+});
+
+test("back from preview restores listings tab from location state", async () => {
+  const user = userEvent.setup();
+  seedSession();
+  seedAllListingsRow({
+    id: LISTING_ID,
+    title: "Опубликованная студия",
+    address: "Москва, ул. Садовая 10",
+    housingType: "apartment",
+    status: "published",
+  });
+  seedListing(
+    completeListing({
+      status: "published",
+      title: "Опубликованная студия",
+    }),
+  );
+
+  render(
+    <SessionProvider>
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: `/listings/${LISTING_ID}/preview`,
+            state: { fromTab: "published" },
+          },
+        ]}
+      >
+        <AllListingsProvider>
+          <Routes>
+            <Route path="/listings" element={<ListingsPage />} />
+            <Route
+              path="/listings/:id/preview"
+              element={<ListingPreviewPage />}
+            />
+          </Routes>
+        </AllListingsProvider>
+      </MemoryRouter>
+    </SessionProvider>,
+  );
+
+  expect(await screen.findByRole("heading", { name: "Объявление" })).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Назад" }));
+
+  expect(
+    await screen.findByRole("heading", { name: "Мои объявления" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Опубликованы" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+});

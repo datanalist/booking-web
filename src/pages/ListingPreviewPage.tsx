@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSession } from "../app/session";
 import type { Listing } from "../api/types";
 import {
@@ -9,6 +9,7 @@ import {
   ListingPreviewHeader,
   ListingPreviewView,
   listingTableStatusFromApi,
+  type ListingPreviewLocationState,
   ModerationSentDialog,
   PublishAnnouncementDialog,
   resolveListingForPreview,
@@ -17,13 +18,17 @@ import {
   useAllListings,
 } from "../features/listings";
 import { firstInvalidStep } from "../lib/canSubmit";
-import type { ListingsLocationState } from "../lib/listingTabs";
+import {
+  isListingTabId,
+  type ListingsLocationState,
+} from "../lib/listingTabs";
 
 export function ListingPreviewPage() {
   const { listings, session } = useSession();
   const { items, upsert, remove: removeFromTable, setStatus } = useAllListings();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [listing, setListing] = useState<Listing | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moderationOpen, setModerationOpen] = useState(false);
@@ -87,14 +92,9 @@ export function ListingPreviewPage() {
   }
 
   function onBack(): void {
-    if (!listing) {
-      return;
-    }
-    if (listing.status === "draft") {
-      navigate(`/listings/${listing.id}/edit?step=6`);
-      return;
-    }
-    goToListings();
+    const previewState = location.state as ListingPreviewLocationState | null;
+    const fromTab = previewState?.fromTab;
+    goToListings(isListingTabId(fromTab) ? fromTab : undefined);
   }
 
   async function onSubmit(): Promise<void> {
