@@ -1,5 +1,6 @@
 import { EmptyState } from "../../../ui/EmptyState";
 import type { BookingEmptyCopy } from "../bookingEmptyCopy";
+import { BookingsEmptyIllustration } from "./BookingsEmptyIllustration";
 
 type BookingsEmptyCardProps = {
   copy: BookingEmptyCopy;
@@ -11,15 +12,7 @@ export function BookingsEmptyCard({ copy }: BookingsEmptyCardProps) {
       <EmptyState
         title={copy.title}
         description={copy.description}
-        illustration={
-          <img
-            src="/bookings-empty.svg"
-            alt=""
-            width={172}
-            height={160}
-            className="mb-0"
-          />
-        }
+        illustration={<BookingsEmptyIllustration />}
       />
     </div>
   );
