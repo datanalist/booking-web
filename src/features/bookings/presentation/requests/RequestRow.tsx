@@ -1,6 +1,6 @@
-import { Mail } from "lucide-react";
 import type { BookingRequest } from "../../domain/BookingRequest";
 import { Button } from "../../../../ui/Button";
+import { ChatEnvelopeIcon } from "./ChatEnvelopeIcon";
 
 type RequestRowProps = {
   request: BookingRequest;
@@ -10,8 +10,8 @@ type RequestRowProps = {
 
 export function RequestRow({ request, onAccept, onReject }: RequestRowProps) {
   return (
-    <tr className="h-[112px] border-b border-[rgba(26,27,29,0.08)]">
-      <td className="px-4 py-3 align-middle">
+    <tr className="h-28 border-b border-amber-400/20 bg-white">
+      <td className="w-56 px-5 align-middle">
         <div className="flex items-center gap-3">
           <img
             src={request.guestAvatarUrl}
@@ -21,26 +21,26 @@ export function RequestRow({ request, onAccept, onReject }: RequestRowProps) {
             className="size-12 shrink-0 rounded-full object-cover"
           />
           <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-[16px] font-bold leading-[1.2] text-[var(--color-ink)]">
+            <span className="truncate text-sm text-[var(--color-ink)]">
               {request.guestName}
             </span>
-            <span className="truncate text-[14px] leading-[1.4] text-[#525353]">
+            <span className="truncate text-xs text-neutral-600">
               {request.guestPhone}
             </span>
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 align-middle">
+      <td className="w-16 px-2 align-middle">
         <button
           type="button"
           aria-label={`Чат с ${request.guestName}`}
-          className="inline-flex size-10 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-[var(--color-accent)]"
+          className="inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-black"
           onClick={() => undefined}
         >
-          <Mail className="size-5" aria-hidden />
+          <ChatEnvelopeIcon />
         </button>
       </td>
-      <td className="px-4 py-3 align-middle">
+      <td className="w-72 px-5 align-middle">
         <div className="flex items-center gap-3">
           <img
             src={request.listingPhotoUrl}
@@ -50,22 +50,22 @@ export function RequestRow({ request, onAccept, onReject }: RequestRowProps) {
             className="size-12 shrink-0 rounded-lg object-cover"
           />
           <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-[16px] font-bold leading-[1.2] text-[var(--color-ink)]">
+            <span className="truncate text-sm text-[var(--color-ink)]">
               {request.listingTitle}
             </span>
-            <span className="truncate text-[14px] leading-[1.4] text-[#525353]">
+            <span className="truncate text-xs text-neutral-600">
               {request.listingAddress}
             </span>
           </div>
         </div>
       </td>
-      <td className="whitespace-nowrap px-4 py-3 align-middle text-[16px] text-[var(--color-ink)]">
+      <td className="w-36 whitespace-nowrap px-5 align-middle text-sm text-[var(--color-ink)]">
         {request.datesLabel}
       </td>
-      <td className="whitespace-nowrap px-4 py-3 align-middle text-[16px] font-bold text-[var(--color-ink)]">
+      <td className="w-28 whitespace-nowrap px-5 align-middle text-sm text-[var(--color-ink)]">
         {request.priceLabel}
       </td>
-      <td className="px-4 py-3 align-middle">
+      <td className="px-5 align-middle">
         <div className="flex items-center justify-end gap-2">
           <Button size="sm" onClick={() => onAccept(request.id)}>
             Принять

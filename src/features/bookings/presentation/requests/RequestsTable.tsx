@@ -13,16 +13,16 @@ export function RequestsTable({
   onReject,
 }: RequestsTableProps) {
   return (
-    <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-[rgba(251,192,40,0.17)] bg-white">
+    <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-amber-400/20 bg-white">
       <table className="w-full min-w-[960px] border-collapse font-sans">
         <thead>
-          <tr className="bg-[rgba(248,138,42,0.12)] text-left text-[14px] font-bold text-[var(--color-ink)]">
-            <th className="px-4 py-3 font-bold">ФИО</th>
-            <th className="px-4 py-3 font-bold">Чат</th>
-            <th className="px-4 py-3 font-bold">Жилье</th>
-            <th className="px-4 py-3 font-bold">Даты</th>
-            <th className="px-4 py-3 font-bold">Стоимость</th>
-            <th className="px-4 py-3 font-bold" aria-label="Действия" />
+          <tr className="h-12 bg-amber-400/20 text-left text-sm font-bold text-[var(--color-ink)]">
+            <th className="w-56 px-5 font-bold opacity-90">ФИО</th>
+            <th className="w-16 px-2 font-bold opacity-90">Чат</th>
+            <th className="w-72 px-5 font-bold opacity-90">Жилье</th>
+            <th className="w-36 px-5 font-bold opacity-90">Даты</th>
+            <th className="w-28 px-5 font-bold opacity-90">Стоимость</th>
+            <th className="px-5 font-bold" aria-label="Действия" />
           </tr>
         </thead>
         <tbody>
