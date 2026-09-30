@@ -58,7 +58,7 @@ test("store row wins status title address type over divergent API listing", () =
   expect(resolved?.title).toBe(row.title);
   expect(resolved?.address).toBe(row.address);
   expect(resolved?.housingType).toBe("house");
-  expect(resolved?.photos[0]).toBe(row.coverUrl);
+  expect(resolved?.photos).toEqual(["/api-photo.jpg"]);
   expect(resolved?.description).not.toBe("test");
 });
 
@@ -87,7 +87,7 @@ test("unpublished store row ignores moderation API details", () => {
   expect(resolved?.title).toBe(row.title);
   expect(resolved?.address).toBe(row.address);
   expect(resolved?.description).not.toBe("Крутая");
-  expect(resolved?.photos[0]).toBe(row.coverUrl);
+  expect(resolved?.photos).toEqual(["/api-photo.jpg"]);
 });
 
 test("aligned API listing supplies own detail fields", () => {
@@ -104,7 +104,7 @@ test("aligned API listing supplies own detail fields", () => {
   expect(resolved?.title).toBe(row.title);
   expect(resolved?.description).toBe("Своё описание");
   expect(resolved?.amenityIds).toEqual(["wifi", "tv"]);
-  expect(resolved?.photos[0]).toBe(row.coverUrl);
+  expect(resolved?.photos).toEqual(["/api-photo.jpg"]);
 });
 
 test("without table row returns API listing as-is", () => {
@@ -114,4 +114,23 @@ test("without table row returns API listing as-is", () => {
 
 test("without table row and API returns null", () => {
   expect(resolveListingForPreview(undefined, null, OWNER)).toBeNull();
+});
+
+test("photos keep the exact saved order even when the row cover is stale", () => {
+  const row = tableRow({ status: "published", coverUrl: "/a.jpg" });
+  const api = apiListing({
+    status: "moderation",
+    photos: ["/c.jpg", "/a.jpg", "/b.jpg", "/d.jpg", "/e.jpg"],
+  });
+  const resolved = resolveListingForPreview(row, api, OWNER);
+
+  expect(resolved?.photos).toEqual(["/c.jpg", "/a.jpg", "/b.jpg", "/d.jpg", "/e.jpg"]);
+});
+
+test("mock row without own photos uses row cover first and demo photos after", () => {
+  const row = tableRow({ coverUrl: "/listings/cover-house.jpg" });
+  const resolved = resolveListingForPreview(row, null, OWNER);
+
+  expect(resolved?.photos[0]).toBe("/listings/cover-house.jpg");
+  expect(resolved?.photos.length).toBeGreaterThan(4);
 });
