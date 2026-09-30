@@ -8,34 +8,52 @@ type CancelledBookingRowProps = {
 
 export function CancelledBookingRow({ booking }: CancelledBookingRowProps) {
   return (
-    <tr className="h-[112px] border-b border-[#f0e6d8] bg-white last:border-b-0">
-      <td className="px-4 py-3 align-middle">
-        <div className="flex flex-col gap-1">
-          <span className="text-[16px] font-bold leading-[1.3] text-[var(--color-ink)]">
-            {booking.guestName}
-          </span>
-          <span className="text-[14px] leading-[1.4] text-[#525353]">
-            {booking.guestPhone}
-          </span>
+    <tr className="border-b border-amber-400/20 bg-white last:border-b-0">
+      <td className="w-56 px-5 py-3 align-middle">
+        <div className="flex items-center gap-3">
+          <img
+            src={booking.guestAvatarUrl}
+            alt=""
+            width={48}
+            height={48}
+            className="size-12 shrink-0 rounded-full object-cover"
+          />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate text-sm font-semibold leading-5 text-black">
+              {booking.guestName}
+            </span>
+            <span className="truncate text-sm leading-5 text-neutral-600">
+              {booking.guestPhone}
+            </span>
+          </div>
         </div>
       </td>
-      <td className="px-4 py-3 align-middle">
+      <td className="w-16 px-5 py-3 align-middle">
         <CancelledBookingChatIcon />
       </td>
-      <td className="px-4 py-3 align-middle">
-        <div className="flex flex-col gap-1">
-          <span className="text-[16px] font-bold leading-[1.3] text-[var(--color-ink)]">
-            {booking.housingTitle}
-          </span>
-          <span className="text-[14px] leading-[1.4] text-[#525353]">
-            {booking.housingAddress}
-          </span>
+      <td className="w-72 px-5 py-3 align-middle">
+        <div className="flex items-center gap-3">
+          <img
+            src={booking.housingPhotoUrl}
+            alt=""
+            width={48}
+            height={48}
+            className="size-12 shrink-0 rounded-lg object-cover"
+          />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate text-sm font-semibold leading-5 text-black">
+              {booking.housingTitle}
+            </span>
+            <span className="truncate text-sm leading-5 text-neutral-600">
+              {booking.housingAddress}
+            </span>
+          </div>
         </div>
       </td>
-      <td className="whitespace-nowrap px-4 py-3 align-middle text-[16px] text-[var(--color-ink)]">
+      <td className="w-36 whitespace-nowrap px-5 py-3 align-middle text-sm leading-5 text-black">
         {booking.datesLabel}
       </td>
-      <td className="whitespace-nowrap px-4 py-3 align-middle text-[16px] font-bold text-[var(--color-ink)]">
+      <td className="w-28 whitespace-nowrap px-5 py-3 align-middle text-sm font-semibold leading-5 text-black">
         {formatRub(booking.price)}
       </td>
     </tr>
