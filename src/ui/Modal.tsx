@@ -5,9 +5,17 @@ type ModalProps = {
   title: string;
   children: ReactNode;
   onClose: () => void;
+  /** Extra classes for the dialog card (width, shadow). */
+  className?: string;
 };
 
-export function Modal({ open, title, children, onClose }: ModalProps) {
+export function Modal({
+  open,
+  title,
+  children,
+  onClose,
+  className = "",
+}: ModalProps) {
   if (!open) {
     return null;
   }
@@ -22,7 +30,7 @@ export function Modal({ open, title, children, onClose }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-lg"
+        className={`relative w-full max-w-md rounded-xl bg-white p-6 shadow-lg ${className}`.trim()}
         onClick={(event) => event.stopPropagation()}
       >
         <button
