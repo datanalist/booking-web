@@ -14,23 +14,36 @@ import { ListingWizardPage } from "./ListingWizardPage";
 const OWNER_ID = "owner-photo-upload-1";
 const LISTING_ID = "photo-upload-listing-1";
 
+let uploadSeq = 0;
+
 vi.mock("../lib/compressImage", () => ({
   compressImage: vi.fn(async (file: File) => {
     if (file.name.startsWith("bad")) {
       throw new Error("compress failed");
     }
-    return `data:image/jpeg;base64,${file.name}`;
+    return new Blob([file.name], { type: "image/jpeg" });
   }),
+}));
+
+vi.mock("../features/listings/uploadPhoto", () => ({
+  uploadPhoto: vi.fn(async () => {
+    uploadSeq += 1;
+    const n = String(uploadSeq).padStart(12, "0");
+    return `/data/550e8400-e29b-41d4-a716-${n}.jpg`;
+  }),
+  PhotoUploadError: class PhotoUploadError extends Error {},
 }));
 
 afterEach(() => {
   cleanup();
   localStorage.clear();
   vi.clearAllMocks();
+  uploadSeq = 0;
 });
 
 beforeEach(() => {
   localStorage.clear();
+  uploadSeq = 0;
 });
 
 function seedSession(): void {
@@ -153,6 +166,11 @@ test("after successful photo upload Next is enabled and opens amenities step", a
       "Укажите удобства и дополнительные характеристики жилья",
     ),
   ).toBeInTheDocument();
+
+  const raw = localStorage.getItem(LISTINGS_KEY) ?? "";
+  expect(raw).not.toContain("base64");
+  expect(raw).not.toContain("data:image");
+  expect(raw).toContain("/data/");
 });
 
 test("one failed file does not block others and Next stays available with enough photos", async () => {
@@ -193,7 +211,7 @@ test("loading indicator appears during compress and clears after", async () => {
   });
   vi.mocked(compressImage).mockImplementation(async (file: File) => {
     await compressGate;
-    return `data:image/jpeg;base64,${file.name}`;
+    return new Blob([file.name], { type: "image/jpeg" });
   });
 
   renderWizardStep2();

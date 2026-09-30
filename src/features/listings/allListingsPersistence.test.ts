@@ -106,6 +106,22 @@ test("writeAllListingsToStorage omits data-URL covers from payload", () => {
   ]);
 });
 
+test("writeAllListingsToStorage keeps /data cover urls", () => {
+  const storage = new MemoryStorage();
+  const row: ListingTableRow = {
+    id: "with-data-path",
+    title: "Студия",
+    address: "Москва",
+    housingType: "studio",
+    status: "draft",
+    coverUrl: "/data/550e8400-e29b-41d4-a716-446655440000.jpg",
+  };
+  writeAllListingsToStorage(storage, [row]);
+  expect(readAllListingsFromStorage(storage)?.[0]?.coverUrl).toBe(
+    "/data/550e8400-e29b-41d4-a716-446655440000.jpg",
+  );
+});
+
 test("writeAllListingsToStorage keeps path covers", () => {
   const storage = new MemoryStorage();
   writeAllListingsToStorage(storage, [MOCK_ALL_LISTINGS[0]!]);
