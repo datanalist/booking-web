@@ -12,8 +12,8 @@ export function ListingPreviewPriceCard({
   base,
 }: ListingPreviewPriceCardProps): ReactElement {
   return (
-    <div className="flex min-w-[240px] flex-1 flex-col gap-2 rounded-lg border border-solid border-amber-400/20 bg-amber-400/5 p-3 text-[14px] leading-[1.4]">
-      <p className="m-0 text-[#525353]">{label}</p>
+    <div className="flex w-80 shrink-0 flex-col gap-2 rounded-lg border border-solid border-amber-400/20 bg-amber-400/5 p-3 text-sm leading-[1.4]">
+      <p className="m-0 text-neutral-600">{label}</p>
       <div className="flex flex-col gap-1 text-[var(--color-ink)]">
         <div className="flex items-center justify-between gap-3">
           <span>Стоимость для клиента:</span>

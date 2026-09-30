@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { createListingsApi } from "./listings";
 import { LISTINGS_KEY } from "./keys";
 import { emptyDraft } from "../lib/emptyDraft";
@@ -112,4 +112,23 @@ test("ensureForEdit creates draft with given id and is idempotent", async () => 
     housingType: "apartment",
   });
   expect(again).toEqual(seeded);
+});
+
+test("saveDraft throws QUOTA_EXCEEDED without crashing when setItem fails", async () => {
+  const { api, storage } = setup();
+  const setItem = vi.spyOn(storage, "setItem").mockImplementation(() => {
+    throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
+  });
+
+  await expect(
+    api.saveDraft({
+      ...emptyDraft("u1"),
+      title: "A",
+      address: "B",
+      housingType: "apartment",
+      description: "C",
+    }),
+  ).rejects.toMatchObject({ code: "QUOTA_EXCEEDED" });
+
+  setItem.mockRestore();
 });

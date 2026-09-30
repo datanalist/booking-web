@@ -10,6 +10,9 @@ import {
   type IsoDate,
 } from "../../lib/isoDate";
 import { LISTING_PREVIEW_DEMO } from "./listingPreviewDemo";
+import { LISTING_PREVIEW_DEMO_PHOTOS } from "./listingPreviewDemoPhotos";
+import type { ListingTableStatus } from "./listingTableStatus";
+import { listingTableStatusFromApi } from "./listingTableStatusFromApi";
 
 export type ListingPreviewPriceTier = {
   label: string;
@@ -17,6 +20,7 @@ export type ListingPreviewPriceTier = {
 };
 
 export type ListingPreviewDisplay = {
+  status: ListingTableStatus;
   title: string;
   address: string;
   housingType: HousingType;
@@ -115,12 +119,18 @@ export function toListingPreviewDisplay(listing: Listing): ListingPreviewDisplay
       ? listing.priceFrom28
       : LISTING_PREVIEW_DEMO.priceFrom28;
 
+  const photos =
+    listing.photos.length > 0
+      ? listing.photos
+      : [...LISTING_PREVIEW_DEMO_PHOTOS];
+
   return {
+    status: listingTableStatusFromApi(listing.status),
     title: pickText(listing.title, LISTING_PREVIEW_DEMO.title),
     address: pickText(listing.address, LISTING_PREVIEW_DEMO.address),
     housingType: listing.housingType || LISTING_PREVIEW_DEMO.housingType,
     description: pickText(listing.description, LISTING_PREVIEW_DEMO.description),
-    photos: listing.photos,
+    photos,
     amenityIds: useDemoAmenities
       ? [...LISTING_PREVIEW_DEMO.amenityIds]
       : listing.amenityIds,

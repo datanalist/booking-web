@@ -7,6 +7,7 @@ import {
   PublishAnnouncementDialog,
   UnpublishAnnouncementDialog,
   useAllListings,
+  type ListingPreviewLocationState,
   type ListingRowMenuActionId,
   type ListingTableRow,
 } from "../features/listings";
@@ -67,7 +68,8 @@ export function ListingsPage() {
     actionId: ListingRowMenuActionId,
   ): void {
     if (actionId === "edit") {
-      navigate(`/listings/${listingId}/edit?step=1`);
+      const state: ListingPreviewLocationState = { fromTab: tab };
+      navigate(`/listings/${listingId}/edit?step=1`, { state });
       return;
     }
     if (actionId === "calendar") {
@@ -141,6 +143,10 @@ export function ListingsPage() {
         openMenuId={openMenuId}
         onOpenMenuChange={setOpenMenuId}
         onMenuAction={handleMenuAction}
+        onOpenListing={(listingId) => {
+          const state: ListingPreviewLocationState = { fromTab: tab };
+          navigate(`/listings/${listingId}/preview`, { state });
+        }}
       />
     );
   }
@@ -155,7 +161,13 @@ export function ListingsPage() {
           <Button size="sm" variant="outlined">
             Импорт из TravelLine
           </Button>
-          <Button size="sm" onClick={() => navigate("/listings/new")}>
+          <Button
+            size="sm"
+            onClick={() => {
+              const state: ListingPreviewLocationState = { fromTab: tab };
+              navigate("/listings/new", { state });
+            }}
+          >
             Создать объявление
           </Button>
         </div>

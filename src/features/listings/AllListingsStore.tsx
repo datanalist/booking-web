@@ -5,9 +5,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { MOCK_ALL_LISTINGS } from "./mockAllListings";
 import type { ListingTableRow } from "./ListingTableRow";
 import type { ListingTableStatus } from "./listingTableStatus";
+import { loadAllListingsInitial } from "./loadAllListingsInitial";
+import { writeAllListingsToStorage } from "./writeAllListingsToStorage";
 
 type AllListingsStoreValue = {
   items: ListingTableRow[];
@@ -23,36 +24,61 @@ const AllListingsStoreContext = createContext<AllListingsStoreValue | null>(
 
 type AllListingsProviderProps = {
   children: ReactNode;
+  /** Подмена Storage в тестах; по умолчанию localStorage. */
+  storage?: Storage;
 };
 
-/** In-memory список «Мои объявления» — живёт выше роутов, чтобы edit/back не сбрасывал удаления и статусы. */
-export function AllListingsProvider({ children }: AllListingsProviderProps) {
-  const [items, setItems] = useState<ListingTableRow[]>(() => [
-    ...MOCK_ALL_LISTINGS,
-  ]);
+function persist(
+  storage: Storage,
+  next: ListingTableRow[],
+): ListingTableRow[] {
+  writeAllListingsToStorage(storage, next);
+  return next;
+}
+
+/** Обновлённая строка целиком заменяет поля; без `coverUrl` старая обложка не остаётся. */
+function mergeRow(current: ListingTableRow, next: ListingTableRow): ListingTableRow {
+  const { coverUrl: _staleCover, ...rest } = current;
+  return { ...rest, ...next };
+}
+
+/** Список «Мои объявления» с персистентностью в Storage (статусы и upsert переживают reload). */
+export function AllListingsProvider({
+  children,
+  storage = localStorage,
+}: AllListingsProviderProps) {
+  const [items, setItems] = useState<ListingTableRow[]>(() =>
+    loadAllListingsInitial(storage),
+  );
 
   const value = useMemo(
     (): AllListingsStoreValue => ({
       items,
       remove: (id) => {
-        setItems((prev) => prev.filter((item) => item.id !== id));
+        setItems((prev) => persist(storage, prev.filter((item) => item.id !== id)));
       },
       setStatus: (id, status) => {
         setItems((prev) =>
-          prev.map((item) => (item.id === id ? { ...item, status } : item)),
+          persist(
+            storage,
+            prev.map((item) => (item.id === id ? { ...item, status } : item)),
+          ),
         );
       },
       upsert: (row) => {
         setItems((prev) => {
           const index = prev.findIndex((item) => item.id === row.id);
           if (index < 0) {
-            return [row, ...prev];
+            return persist(storage, [row, ...prev]);
           }
-          return prev.map((item, i) => (i === index ? { ...item, ...row } : item));
+          return persist(
+            storage,
+            prev.map((item, i) => (i === index ? mergeRow(item, row) : item)),
+          );
         });
       },
     }),
-    [items],
+    [items, storage],
   );
 
   return (

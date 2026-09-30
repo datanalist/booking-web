@@ -11,6 +11,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "^1.1.23",
     "lucide-react": "^0.544.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -28,6 +29,7 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.1",
+    "@types/node": "^22.15.29"
   }
 }

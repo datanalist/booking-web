@@ -1,6 +1,8 @@
 /** Единая причина изменения: UI шага «2. Фото» мастера создания объявления. */
 import { useRef, type DragEvent } from "react";
 import { PHOTO_MAX, PHOTO_MIN } from "../config";
+import type { PhotoUploadStatus } from "../features/listings";
+import { isWizardPhotosNextDisabled } from "../features/listings";
 import { dataTransferHasFiles } from "../lib/dataTransferHasFiles";
 import { imageFileListFromDataTransfer } from "../lib/imageFileListFromDataTransfer";
 import { reorderPhotos } from "../lib/reorderPhotos";
@@ -11,6 +13,7 @@ type WizardPhotosStepProps = {
   photos: string[];
   error?: string;
   pending?: boolean;
+  uploadStatus: PhotoUploadStatus;
   onPhotosChange: (photos: string[]) => void;
   onFilesSelected: (files: FileList) => void;
   onBack: () => void;
@@ -21,6 +24,7 @@ export function WizardPhotosStep({
   photos,
   error,
   pending = false,
+  uploadStatus,
   onPhotosChange,
   onFilesSelected,
   onBack,
@@ -28,9 +32,16 @@ export function WizardPhotosStep({
 }: WizardPhotosStepProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dragFromIndexRef = useRef<number | null>(null);
-  const canAdd = photos.length < PHOTO_MAX;
-  const canProceed = photos.length >= PHOTO_MIN;
+  const uploading = uploadStatus.kind === "loading";
+  const canAdd = photos.length < PHOTO_MAX && !uploading;
+  const nextDisabled = isWizardPhotosNextDisabled({
+    photoCount: photos.length,
+    minPhotos: PHOTO_MIN,
+    savePending: pending,
+  });
   const slots = Array.from({ length: PHOTO_MAX }, (_, index) => photos[index] ?? null);
+  const displayError =
+    error ?? (uploadStatus.kind === "error" ? uploadStatus.message : undefined);
 
   function openPicker(): void {
     if (!canAdd) {
@@ -114,12 +125,24 @@ export function WizardPhotosStep({
           ))}
         </div>
 
-        {error ? <p className="m-0 text-[14px] text-red-600">{error}</p> : null}
+        {uploading ? (
+          <p
+            className="m-0 text-[14px] text-[#525353]"
+            role="status"
+            aria-live="polite"
+          >
+            Обработка фото…
+          </p>
+        ) : null}
+
+        {displayError ? (
+          <p className="m-0 text-[14px] text-red-600">{displayError}</p>
+        ) : null}
 
         <div className="inline-flex items-start justify-start gap-5 self-stretch">
           <button
             type="button"
-            disabled={pending}
+            disabled={pending || uploading}
             className="flex-1 cursor-pointer rounded-lg border-0 bg-transparent px-6 py-5 font-sans text-[18px] font-bold text-orange-400 outline outline-1 outline-offset-[-1px] outline-orange-400 disabled:cursor-not-allowed disabled:opacity-40"
             onClick={onBack}
           >
@@ -127,7 +150,7 @@ export function WizardPhotosStep({
           </button>
           <button
             type="button"
-            disabled={pending || !canProceed}
+            disabled={nextDisabled}
             className="flex-1 cursor-pointer rounded-lg border-0 bg-orange-400 px-6 py-5 font-sans text-[18px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
             onClick={onNext}
           >
@@ -141,6 +164,7 @@ export function WizardPhotosStep({
           accept="image/jpeg,image/png,image/webp"
           multiple
           className="hidden"
+          disabled={uploading}
           onChange={(event) => {
             const files = event.target.files;
             if (files && files.length > 0) {

@@ -1,21 +1,19 @@
 import type { ReactElement } from "react";
+import { listingPreviewGalleryTiles } from "./listingPreviewGalleryTiles";
 
 type ListingPreviewGalleryProps = {
   photos: string[];
 };
 
-/** Галерея предпросмотра: большое фото, превью, плитка «+N фото». */
+/** Галерея предпросмотра: главное фото + сетка 2×N миниатюр, плитка «+N фото». */
 export function ListingPreviewGallery({
   photos,
 }: ListingPreviewGalleryProps): ReactElement {
-  const hero = photos[0] ?? null;
-  const thumbs = photos.slice(1, 4);
-  const extraCount = Math.max(0, photos.length - 4);
-  const overlaySrc = photos[4] ?? photos[3] ?? null;
+  const { hero, tiles } = listingPreviewGalleryTiles(photos);
 
   return (
-    <div className="flex w-full max-w-[390px] shrink-0 flex-col gap-3">
-      <div className="relative h-[264px] w-full overflow-hidden rounded-2xl bg-amber-400/10">
+    <div className="flex w-96 shrink-0 flex-col gap-3">
+      <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-amber-400/10">
         {hero ? (
           <img
             src={hero}
@@ -24,33 +22,43 @@ export function ListingPreviewGallery({
           />
         ) : null}
       </div>
-      <div className="flex flex-wrap gap-3">
-        {thumbs.map((src, index) => (
-          <div
-            key={`thumb-${index}`}
-            className="relative size-[calc(50%-6px)] min-h-[120px] min-w-[120px] flex-1 overflow-hidden rounded-xl bg-amber-400/10 sm:size-[189px] sm:flex-none"
-          >
-            <img
-              src={src}
-              alt=""
-              className="absolute inset-0 size-full object-cover"
-            />
-          </div>
-        ))}
-        {extraCount > 0 && overlaySrc ? (
-          <div className="relative flex size-[calc(50%-6px)] min-h-[120px] min-w-[120px] flex-1 items-center justify-center overflow-hidden rounded-xl sm:size-[189px] sm:flex-none">
-            <img
-              src={overlaySrc}
-              alt=""
-              className="absolute inset-0 size-full object-cover"
-            />
-            <div className="absolute inset-0 bg-[rgba(56,80,112,0.6)]" />
-            <p className="relative m-0 text-[16px] leading-[1.45] text-white">
-              +{extraCount} фото
-            </p>
-          </div>
-        ) : null}
-      </div>
+      {tiles.length > 0 ? (
+        <div
+          className="grid grid-cols-2 gap-3"
+          data-testid="listing-preview-thumbs"
+        >
+          {tiles.map((tile, index) =>
+            tile.kind === "photo" ? (
+              <div
+                key={`thumb-${index}`}
+                className="relative aspect-square w-full overflow-hidden rounded-xl bg-amber-400/10"
+              >
+                <img
+                  src={tile.src}
+                  alt=""
+                  className="absolute inset-0 size-full object-cover"
+                />
+              </div>
+            ) : (
+              <div
+                key={`thumb-extra-${index}`}
+                className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl"
+                data-testid="listing-preview-extra-photos"
+              >
+                <img
+                  src={tile.src}
+                  alt=""
+                  className="absolute inset-0 size-full object-cover"
+                />
+                <div className="absolute inset-0 bg-slate-600/60" />
+                <p className="relative m-0 text-base leading-normal text-white">
+                  +{tile.count} фото
+                </p>
+              </div>
+            ),
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
