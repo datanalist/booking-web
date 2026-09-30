@@ -8,6 +8,8 @@ import {
   listingTableRowFromListing,
   ListingPreviewHeader,
   ListingPreviewView,
+  listingsLocationStateFromOrigin,
+  parseListingOriginState,
   listingTableStatusFromApi,
   type ListingPreviewLocationState,
   ModerationSentDialog,
@@ -18,10 +20,7 @@ import {
   useAllListings,
 } from "../features/listings";
 import { firstInvalidStep } from "../lib/canSubmit";
-import {
-  isListingTabId,
-  type ListingsLocationState,
-} from "../lib/listingTabs";
+import type { ListingsLocationState } from "../lib/listingTabs";
 
 export function ListingPreviewPage() {
   const { listings, session } = useSession();
@@ -92,9 +91,14 @@ export function ListingPreviewPage() {
   }
 
   function onBack(): void {
-    const previewState = location.state as ListingPreviewLocationState | null;
-    const fromTab = previewState?.fromTab;
-    goToListings(isListingTabId(fromTab) ? fromTab : undefined);
+    goToListings(listingsLocationStateFromOrigin(location.state)?.tab);
+  }
+
+  function navigateToEdit(listingId: string, step: number): void {
+    const state: ListingPreviewLocationState = parseListingOriginState(
+      location.state,
+    );
+    navigate(`/listings/${listingId}/edit?step=${step}`, { state });
   }
 
   async function onSubmit(): Promise<void> {
@@ -104,7 +108,7 @@ export function ListingPreviewPage() {
     const invalid = firstInvalidStep(listing);
     if (invalid !== null) {
       setSubmitError(`Заполните шаг ${invalid}`);
-      navigate(`/listings/${listing.id}/edit?step=${invalid}`);
+      navigateToEdit(listing.id, invalid);
       return;
     }
     setPending(true);
@@ -194,7 +198,7 @@ export function ListingPreviewPage() {
         status={tableStatus}
         pending={pending}
         onBack={onBack}
-        onEdit={() => navigate(`/listings/${listing.id}/edit?step=1`)}
+        onEdit={() => navigateToEdit(listing.id, 1)}
         onDelete={() => setDeleteOpen(true)}
         onArchive={() => {
           void onArchive();

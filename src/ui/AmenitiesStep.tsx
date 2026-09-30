@@ -1,5 +1,4 @@
 /** Единая причина изменения: UI шага «3. Удобства» мастера объявления по макету. */
-import { ChevronLeft } from "lucide-react";
 import type { AmenityId, ExtraAmenityId } from "../api/types";
 import { AMENITY_LABELS, EXTRA_AMENITY_LABELS } from "../config";
 import {
@@ -8,6 +7,7 @@ import {
 } from "../lib/amenityIconMap";
 import { AmenityChip } from "./AmenityChip";
 import { Button } from "./Button";
+import { WizardBackButton } from "./WizardBackButton";
 
 const STEP_LABELS = [
   "Описание",
@@ -24,6 +24,9 @@ type AmenitiesStepProps = {
   pending: boolean;
   onToggleAmenity: (id: AmenityId) => void;
   onToggleExtra: (id: ExtraAmenityId) => void;
+  /** Стрелка в шапке: выход в список объявлений. */
+  onExit: () => void;
+  /** Кнопка «Вернуться»: предыдущий шаг мастера. */
   onBack: () => void;
   onNext: () => void;
 };
@@ -34,20 +37,14 @@ export function AmenitiesStep({
   pending,
   onToggleAmenity,
   onToggleExtra,
+  onExit,
   onBack,
   onNext,
 }: AmenitiesStepProps) {
   return (
     <div className="flex h-full min-h-0 flex-col gap-8 overflow-auto bg-[rgba(251,192,40,0.06)] p-8 font-sans">
       <header className="flex items-center gap-5">
-        <button
-          type="button"
-          aria-label="Назад"
-          onClick={onBack}
-          className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[30px] border border-solid border-[#ffe4b8] bg-white p-2"
-        >
-          <ChevronLeft className="size-6 text-[var(--color-ink)]" strokeWidth={1.75} />
-        </button>
+        <WizardBackButton disabled={pending} onClick={onExit} />
         <h1 className="m-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
           Создание объявления
         </h1>
