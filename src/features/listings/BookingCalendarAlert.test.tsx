@@ -76,7 +76,6 @@ test("кнопки гостя и навигации месяца вызываю�
   const onDeleteBooking = vi.fn();
   const onPrevMonth = vi.fn();
   const onNextMonth = vi.fn();
-  const onAvailabilityChange = vi.fn();
 
   render(
     <BookingCalendarAlert
@@ -86,7 +85,6 @@ test("кнопки гостя и навигации месяца вызываю�
       onDeleteBooking={onDeleteBooking}
       onPrevMonth={onPrevMonth}
       onNextMonth={onNextMonth}
-      onAvailabilityChange={onAvailabilityChange}
     />,
   );
 
@@ -96,10 +94,12 @@ test("кнопки гостя и навигации месяца вызываю�
   await user.click(screen.getByRole("button", { name: "Следующий месяц" }));
   expect(onNextMonth).toHaveBeenCalledTimes(1);
 
-  await user.click(
-    screen.getByRole("switch", { name: "доступно для бронирования" }),
-  );
-  expect(onAvailabilityChange).toHaveBeenCalledWith(false);
+  const availability = screen.getByRole("switch", {
+    name: "доступно для бронирования",
+  });
+  await user.click(availability);
+  expect(availability).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByText("15 декабря")).toBeInTheDocument();
 
   await user.click(
     screen.getByRole("button", { name: "Написать Анна Иваненко" }),

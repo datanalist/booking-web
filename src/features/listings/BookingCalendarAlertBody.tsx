@@ -3,11 +3,12 @@ import type { BookingCalendarDemo } from "./bookingCalendarDemo";
 import { BookingCalendarGuestCard } from "./BookingCalendarGuestCard";
 import { BookingCalendarLegend } from "./BookingCalendarLegend";
 import { BookingCalendarMonthCard } from "./BookingCalendarMonthCard";
+import type { BookingCalendarView } from "./BookingCalendarView";
 
 type BookingCalendarAlertBodyProps = {
   demo: BookingCalendarDemo;
-  available: boolean;
-  onAvailableChange: (available: boolean) => void;
+  view: BookingCalendarView;
+  onSelectDay: (day: number) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onMessageGuest: (guestId: string) => void;
@@ -17,8 +18,8 @@ type BookingCalendarAlertBodyProps = {
 /** Тело алерта: календарь слева, объявление и гости справа. */
 export function BookingCalendarAlertBody({
   demo,
-  available,
-  onAvailableChange,
+  view,
+  onSelectDay,
   onPrevMonth,
   onNextMonth,
   onMessageGuest,
@@ -28,10 +29,8 @@ export function BookingCalendarAlertBody({
     <div className="flex items-start gap-8">
       <div className="flex flex-col gap-6">
         <BookingCalendarMonthCard
-          monthLabel={demo.monthLabel}
-          selectedDayLabel={demo.selectedDayLabel}
-          available={available}
-          onAvailableChange={onAvailableChange}
+          view={view}
+          onSelectDay={onSelectDay}
           onPrevMonth={onPrevMonth}
           onNextMonth={onNextMonth}
         />

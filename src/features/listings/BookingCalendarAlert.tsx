@@ -5,6 +5,11 @@ import {
   type BookingCalendarDemo,
 } from "./bookingCalendarDemo";
 import { BookingCalendarAlertBody } from "./BookingCalendarAlertBody";
+import {
+  INITIAL_BOOKING_CALENDAR_VIEW,
+  type BookingCalendarView,
+} from "./BookingCalendarView";
+import { shiftBookingCalendarView } from "./shiftBookingCalendarView";
 
 const CARD_SHADOW =
   "shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08),0px_8px_8px_-4px_rgba(16,24,40,0.03)]";
@@ -15,7 +20,6 @@ export type BookingCalendarAlertProps = {
   onCancel?: () => void;
   onMessageGuest?: (guestId: string) => void;
   onDeleteBooking?: (guestId: string) => void;
-  onAvailabilityChange?: (available: boolean) => void;
   onPrevMonth?: () => void;
   onNextMonth?: () => void;
   demo?: BookingCalendarDemo;
@@ -31,12 +35,13 @@ export function BookingCalendarAlert({
   onCancel,
   onMessageGuest,
   onDeleteBooking,
-  onAvailabilityChange,
   onPrevMonth,
   onNextMonth,
   demo = BOOKING_CALENDAR_DEMO,
 }: BookingCalendarAlertProps): ReactElement {
-  const [available, setAvailable] = useState(true);
+  const [view, setView] = useState<BookingCalendarView>(
+    INITIAL_BOOKING_CALENDAR_VIEW,
+  );
 
   function handleOpenChange(next: boolean): void {
     onOpenChange(next);
@@ -45,9 +50,18 @@ export function BookingCalendarAlert({
     }
   }
 
-  function handleAvailableChange(next: boolean): void {
-    setAvailable(next);
-    onAvailabilityChange?.(next);
+  function handlePrevMonth(): void {
+    setView((current) => shiftBookingCalendarView(current, -1));
+    onPrevMonth?.();
+  }
+
+  function handleNextMonth(): void {
+    setView((current) => shiftBookingCalendarView(current, 1));
+    onNextMonth?.();
+  }
+
+  function handleSelectDay(day: number): void {
+    setView((current) => ({ month: current.month, selectedDay: day }));
   }
 
   return (
@@ -66,10 +80,10 @@ export function BookingCalendarAlert({
           </AlertDialog.Description>
           <BookingCalendarAlertBody
             demo={demo}
-            available={available}
-            onAvailableChange={handleAvailableChange}
-            onPrevMonth={() => onPrevMonth?.()}
-            onNextMonth={() => onNextMonth?.()}
+            view={view}
+            onSelectDay={handleSelectDay}
+            onPrevMonth={handlePrevMonth}
+            onNextMonth={handleNextMonth}
             onMessageGuest={(guestId) => onMessageGuest?.(guestId)}
             onDeleteBooking={(guestId) => onDeleteBooking?.(guestId)}
           />
