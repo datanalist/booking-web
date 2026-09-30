@@ -10,10 +10,13 @@ import type {
 } from "../api/types";
 import {
   listingTableRowFromListing,
+  PHOTO_UPLOAD_IDLE,
+  processWizardPhotoSelection,
   useAllListings,
+  type PhotoUploadStatus,
 } from "../features/listings";
 import { emptyDraft } from "../lib/emptyDraft";
-import { compressImage } from "../lib/compressImage";
+import { errorCodeOf } from "../lib/errorCodeOf";
 import { isDescriptionStepComplete } from "../lib/parseDescriptionStep";
 import { parseStep } from "../lib/wizardStep";
 import { validateStep } from "../lib/wizardValidation";
@@ -43,6 +46,8 @@ export function ListingWizardPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uniqueOn, setUniqueOn] = useState(false);
   const [pending, setPending] = useState(false);
+  const [photoUpload, setPhotoUpload] =
+    useState<PhotoUploadStatus>(PHOTO_UPLOAD_IDLE);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,6 +138,15 @@ export function ListingWizardPage() {
       } else {
         setStep(nextStep);
       }
+    } catch (error: unknown) {
+      if (errorCodeOf(error) === "QUOTA_EXCEEDED") {
+        setErrors({
+          photos:
+            "Не удалось сохранить объявление: переполнение хранилища. Уменьшите размер или число фото.",
+        });
+        return;
+      }
+      throw error;
     } finally {
       setPending(false);
     }
@@ -164,16 +178,39 @@ export function ListingWizardPage() {
   }
 
   async function onPhotosSelected(files: FileList | null): Promise<void> {
-    if (!files || !draft) {
+    if (!files || !draft || photoUpload.kind === "loading") {
       return;
     }
-    const remaining = PHOTO_MAX - draft.photos.length;
-    const selected = [...files].slice(0, remaining);
-    const compressed: string[] = [];
-    for (const file of selected) {
-      compressed.push(await compressImage(file));
+    const selected = [...files];
+    setPhotoUpload({ kind: "loading" });
+    let nextStatus: PhotoUploadStatus = PHOTO_UPLOAD_IDLE;
+    try {
+      const outcome = await processWizardPhotoSelection(
+        selected,
+        draft.photos.length,
+      );
+      if (outcome.addedPhotos.length > 0) {
+        setDraft((current) => {
+          if (!current) {
+            return current;
+          }
+          const room = PHOTO_MAX - current.photos.length;
+          return {
+            ...current,
+            photos: [...current.photos, ...outcome.addedPhotos.slice(0, room)],
+          };
+        });
+        setTouched(true);
+      }
+      nextStatus = outcome.status;
+    } catch {
+      nextStatus = {
+        kind: "error",
+        message: "Не удалось обработать фото. Попробуйте другие файлы.",
+      };
+    } finally {
+      setPhotoUpload(nextStatus);
     }
-    patch({ photos: [...draft.photos, ...compressed] });
   }
 
   function toggleAmenity(id: AmenityId): void {
@@ -290,6 +327,7 @@ export function ListingWizardPage() {
             photos={draft.photos}
             error={errors.photos}
             pending={pending}
+            uploadStatus={photoUpload}
             onPhotosChange={(photos) => patch({ photos })}
             onFilesSelected={(files) => {
               void onPhotosSelected(files);
