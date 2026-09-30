@@ -114,6 +114,18 @@ test("кнопки гостя и навигации месяца вызываю�
   expect(onDeleteBooking).toHaveBeenCalledWith("anna");
 });
 
+test("подложка алерта серая #525353, карточка белая", () => {
+  render(
+    <BookingCalendarAlert open onOpenChange={() => undefined} />,
+  );
+
+  const overlay = document.querySelector("[data-booking-calendar-overlay]");
+  expect(overlay).not.toBeNull();
+  expect(overlay).toHaveClass("bg-[#525353]");
+  expect(overlay?.className ?? "").not.toContain("bg-[#525353]/");
+  expect(screen.getByRole("alertdialog")).toHaveClass("bg-white");
+});
+
 test("при open=false алерт не в документе", () => {
   render(
     <BookingCalendarAlert open={false} onOpenChange={() => undefined} />,

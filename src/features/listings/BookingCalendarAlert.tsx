@@ -23,7 +23,7 @@ export type BookingCalendarAlertProps = {
 
 /**
  * Алерт «Календарь бронирования» — макет Figma 1:22281.
- * Оверлей #525353/80, карточка p-24 gap-40 rounded-xl, Shadow/xl.
+ * Подложка кадра сплошная #525353, карточка белая, p-24 gap-40 rounded-xl, Shadow/xl.
  */
 export function BookingCalendarAlert({
   open,
@@ -53,7 +53,10 @@ export function BookingCalendarAlert({
   return (
     <AlertDialog.Root open={open} onOpenChange={handleOpenChange}>
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="fixed inset-0 z-50 bg-[#525353]/80" />
+        <AlertDialog.Overlay
+          data-booking-calendar-overlay=""
+          className="fixed inset-0 z-50 bg-[#525353]"
+        />
         <AlertDialog.Content
           className={`fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-48px)] w-max max-w-[calc(100vw-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-start gap-10 overflow-auto rounded-xl bg-white p-6 font-sans ${CARD_SHADOW}`}
         >
