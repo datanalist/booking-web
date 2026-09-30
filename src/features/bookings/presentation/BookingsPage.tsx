@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search } from "../../../ui/Search";
-import { Tabs } from "../../../ui/Tabs";
 import { BOOKING_EMPTY_COPY } from "../domain/bookingEmptyCopy";
 import {
   BOOKING_TABS,
@@ -9,6 +7,8 @@ import {
 } from "../domain/BookingTabId";
 import { isBookingTabId, parseBookingTab } from "../domain/parseBookingTab";
 import { BookingsEmptyPanel } from "./BookingsEmptyPanel";
+import { BookingsGuestSearch } from "./BookingsGuestSearch";
+import { BookingsTabs } from "./BookingsTabs";
 import { RejectedBookingsPanel } from "./rejected/RejectedBookingsPanel";
 
 export function BookingsPage() {
@@ -38,28 +38,22 @@ export function BookingsPage() {
   const foreignCopy = BOOKING_EMPTY_COPY[tab];
 
   return (
-    <div className="flex h-full w-full flex-col gap-8 bg-[rgba(251,192,40,0.06)] p-8 font-sans">
-      <div className="flex w-full shrink-0 items-center justify-between gap-4">
-        <h1 className="m-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
-          Бронирования
-        </h1>
-        <div className="w-[320px] shrink-0">
-          <Search
-            value={query}
-            onChange={setQuery}
-            placeholder="Введите имя или номер гостя"
-          />
-        </div>
-      </div>
+    <div className="flex h-full w-full flex-col gap-8 bg-amber-400/5 p-8 font-sans">
+      <h1 className="m-0 shrink-0 text-2xl font-bold leading-7 text-[var(--color-ink)]">
+        Бронирования
+      </h1>
 
-      <Tabs
-        items={BOOKING_TABS.map((item) => ({
-          id: item.id,
-          label: item.label,
-        }))}
-        value={tab}
-        onChange={handleTabChange}
-      />
+      <div className="flex w-full shrink-0 items-start justify-between gap-4">
+        <BookingsTabs
+          items={BOOKING_TABS.map((item) => ({
+            id: item.id,
+            label: item.label,
+          }))}
+          value={tab}
+          onChange={handleTabChange}
+        />
+        <BookingsGuestSearch value={query} onChange={setQuery} />
+      </div>
 
       {tab === "rejected" ? (
         <RejectedBookingsPanel query={query} forceEmpty={forceEmpty} />

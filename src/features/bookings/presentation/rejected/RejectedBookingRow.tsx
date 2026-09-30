@@ -7,59 +7,68 @@ type RejectedBookingRowProps = {
 
 export function RejectedBookingRow({ booking }: RejectedBookingRowProps) {
   return (
-    <tr className="h-[112px] border-b border-[rgba(26,27,29,0.08)]">
-      <td className="px-4 py-3 align-middle">
-        <div className="flex items-center gap-3">
-          <img
-            src={booking.guestAvatarUrl}
-            alt=""
-            width={48}
-            height={48}
-            className="size-12 shrink-0 rounded-full object-cover"
-          />
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-[16px] font-bold leading-[1.2] text-[var(--color-ink)]">
-              {booking.guestName}
-            </span>
-            <span className="truncate text-[14px] leading-[1.4] text-[#525353]">
-              {booking.guestPhone}
-            </span>
-          </div>
+    <div
+      role="row"
+      className="flex h-28 items-center border-b border-amber-400/20 bg-white"
+    >
+      <div role="cell" className="flex w-56 items-center gap-3 px-5">
+        <img
+          src={booking.guestAvatarUrl}
+          alt=""
+          width={48}
+          height={48}
+          className="size-12 shrink-0 rounded-full object-cover"
+        />
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate text-sm leading-5 text-[var(--color-ink)]">
+            {booking.guestName}
+          </span>
+          <span className="truncate text-xs leading-4 text-neutral-600">
+            {booking.guestPhone}
+          </span>
         </div>
-      </td>
-      <td className="px-4 py-3 align-middle">
+      </div>
+
+      <div role="cell" className="flex w-16 items-center justify-center px-2">
         <span
           aria-label={`Чат с ${booking.guestName}`}
-          className="inline-flex size-10 items-center justify-center rounded-lg text-[var(--color-accent)]"
+          className="inline-flex size-6 items-center justify-center text-black"
         >
-          <Mail className="size-5" aria-hidden />
+          <Mail className="size-6" strokeWidth={1.5} aria-hidden />
         </span>
-      </td>
-      <td className="px-4 py-3 align-middle">
-        <div className="flex items-center gap-3">
-          <img
-            src={booking.listingPhotoUrl}
-            alt=""
-            width={48}
-            height={48}
-            className="size-12 shrink-0 rounded-lg object-cover"
-          />
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-[16px] font-bold leading-[1.2] text-[var(--color-ink)]">
-              {booking.listingTitle}
-            </span>
-            <span className="truncate text-[14px] leading-[1.4] text-[#525353]">
-              {booking.listingAddress}
-            </span>
-          </div>
+      </div>
+
+      <div role="cell" className="flex w-72 items-center gap-3 px-5">
+        <img
+          src={booking.listingPhotoUrl}
+          alt=""
+          width={48}
+          height={48}
+          className="size-12 shrink-0 rounded-lg object-cover"
+        />
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate text-sm leading-5 text-[var(--color-ink)]">
+            {booking.listingTitle}
+          </span>
+          <span className="truncate text-xs leading-4 text-neutral-600">
+            {booking.listingAddress}
+          </span>
         </div>
-      </td>
-      <td className="whitespace-nowrap px-4 py-3 align-middle text-[16px] text-[var(--color-ink)]">
+      </div>
+
+      <div
+        role="cell"
+        className="flex w-36 items-center px-5 text-sm leading-5 text-[var(--color-ink)]"
+      >
         {booking.datesLabel}
-      </td>
-      <td className="whitespace-nowrap px-4 py-3 align-middle text-[16px] font-bold text-[var(--color-ink)]">
+      </div>
+
+      <div
+        role="cell"
+        className="flex w-28 items-center px-5 text-sm leading-5 text-[var(--color-ink)]"
+      >
         {booking.priceLabel}
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 }
