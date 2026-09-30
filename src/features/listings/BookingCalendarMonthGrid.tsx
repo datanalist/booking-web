@@ -24,9 +24,10 @@ export function BookingCalendarMonthGrid({
   return (
     <div className="flex w-[360px] flex-col gap-8">
       <WeekdayRow />
+      {/* Позиция недели — её ключ: ключ по числу дня совпадает с пустой шестой строкой. */}
       {weeks.map((week, weekIndex) => (
         <WeekRow
-          key={weekKey(week, weekIndex)}
+          key={weekIndex}
           month={month}
           week={week}
           selectedDay={selectedDay}
@@ -93,7 +94,7 @@ function GridCell({
   onSelectDay: (day: number) => void;
 }): ReactElement {
   if (cell.kind === "pad") {
-    return <span className="h-9" />;
+    return <span data-calendar-cell="" className="h-9" />;
   }
   return (
     <BookingCalendarDayButton
@@ -107,10 +108,3 @@ function GridCell({
   );
 }
 
-function weekKey(week: readonly CalendarGridCell[], weekIndex: number): string {
-  const firstDay = week.find((cell) => cell.kind === "day");
-  if (firstDay === undefined || firstDay.kind !== "day") {
-    return `week-${weekIndex}`;
-  }
-  return `week-${firstDay.day}`;
-}

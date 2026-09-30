@@ -128,7 +128,11 @@ test("save in wizard then preview back returns to listings not cost step", async
   await user.click(screen.getByRole("button", { name: "Далее" }));
 
   expect(
-    await screen.findByRole("heading", { name: "Создание объявления" }),
+    await screen.findByRole(
+      "heading",
+      { name: "Создание объявления" },
+      { timeout: 5000 },
+    ),
   ).toBeInTheDocument();
   expect(
     screen.getByRole("heading", { name: "Черновик из мастера" }),

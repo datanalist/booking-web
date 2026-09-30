@@ -1,12 +1,19 @@
+import {
+  emptyBookingDayOverrides,
+  type BookingDayOverrides,
+} from "./BookingDayOverrides";
+import type { BookingCalendarMonthMarks } from "./bookingCalendarDemo";
 import type { CalendarGridCell } from "./CalendarGridCell";
 import { daysInYearMonth } from "./daysInYearMonth";
 import { mondayIndexOfMonthStart } from "./mondayIndexOfMonthStart";
 import { resolveCalendarDayMark } from "./resolveCalendarDayMark";
 import type { YearMonth } from "./YearMonth";
 
-/** Недели месяца: ведущие пустые ячейки до понедельника и хвост до вс. */
+/** Шесть недель (42 ячейки): пустые дни вне месяца невидимы, высота сетки постоянна. */
 export function buildCalendarWeeks(
   month: YearMonth,
+  marks: BookingCalendarMonthMarks,
+  overrides: BookingDayOverrides = emptyBookingDayOverrides(),
 ): readonly (readonly CalendarGridCell[])[] {
   const cells: CalendarGridCell[] = [];
   const leading = mondayIndexOfMonthStart(month);
@@ -18,7 +25,7 @@ export function buildCalendarWeeks(
     cells.push({
       kind: "day",
       day,
-      mark: resolveCalendarDayMark(month, day),
+      mark: resolveCalendarDayMark(month, day, marks, overrides),
     });
   }
   while (cells.length % 7 !== 0) {
@@ -28,5 +35,12 @@ export function buildCalendarWeeks(
   for (let offset = 0; offset < cells.length; offset += 7) {
     weeks.push(cells.slice(offset, offset + 7));
   }
+  while (weeks.length < 6) {
+    weeks.push(emptyCalendarWeek());
+  }
   return weeks;
+}
+
+function emptyCalendarWeek(): CalendarGridCell[] {
+  return Array.from({ length: 7 }, () => ({ kind: "pad" }));
 }

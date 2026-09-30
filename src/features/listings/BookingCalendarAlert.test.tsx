@@ -1,10 +1,17 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { BookingCalendarAlert } from "./BookingCalendarAlert";
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2024, 11, 15, 12, 0, 0));
+});
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
+  vi.useRealTimers();
 });
 
 test("при open показывает заголовок, тексты и кнопки из макета", () => {
@@ -94,13 +101,6 @@ test("кнопки гостя и навигации месяца вызываю�
   await user.click(screen.getByRole("button", { name: "Следующий месяц" }));
   expect(onNextMonth).toHaveBeenCalledTimes(1);
 
-  const availability = screen.getByRole("switch", {
-    name: "доступно для бронирования",
-  });
-  await user.click(availability);
-  expect(availability).toHaveAttribute("aria-checked", "true");
-  expect(screen.getByText("15 декабря")).toBeInTheDocument();
-
   await user.click(
     screen.getByRole("button", { name: "Написать Анна Иваненко" }),
   );
@@ -187,29 +187,40 @@ test("клик по дню меняет выбранный день и подп�
   );
 });
 
-test("переключатель доступности не меняет выбор и отметки дней", async () => {
+test("для забронированного дня переключатель недоступен", async () => {
   const user = userEvent.setup();
-  render(
-    <BookingCalendarAlert open onOpenChange={() => undefined} />,
+  render(<BookingCalendarAlert open onOpenChange={() => undefined} />);
+
+  await user.click(screen.getByRole("button", { name: "5 декабря" }));
+  const toggle = screen.getByRole("switch", { name: "забронировано" });
+  expect(toggle).toBeDisabled();
+  expect(toggle).toHaveAttribute("aria-checked", "false");
+  expect(screen.getByRole("button", { name: "5 декабря" })).toHaveClass(
+    "bg-[rgba(77,56,232,0.23)]",
   );
+  expect(screen.getByRole("button", { name: "5 декабря" })).not.toHaveClass(
+    "line-through",
+  );
+});
 
-  await user.click(screen.getByRole("button", { name: "20 декабря" }));
-  const toggle = screen.getByRole("switch", {
-    name: "доступно для бронирования",
-  });
-  await user.click(toggle);
+test("открывается на текущей дате и показывает демо-брони этого месяца", () => {
+  vi.setSystemTime(new Date(2026, 9, 1, 8, 30, 0));
+  render(<BookingCalendarAlert open onOpenChange={() => undefined} />);
 
-  expect(toggle).toHaveAttribute("aria-checked", "true");
-  expect(screen.getByRole("button", { name: "20 декабря" })).toHaveAttribute(
+  expect(screen.getByText("Октябрь 2026")).toBeInTheDocument();
+  expect(screen.getByText("1 октября")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "1 октября" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  expect(screen.getByText("20 декабря")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "16 декабря" })).toHaveClass(
-    "line-through",
-  );
-  expect(screen.getByRole("button", { name: "5 декабря" })).toHaveClass(
+  expect(screen.getByText("5-10 октября")).toBeInTheDocument();
+  expect(screen.getByText("13-14 октября")).toBeInTheDocument();
+  expect(screen.getByText("21-23 октября")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "5 октября" })).toHaveClass(
     "bg-[rgba(77,56,232,0.23)]",
+  );
+  expect(screen.getByRole("button", { name: "16 октября" })).toHaveClass(
+    "line-through",
   );
 });
 

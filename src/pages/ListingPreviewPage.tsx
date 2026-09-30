@@ -239,6 +239,7 @@ export function ListingPreviewPage() {
       <BookingCalendarAlert
         open={bookingCalendarOpen}
         onOpenChange={setBookingCalendarOpen}
+        listingId={id ?? "preview"}
       />
     </div>
   );
