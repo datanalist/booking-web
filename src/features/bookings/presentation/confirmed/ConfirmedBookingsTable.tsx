@@ -24,13 +24,13 @@ export function ConfirmedBookingsTable({ items }: ConfirmedBookingsTableProps) {
     >
       <div
         role="row"
-        className="grid grid-cols-[14rem_4rem_18rem_minmax(0,1fr)_7rem_13rem_3.5rem] items-center bg-amber-400/20"
+        className="grid h-12 grid-cols-[14rem_4rem_18rem_9rem_7rem_minmax(0,1fr)_3.5rem] items-center bg-amber-400/20"
       >
         {HEADER_CELLS.map((label, index) => (
           <div
             key={label === "" ? "actions" : label}
             role="columnheader"
-            className={`flex h-[52px] items-center px-5 text-sm font-bold leading-5 text-[var(--color-ink)] ${
+            className={`flex h-12 items-center px-5 text-sm font-bold leading-5 text-[var(--color-ink)] ${
               index === HEADER_CELLS.length - 1 ? "justify-center px-4" : ""
             }`}
           >

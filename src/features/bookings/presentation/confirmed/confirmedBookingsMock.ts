@@ -6,17 +6,17 @@ const PRICE = "15 460 ₽";
 const STUDIO = {
   title: "Уютная студия в центре Москвы",
   address: "Москва, ул. Невская 48",
-  photoUrl: "https://placehold.co/48x48/f5d0a9/1a1b1d?text=1",
+  photoUrl: "/bookings/housing-studio.jpg",
 } as const;
 const HOUSE = {
   title: "Частный дом в 10 км от Москвы",
   address: "Лесной, ул. Летняя 3",
-  photoUrl: "https://placehold.co/48x48/c8e0c0/1a1b1d?text=2",
+  photoUrl: "/bookings/housing-house.jpg",
 } as const;
 const APARTMENT = {
   title: "Квартира в старом городе",
   address: "Москва, ул. Невская 48",
-  photoUrl: "https://placehold.co/48x48/c5d4f0/1a1b1d?text=3",
+  photoUrl: "/bookings/housing-apartment.jpg",
 } as const;
 
 export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
@@ -24,7 +24,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     id: "confirmed-1",
     guestName: "Иваненко Анна",
     guestPhone: PHONE,
-    guestAvatarUrl: "https://placehold.co/40x40/e8e8e8/1a1b1d?text=ИА",
+    guestAvatarUrl: "/bookings/guest-ivanenko-anna.jpg",
     housingTitle: STUDIO.title,
     housingAddress: STUDIO.address,
     housingPhotoUrl: STUDIO.photoUrl,
@@ -39,7 +39,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     id: "confirmed-2",
     guestName: "Ковалев Леонид",
     guestPhone: PHONE,
-    guestAvatarUrl: "https://placehold.co/40x40/e8e8e8/1a1b1d?text=КЛ",
+    guestAvatarUrl: "/bookings/guest-kovalev-leonid.jpg",
     housingTitle: HOUSE.title,
     housingAddress: HOUSE.address,
     housingPhotoUrl: HOUSE.photoUrl,
@@ -51,7 +51,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     id: "confirmed-3",
     guestName: "Полякова Кристина",
     guestPhone: PHONE,
-    guestAvatarUrl: "https://placehold.co/40x40/e8e8e8/1a1b1d?text=ПК",
+    guestAvatarUrl: "/bookings/guest-polyakova-kristina.jpg",
     housingTitle: HOUSE.title,
     housingAddress: HOUSE.address,
     housingPhotoUrl: HOUSE.photoUrl,
@@ -63,7 +63,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     id: "confirmed-4",
     guestName: "Петров Иван",
     guestPhone: PHONE,
-    guestAvatarUrl: "https://placehold.co/40x40/e8e8e8/1a1b1d?text=ПИ",
+    guestAvatarUrl: "/bookings/guest-petrov-ivan.jpg",
     housingTitle: STUDIO.title,
     housingAddress: STUDIO.address,
     housingPhotoUrl: STUDIO.photoUrl,
@@ -75,7 +75,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     id: "confirmed-5",
     guestName: "Симонов Степан",
     guestPhone: PHONE,
-    guestAvatarUrl: "https://placehold.co/40x40/e8e8e8/1a1b1d?text=СС",
+    guestAvatarUrl: "/bookings/guest-simonov-stepan.jpg",
     housingTitle: APARTMENT.title,
     housingAddress: APARTMENT.address,
     housingPhotoUrl: APARTMENT.photoUrl,
