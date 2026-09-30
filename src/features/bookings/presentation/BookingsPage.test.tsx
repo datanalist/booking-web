@@ -102,13 +102,10 @@ test("rejected tab shows table without accept buttons", async () => {
   expect(screen.queryByRole("button", { name: "Принять" })).not.toBeInTheDocument();
 });
 
-test("cancelled tab shows empty copy", async () => {
+test("cancelled tab shows table without action buttons", async () => {
   const user = userEvent.setup();
   renderBookings();
   await user.click(screen.getByRole("tab", { name: "Отменены" }));
-  expect(
-    screen.getByText(
-      "Отменённые вами или пользователями бронирования появятся здесь!",
-    ),
-  ).toBeInTheDocument();
+  expect(screen.getByText("Симонов Степан")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Принять" })).not.toBeInTheDocument();
 });

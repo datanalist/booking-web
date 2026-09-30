@@ -20,6 +20,7 @@ export const BOOKING_EMPTY_COPY: Record<BookingTabId, BookingEmptyCopy> = {
   },
   cancelled: {
     title: "Нет бронирований",
-    description: "Отменённые вами или пользователями бронирования появятся здесь!",
+    description:
+      "Отменённые вами или пользователями бронирования появятся здесь!",
   },
 };

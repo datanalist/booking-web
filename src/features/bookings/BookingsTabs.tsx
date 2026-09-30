@@ -1,7 +1,4 @@
-import {
-  BOOKING_TABS,
-  type BookingTabId,
-} from "./domain/BookingTabId";
+import { BOOKING_TABS, type BookingTabId } from "./bookingTabId";
 
 type BookingsTabsProps = {
   value: BookingTabId;
