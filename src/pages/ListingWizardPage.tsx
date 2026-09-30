@@ -34,11 +34,12 @@ import { ListingWizardDetailsStep } from "../ui/ListingWizardDetailsStep";
 import { WizardBackButton } from "../ui/WizardBackButton";
 import { WizardDescriptionForm } from "../ui/WizardDescriptionForm";
 import { WizardPhotosStep } from "../ui/WizardPhotosStep";
+import type { WizardStepNumber } from "../ui/WizardStepNumber";
 import { WizardSteps } from "../ui/WizardSteps";
 import { ListingWizardPriceStep } from "./ListingWizardPriceStep";
 import { ListingWizardRulesStep } from "./ListingWizardRulesStep";
 
-type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
+type WizardStep = WizardStepNumber;
 
 export function ListingWizardPage() {
   const { session, listings } = useSession();

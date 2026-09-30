@@ -1,7 +1,7 @@
 import { DESCRIPTION_MAX } from "../config";
-import { ListingWizardStepper } from "./ListingWizardStepper";
 import { WizardBackButton } from "./WizardBackButton";
 import { WizardMultilineField } from "./WizardMultilineField";
+import { WizardSteps } from "./WizardSteps";
 
 export type ListingWizardDetailsValues = {
   accessInfo: string;
@@ -40,7 +40,7 @@ export function ListingWizardDetailsStep({
         </h1>
       </header>
 
-      <ListingWizardStepper current={5} />
+      <WizardSteps current={5} />
 
       <section className="flex w-full grow shrink-0 flex-col items-center rounded-[16px] border border-[rgba(251,192,40,0.17)] bg-white">
         <div className="flex w-full max-w-[437px] shrink-0 flex-col gap-8 py-10">
