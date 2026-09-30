@@ -1,3 +1,7 @@
+import {
+  emptyBookingDayOverrides,
+  type BookingDayOverrides,
+} from "./BookingDayOverrides";
 import type { BookingCalendarMonthMarks } from "./bookingCalendarDemo";
 import type { CalendarGridCell } from "./CalendarGridCell";
 import { daysInYearMonth } from "./daysInYearMonth";
@@ -9,6 +13,7 @@ import type { YearMonth } from "./YearMonth";
 export function buildCalendarWeeks(
   month: YearMonth,
   marks: BookingCalendarMonthMarks,
+  overrides: BookingDayOverrides = emptyBookingDayOverrides(),
 ): readonly (readonly CalendarGridCell[])[] {
   const cells: CalendarGridCell[] = [];
   const leading = mondayIndexOfMonthStart(month);
@@ -20,7 +25,7 @@ export function buildCalendarWeeks(
     cells.push({
       kind: "day",
       day,
-      mark: resolveCalendarDayMark(month, day, marks),
+      mark: resolveCalendarDayMark(month, day, marks, overrides),
     });
   }
   while (cells.length % 7 !== 0) {

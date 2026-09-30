@@ -1,20 +1,15 @@
 import type { ReactElement } from "react";
-import type {
-  BookingCalendarDemo,
-  BookingCalendarMonthMarks,
-} from "./bookingCalendarDemo";
+import type { BookingCalendarDemo } from "./bookingCalendarDemo";
 import { BookingCalendarGuestCard } from "./BookingCalendarGuestCard";
 import { BookingCalendarLegend } from "./BookingCalendarLegend";
-import { BookingCalendarMonthCard } from "./BookingCalendarMonthCard";
-import type { BookingCalendarView } from "./BookingCalendarView";
+import {
+  BookingCalendarMonthCard,
+  type BookingCalendarMonthCardProps,
+} from "./BookingCalendarMonthCard";
 
 type BookingCalendarAlertBodyProps = {
   demo: BookingCalendarDemo;
-  marks: BookingCalendarMonthMarks;
-  view: BookingCalendarView;
-  onSelectDay: (day: number) => void;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
+  monthCard: BookingCalendarMonthCardProps;
   onMessageGuest: (guestId: string) => void;
   onDeleteBooking: (guestId: string) => void;
 };
@@ -22,24 +17,14 @@ type BookingCalendarAlertBodyProps = {
 /** Тело алерта: календарь слева, объявление и гости справа. */
 export function BookingCalendarAlertBody({
   demo,
-  marks,
-  view,
-  onSelectDay,
-  onPrevMonth,
-  onNextMonth,
+  monthCard,
   onMessageGuest,
   onDeleteBooking,
 }: BookingCalendarAlertBodyProps): ReactElement {
   return (
     <div className="flex items-start gap-8">
       <div className="flex flex-col gap-6">
-        <BookingCalendarMonthCard
-          view={view}
-          marks={marks}
-          onSelectDay={onSelectDay}
-          onPrevMonth={onPrevMonth}
-          onNextMonth={onNextMonth}
-        />
+        <BookingCalendarMonthCard {...monthCard} />
         <BookingCalendarLegend />
       </div>
       <div className="flex flex-col gap-8">

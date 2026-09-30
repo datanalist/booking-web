@@ -10,6 +10,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.useRealTimers();
 });
 
@@ -100,13 +101,6 @@ test("кнопки гостя и навигации месяца вызываю�
   await user.click(screen.getByRole("button", { name: "Следующий месяц" }));
   expect(onNextMonth).toHaveBeenCalledTimes(1);
 
-  const availability = screen.getByRole("switch", {
-    name: "доступно для бронирования",
-  });
-  await user.click(availability);
-  expect(availability).toHaveAttribute("aria-checked", "true");
-  expect(screen.getByText("15 декабря")).toBeInTheDocument();
-
   await user.click(
     screen.getByRole("button", { name: "Написать Анна Иваненко" }),
   );
@@ -193,29 +187,19 @@ test("клик по дню меняет выбранный день и подп�
   );
 });
 
-test("переключатель доступности не меняет выбор и отметки дней", async () => {
+test("для забронированного дня переключатель недоступен", async () => {
   const user = userEvent.setup();
-  render(
-    <BookingCalendarAlert open onOpenChange={() => undefined} />,
-  );
+  render(<BookingCalendarAlert open onOpenChange={() => undefined} />);
 
-  await user.click(screen.getByRole("button", { name: "20 декабря" }));
-  const toggle = screen.getByRole("switch", {
-    name: "доступно для бронирования",
-  });
-  await user.click(toggle);
-
-  expect(toggle).toHaveAttribute("aria-checked", "true");
-  expect(screen.getByRole("button", { name: "20 декабря" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  expect(screen.getByText("20 декабря")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "16 декабря" })).toHaveClass(
-    "line-through",
-  );
+  await user.click(screen.getByRole("button", { name: "5 декабря" }));
+  const toggle = screen.getByRole("switch", { name: "забронировано" });
+  expect(toggle).toBeDisabled();
+  expect(toggle).toHaveAttribute("aria-checked", "false");
   expect(screen.getByRole("button", { name: "5 декабря" })).toHaveClass(
     "bg-[rgba(77,56,232,0.23)]",
+  );
+  expect(screen.getByRole("button", { name: "5 декабря" })).not.toHaveClass(
+    "line-through",
   );
 });
 

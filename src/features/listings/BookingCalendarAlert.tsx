@@ -4,7 +4,9 @@ import { bookingCalendarDemoFor } from "./bookingCalendarDemoFor";
 import type { BookingCalendarDemo } from "./bookingCalendarDemo";
 import { bookingCalendarMarksFor } from "./bookingCalendarMarksFor";
 import { BookingCalendarAlertBody } from "./BookingCalendarAlertBody";
+import { toggleSelectedBookingDay } from "./toggleSelectedBookingDay";
 import { useBookingCalendarView } from "./useBookingCalendarView";
+import { useBookingDayOverrides } from "./useBookingDayOverrides";
 
 const CARD_SHADOW =
   "shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08),0px_8px_8px_-4px_rgba(16,24,40,0.03)]";
@@ -18,6 +20,8 @@ export type BookingCalendarAlertProps = {
   onPrevMonth?: () => void;
   onNextMonth?: () => void;
   today?: Date;
+  listingId?: string;
+  storage?: Storage;
   demo?: BookingCalendarDemo;
 };
 
@@ -34,11 +38,14 @@ export function BookingCalendarAlert({
   onPrevMonth,
   onNextMonth,
   today = new Date(),
+  listingId = "demo",
+  storage = localStorage,
   demo,
 }: BookingCalendarAlertProps): ReactElement {
   const resolvedDemo = demo ?? bookingCalendarDemoFor(today);
   const marks = bookingCalendarMarksFor(today);
   const { view, selectDay, shiftMonth } = useBookingCalendarView(open, today);
+  const { overrides, toggleDay } = useBookingDayOverrides(listingId, storage);
 
   function handleOpenChange(next: boolean): void {
     onOpenChange(next);
@@ -57,6 +64,10 @@ export function BookingCalendarAlert({
     onNextMonth?.();
   }
 
+  function handleToggleAvailability(): void {
+    toggleSelectedBookingDay(view, marks, overrides, toggleDay);
+  }
+
   return (
     <AlertDialog.Root open={open} onOpenChange={handleOpenChange}>
       <AlertDialog.Portal>
@@ -73,11 +84,15 @@ export function BookingCalendarAlert({
           </AlertDialog.Description>
           <BookingCalendarAlertBody
             demo={resolvedDemo}
-            marks={marks}
-            view={view}
-            onSelectDay={selectDay}
-            onPrevMonth={handlePrevMonth}
-            onNextMonth={handleNextMonth}
+            monthCard={{
+              view,
+              marks,
+              overrides,
+              onSelectDay: selectDay,
+              onPrevMonth: handlePrevMonth,
+              onNextMonth: handleNextMonth,
+              onToggleAvailability: handleToggleAvailability,
+            }}
             onMessageGuest={(guestId) => onMessageGuest?.(guestId)}
             onDeleteBooking={(guestId) => onDeleteBooking?.(guestId)}
           />
