@@ -1,3 +1,4 @@
+import type { PreviousBookingStatus } from "./PreviousBookingStatus";
 import type { ConfirmedBookingRequest } from "./request/ConfirmedBookingRequest";
 
 export const CONFIRMED_BOOKING_STATUS_KINDS = [
@@ -12,11 +13,13 @@ export type ConfirmedBookingStatusKind =
   (typeof CONFIRMED_BOOKING_STATUS_KINDS)[number];
 
 export type ConfirmedBookingStatus =
-  | { kind: "awaitingPrepayment"; remainingLabel: string }
-  | { kind: "prepaymentPaid" }
-  | { kind: "request"; request: ConfirmedBookingRequest }
-  | { kind: "stayCompleted" }
-  | { kind: "staying" };
+  | PreviousBookingStatus
+  | {
+      kind: "request";
+      /** The status the booking returns to when the request is rejected. */
+      previousStatus: PreviousBookingStatus;
+      request: ConfirmedBookingRequest;
+    };
 
 export const CONFIRMED_BOOKING_STATUS_LABELS: Record<
   ConfirmedBookingStatusKind,

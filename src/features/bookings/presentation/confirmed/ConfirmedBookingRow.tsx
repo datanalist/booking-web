@@ -1,18 +1,18 @@
 import type { ConfirmedBooking } from "./ConfirmedBooking";
 import { ConfirmedBookingMenu } from "./menu/ConfirmedBookingMenu";
+import type { ConfirmedBookingRowActions } from "./menu/ConfirmedBookingRowActions";
 import { ConfirmedBookingChatIcon } from "./ConfirmedBookingChatIcon";
-import type { ConfirmedBookingDialog } from "./dialog/ConfirmedBookingDialog";
 import { ConfirmedStatusCell } from "./ConfirmedStatusCell";
 import { formatStayTable } from "./stay/formatStayTable";
 
 type ConfirmedBookingRowProps = {
   booking: ConfirmedBooking;
-  onOpenDialog: (dialog: ConfirmedBookingDialog) => void;
+  actions: ConfirmedBookingRowActions;
 };
 
 export function ConfirmedBookingRow({
   booking,
-  onOpenDialog,
+  actions,
 }: ConfirmedBookingRowProps) {
   return (
     <div
@@ -81,7 +81,7 @@ export function ConfirmedBookingRow({
         role="cell"
         className="flex h-full items-center justify-center px-5 py-2.5"
       >
-        <ConfirmedBookingMenu booking={booking} onOpenDialog={onOpenDialog} />
+        <ConfirmedBookingMenu booking={booking} actions={actions} />
       </div>
     </div>
   );

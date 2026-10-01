@@ -1,10 +1,10 @@
 import type { ConfirmedBooking } from "./ConfirmedBooking";
-import type { ConfirmedBookingDialog } from "./dialog/ConfirmedBookingDialog";
 import { ConfirmedBookingRow } from "./ConfirmedBookingRow";
+import type { ConfirmedBookingRowActions } from "./menu/ConfirmedBookingRowActions";
 
 type ConfirmedBookingsTableProps = {
   items: readonly ConfirmedBooking[];
-  onOpenDialog: (dialog: ConfirmedBookingDialog) => void;
+  actions: ConfirmedBookingRowActions;
 };
 
 const HEADER_CELLS = [
@@ -19,7 +19,7 @@ const HEADER_CELLS = [
 
 export function ConfirmedBookingsTable({
   items,
-  onOpenDialog,
+  actions,
 }: ConfirmedBookingsTableProps) {
   return (
     <div
@@ -47,7 +47,7 @@ export function ConfirmedBookingsTable({
         <ConfirmedBookingRow
           key={item.id}
           booking={item}
-          onOpenDialog={onOpenDialog}
+          actions={actions}
         />
       ))}
     </div>

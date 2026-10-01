@@ -1,16 +1,12 @@
 import type { ConfirmedBooking } from "../ConfirmedBooking";
+import type { ConfirmedBookingsTransition } from "../ConfirmedBookingsTransition";
 import { canShowCancelBookingMenu } from "./canShowCancelBookingMenu";
 import type { AcceptedCancelReason } from "./parseCancelReason";
-
-export type CancelConfirmedBooking = (
-  bookingId: ConfirmedBooking["id"],
-  reason: AcceptedCancelReason,
-) => void;
 
 export type CancelAwaitingPrepaymentResult =
   | {
       readonly outcome: "cancelled";
-      readonly bookings: readonly ConfirmedBooking[];
+      readonly transition: ConfirmedBookingsTransition;
       readonly reason: AcceptedCancelReason;
     }
   | {
@@ -30,7 +26,10 @@ export function cancelAwaitingPrepaymentBooking(
 
   return {
     outcome: "cancelled",
-    bookings: bookings.filter((item) => item.id !== bookingId),
+    transition: {
+      confirmed: bookings.filter((item) => item.id !== bookingId),
+      cancelled: [target],
+    },
     reason,
   };
 }

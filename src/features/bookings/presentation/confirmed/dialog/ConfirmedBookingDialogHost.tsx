@@ -1,4 +1,5 @@
 import type { ConfirmedBooking } from "../ConfirmedBooking";
+import type { ConfirmedBookingId } from "../ConfirmedBookingId";
 import { CancelBookingModal } from "../cancel/CancelBookingModal";
 import type { AcceptedCancelReason } from "../cancel/parseCancelReason";
 import { asRequestBooking } from "../request/asRequestBooking";
@@ -12,8 +13,8 @@ type ConfirmedBookingDialogHostProps = {
   dialog: ConfirmedBookingDialog | null;
   bookings: readonly ConfirmedBooking[];
   onClose: () => void;
-  onDecideRequest: (bookingId: ConfirmedBooking["id"], decision: RequestDecision) => void;
-  onSubmitCancel: (bookingId: ConfirmedBooking["id"], reason: AcceptedCancelReason) => void;
+  onDecideRequest: (bookingId: ConfirmedBookingId, decision: RequestDecision) => void;
+  onSubmitCancel: (bookingId: ConfirmedBookingId, reason: AcceptedCancelReason) => void;
   onSubmitReview: (review: BookingReview) => void;
 };
 

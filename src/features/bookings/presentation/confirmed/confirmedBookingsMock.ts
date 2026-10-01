@@ -1,4 +1,5 @@
 import type { ConfirmedBooking } from "./ConfirmedBooking";
+import { confirmedBookingId } from "./ConfirmedBookingId";
 import { bookingStay } from "./stay/BookingStay";
 
 const PHONE = "+7 (900) 123-45-67";
@@ -23,7 +24,7 @@ const APARTMENT = {
 
 export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
   {
-    id: "confirmed-1",
+    id: confirmedBookingId("confirmed-1"),
     guestName: "Иваненко Анна",
     guestPhone: PHONE,
     guestAvatarUrl: "/bookings/guest-ivanenko-anna.jpg",
@@ -38,7 +39,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     },
   },
   {
-    id: "confirmed-2",
+    id: confirmedBookingId("confirmed-2"),
     guestName: "Ковалев Леонид",
     guestPhone: PHONE,
     guestAvatarUrl: "/bookings/guest-kovalev-leonid.jpg",
@@ -50,7 +51,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     status: { kind: "prepaymentPaid" },
   },
   {
-    id: "confirmed-3",
+    id: confirmedBookingId("confirmed-3"),
     guestName: "Полякова Кристина",
     guestPhone: PHONE,
     guestAvatarUrl: "/bookings/guest-polyakova-kristina.jpg",
@@ -59,10 +60,14 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     housingPhotoUrl: HOUSE.photoUrl,
     stay: REQUEST_STAY,
     priceLabel: PRICE,
-    status: { kind: "request", request: { kind: "cancel" } },
+    status: {
+      kind: "request",
+      previousStatus: { kind: "prepaymentPaid" },
+      request: { kind: "cancel" },
+    },
   },
   {
-    id: "confirmed-4",
+    id: confirmedBookingId("confirmed-4"),
     guestName: "Петров Иван",
     guestPhone: PHONE,
     guestAvatarUrl: "/bookings/guest-petrov-ivan.jpg",
@@ -74,7 +79,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     status: { kind: "stayCompleted" },
   },
   {
-    id: "confirmed-5",
+    id: confirmedBookingId("confirmed-5"),
     guestName: "Симонов Степан",
     guestPhone: PHONE,
     guestAvatarUrl: "/bookings/guest-simonov-stepan.jpg",
@@ -86,7 +91,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     status: { kind: "staying" },
   },
   {
-    id: "confirmed-6",
+    id: confirmedBookingId("confirmed-6"),
     guestName: "Орлова Мария",
     guestPhone: PHONE,
     guestAvatarUrl: "/bookings/guest-avatar.png",
@@ -97,6 +102,10 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     priceLabel: PRICE,
     status: {
       kind: "request",
+      previousStatus: {
+        kind: "awaitingPrepayment",
+        remainingLabel: "осталось 3 часа 10 минут",
+      },
       request: {
         kind: "changeDates",
         proposedStay: bookingStay("2024-12-06", "2024-12-12"),

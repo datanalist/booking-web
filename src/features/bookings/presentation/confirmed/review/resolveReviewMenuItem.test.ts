@@ -24,7 +24,16 @@ describe("resolveReviewMenuItem", () => {
     expect(resolveReviewMenuItem({ kind: "prepaymentPaid" }, false)).toBe(
       "hidden",
     );
-    expect(resolveReviewMenuItem({ kind: "request" }, false)).toBe("hidden");
+    expect(
+      resolveReviewMenuItem(
+        {
+          kind: "request",
+          previousStatus: { kind: "prepaymentPaid" },
+          request: { kind: "cancel" },
+        },
+        false,
+      ),
+    ).toBe("hidden");
     expect(resolveReviewMenuItem({ kind: "staying" }, false)).toBe("hidden");
   });
 });

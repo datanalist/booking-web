@@ -1,48 +1,75 @@
 import type { ConfirmedBooking } from "../ConfirmedBooking";
+import type { ConfirmedBookingId } from "../ConfirmedBookingId";
+import type { ConfirmedBookingsTransition } from "../ConfirmedBookingsTransition";
 import { asRequestBooking } from "./asRequestBooking";
 import type { ConfirmedRequestBooking } from "./ConfirmedRequestBooking";
 import type { RequestDecision } from "./RequestDecision";
+import { REJECTED_REQUEST_DESTINATION } from "./rejectedRequestDestination";
 
-/** After a request is resolved the row keeps a confirmed booking with paid prepayment. */
-function withoutRequest(booking: ConfirmedRequestBooking): ConfirmedBooking {
-  return { ...booking, status: { kind: "prepaymentPaid" } };
+type RequestOutcome =
+  | { kind: "stays"; booking: ConfirmedBooking }
+  | { kind: "cancelled"; booking: ConfirmedBooking };
+
+/** Drops the request overlay: the row returns to the status it had before the request. */
+function restorePreviousStatus(booking: ConfirmedRequestBooking): ConfirmedBooking {
+  return { ...booking, status: booking.status.previousStatus };
+}
+
+function reject(booking: ConfirmedRequestBooking): RequestOutcome {
+  switch (REJECTED_REQUEST_DESTINATION) {
+    case "restorePreviousStatus":
+      return { kind: "stays", booking: restorePreviousStatus(booking) };
+    case "moveToCancelled":
+      return { kind: "cancelled", booking };
+  }
+}
+
+function accept(booking: ConfirmedRequestBooking): RequestOutcome {
+  const { request } = booking.status;
+  switch (request.kind) {
+    case "cancel":
+      return { kind: "cancelled", booking };
+    case "changeDates":
+      return {
+        kind: "stays",
+        booking: {
+          ...restorePreviousStatus(booking),
+          stay: request.proposedStay,
+          priceLabel: request.proposedPriceLabel,
+        },
+      };
+  }
 }
 
 function applyDecision(
   booking: ConfirmedRequestBooking,
   decision: RequestDecision,
-): ConfirmedBooking | null {
-  const { request } = booking.status;
-  switch (request.kind) {
-    case "cancel":
-      // Accepted cancellation removes the booking from "Подтверждены".
-      return decision === "accept" ? null : withoutRequest(booking);
-    case "changeDates":
-      return decision === "accept"
-        ? {
-            ...withoutRequest(booking),
-            stay: request.proposedStay,
-            priceLabel: request.proposedPriceLabel,
-          }
-        : withoutRequest(booking);
+): RequestOutcome {
+  switch (decision) {
+    case "accept":
+      return accept(booking);
+    case "reject":
+      return reject(booking);
   }
 }
 
 /** Applies the owner's decision to the request booking with `bookingId`; other rows are untouched. */
 export function resolveBookingRequest(
   bookings: readonly ConfirmedBooking[],
-  bookingId: string,
+  bookingId: ConfirmedBookingId,
   decision: RequestDecision,
-): ConfirmedBooking[] {
-  return bookings.flatMap((booking) => {
-    if (booking.id !== bookingId) {
-      return [booking];
-    }
-    const requestBooking = asRequestBooking(booking);
+): ConfirmedBookingsTransition {
+  const confirmed: ConfirmedBooking[] = [];
+  const cancelled: ConfirmedBooking[] = [];
+  for (const booking of bookings) {
+    const requestBooking =
+      booking.id === bookingId ? asRequestBooking(booking) : null;
     if (requestBooking === null) {
-      return [booking];
+      confirmed.push(booking);
+      continue;
     }
-    const resolved = applyDecision(requestBooking, decision);
-    return resolved === null ? [] : [resolved];
-  });
+    const outcome = applyDecision(requestBooking, decision);
+    (outcome.kind === "stays" ? confirmed : cancelled).push(outcome.booking);
+  }
+  return { confirmed, cancelled };
 }

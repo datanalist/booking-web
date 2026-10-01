@@ -1,11 +1,12 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test } from "vitest";
+import { confirmedBookingId } from "../ConfirmedBookingId";
 import { ConfirmedBookingsPanel } from "../ConfirmedBookingsPanel";
 import { bookingReviewsStore } from "./bookingReviewsStore";
 
 const GUEST = "Петров Иван";
-const BOOKING_ID = "confirmed-4";
+const BOOKING_ID = confirmedBookingId("confirmed-4");
 
 afterEach(() => {
   cleanup();

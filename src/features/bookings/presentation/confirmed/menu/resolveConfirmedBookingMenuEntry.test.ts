@@ -9,7 +9,11 @@ test("each status maps to its menu entry", () => {
     [{ kind: "stayCompleted" }, "review"],
     [{ kind: "awaitingPrepayment", remainingLabel: "осталось 1 час" }, "cancel"],
     [
-      { kind: "request", request: { kind: "cancel" } },
+      {
+        kind: "request",
+        previousStatus: { kind: "prepaymentPaid" },
+        request: { kind: "cancel" },
+      },
       "openRequest",
     ],
     [{ kind: "prepaymentPaid" }, "none"],

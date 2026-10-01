@@ -1,7 +1,7 @@
-import type { ConfirmedBooking } from "../ConfirmedBooking";
+import type { ConfirmedBookingId } from "../ConfirmedBookingId";
 
 /** The modal currently opened from a row's «три точки» menu; only one can be open. */
 export type ConfirmedBookingDialog =
-  | { kind: "request"; bookingId: ConfirmedBooking["id"] }
-  | { kind: "cancel"; bookingId: ConfirmedBooking["id"] }
-  | { kind: "review"; bookingId: ConfirmedBooking["id"] };
+  | { kind: "request"; bookingId: ConfirmedBookingId }
+  | { kind: "cancel"; bookingId: ConfirmedBookingId }
+  | { kind: "review"; bookingId: ConfirmedBookingId };
