@@ -7,11 +7,13 @@ import { formatStayTable } from "./stay/formatStayTable";
 type ConfirmedBookingRowProps = {
   booking: ConfirmedBooking;
   onOpenRequest: (bookingId: string) => void;
+  onCancelBooking: (bookingId: string) => void;
 };
 
 export function ConfirmedBookingRow({
   booking,
   onOpenRequest,
+  onCancelBooking,
 }: ConfirmedBookingRowProps) {
   return (
     <div
@@ -80,7 +82,11 @@ export function ConfirmedBookingRow({
         role="cell"
         className="flex h-full items-center justify-center px-5 py-2.5"
       >
-        <ConfirmedBookingMenu booking={booking} onOpenRequest={onOpenRequest} />
+        <ConfirmedBookingMenu
+          booking={booking}
+          onOpenRequest={onOpenRequest}
+          onCancelBooking={onCancelBooking}
+        />
       </div>
     </div>
   );

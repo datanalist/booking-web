@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { BOOKING_EMPTY_COPY } from "../../bookingEmptyCopy";
 import { BookingsEmptyCard } from "../../BookingsEmptyCard";
+import { CancelBookingModal } from "./cancel/CancelBookingModal";
+import { cancelAwaitingPrepaymentBooking } from "./cancel/cancelAwaitingPrepaymentBooking";
+import type { AcceptedCancelReason } from "./cancel/parseCancelReason";
 import type { ConfirmedBooking } from "./ConfirmedBooking";
 import { CONFIRMED_BOOKINGS_MOCK } from "./confirmedBookingsMock";
 import type { ConfirmedStatusSortOption } from "./confirmedStatusSortOption";
@@ -27,6 +30,8 @@ export function ConfirmedBookingsPanel({
     useState<readonly ConfirmedBooking[]>(CONFIRMED_BOOKINGS_MOCK);
   const [openedRequestId, setOpenedRequestId] = useState<string | null>(null);
 
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+
   const closeRequest = useCallback(() => setOpenedRequestId(null), []);
 
   const openedRequest = useMemo(() => {
@@ -41,6 +46,18 @@ export function ConfirmedBookingsPanel({
       );
     }
     closeRequest();
+  }
+
+  function submitCancellation(reason: AcceptedCancelReason): void {
+    if (cancelTargetId !== null) {
+      const result = cancelAwaitingPrepaymentBooking(
+        bookings,
+        cancelTargetId,
+        reason,
+      );
+      setBookings(result.bookings);
+    }
+    setCancelTargetId(null);
   }
 
   const visibleItems = useMemo(() => {
@@ -64,6 +81,12 @@ export function ConfirmedBookingsPanel({
       <ConfirmedBookingsTable
         items={visibleItems}
         onOpenRequest={setOpenedRequestId}
+        onCancelBooking={setCancelTargetId}
+      />
+      <CancelBookingModal
+        open={cancelTargetId !== null}
+        onClose={() => setCancelTargetId(null)}
+        onSubmit={submitCancellation}
       />
       {openedRequest === null ? null : (
         <BookingRequestModal

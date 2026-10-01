@@ -4,6 +4,7 @@ import { ConfirmedBookingRow } from "./ConfirmedBookingRow";
 type ConfirmedBookingsTableProps = {
   items: readonly ConfirmedBooking[];
   onOpenRequest: (bookingId: string) => void;
+  onCancelBooking: (bookingId: string) => void;
 };
 
 const HEADER_CELLS = [
@@ -19,6 +20,7 @@ const HEADER_CELLS = [
 export function ConfirmedBookingsTable({
   items,
   onOpenRequest,
+  onCancelBooking,
 }: ConfirmedBookingsTableProps) {
   return (
     <div
@@ -47,6 +49,7 @@ export function ConfirmedBookingsTable({
           key={item.id}
           booking={item}
           onOpenRequest={onOpenRequest}
+          onCancelBooking={onCancelBooking}
         />
       ))}
     </div>

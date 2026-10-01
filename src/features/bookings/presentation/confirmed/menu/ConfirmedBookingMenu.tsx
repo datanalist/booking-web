@@ -1,4 +1,4 @@
-import { Eye, MoreVertical } from "lucide-react";
+import { Eye, MoreVertical, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { ConfirmedBooking } from "../ConfirmedBooking";
 import { ConfirmedBookingMenuItem } from "./ConfirmedBookingMenuItem";
@@ -6,20 +6,23 @@ import {
   ConfirmedBookingMenuPopup,
   type MenuAnchor,
 } from "./ConfirmedBookingMenuPopup";
+import { resolveConfirmedBookingMenuEntry } from "./resolveConfirmedBookingMenuEntry";
 
 type ConfirmedBookingMenuProps = {
   booking: ConfirmedBooking;
   onOpenRequest: (bookingId: string) => void;
+  onCancelBooking: (bookingId: string) => void;
 };
 
 /** "Три точки" menu; statuses without actions keep a disabled trigger. */
 export function ConfirmedBookingMenu({
   booking,
   onOpenRequest,
+  onCancelBooking,
 }: ConfirmedBookingMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
-  const hasActions = booking.status.kind === "request";
+  const entry = resolveConfirmedBookingMenuEntry(booking.status);
 
   function toggle(): void {
     if (anchor !== null) {
@@ -45,25 +48,37 @@ export function ConfirmedBookingMenu({
         aria-haspopup="menu"
         aria-expanded={anchor !== null}
         data-booking-menu-trigger
-        disabled={!hasActions}
+        disabled={entry === "none"}
         onClick={toggle}
         className="inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[var(--color-ink)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <MoreVertical aria-hidden className="size-5" strokeWidth={1.75} />
       </button>
-      {anchor !== null && booking.status.kind === "request" ? (
+      {anchor !== null && entry !== "none" ? (
         <ConfirmedBookingMenuPopup
           anchor={anchor}
           onClose={() => setAnchor(null)}
         >
-          <ConfirmedBookingMenuItem
-            icon={Eye}
-            label="Открыть"
-            onSelect={() => {
-              setAnchor(null);
-              onOpenRequest(booking.id);
-            }}
-          />
+          {entry === "openRequest" ? (
+            <ConfirmedBookingMenuItem
+              icon={Eye}
+              label="Открыть"
+              onSelect={() => {
+                setAnchor(null);
+                onOpenRequest(booking.id);
+              }}
+            />
+          ) : (
+            <ConfirmedBookingMenuItem
+              icon={Trash2}
+              label="Отменить бронирование"
+              tone="danger"
+              onSelect={() => {
+                setAnchor(null);
+                onCancelBooking(booking.id);
+              }}
+            />
+          )}
         </ConfirmedBookingMenuPopup>
       ) : null}
     </>
