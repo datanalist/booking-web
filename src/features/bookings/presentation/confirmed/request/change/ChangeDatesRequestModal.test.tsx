@@ -67,7 +67,7 @@ test("shows housing and client blocks", () => {
 
 test("shows current terms of the booking", () => {
   renderModal();
-  const current = within(section("Текущиие сроки бронирования"));
+  const current = within(section("Текущие сроки бронирования"));
   expect(current.getByText("5-10 декабря")).toBeInTheDocument();
   expect(current.getByText("5 ночей")).toBeInTheDocument();
   expect(current.getByText("15 460 ₽")).toBeInTheDocument();

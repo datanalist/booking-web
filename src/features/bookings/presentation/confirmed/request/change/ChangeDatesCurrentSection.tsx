@@ -14,7 +14,7 @@ export function ChangeDatesCurrentSection({
   booking,
 }: ChangeDatesCurrentSectionProps) {
   return (
-    <BookingRequestSection title="Текущиие сроки бронирования">
+    <BookingRequestSection title="Текущие сроки бронирования">
       <BookingRequestValuesRow
         values={[
           formatStayLong(booking.stay),
