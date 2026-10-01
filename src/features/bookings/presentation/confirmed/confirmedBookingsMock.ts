@@ -1,7 +1,9 @@
 import type { ConfirmedBooking } from "./ConfirmedBooking";
+import { bookingStay } from "./stay/BookingStay";
 
 const PHONE = "+7 (900) 123-45-67";
-const DATES = "14.11.24-19.11.24";
+const STAY = bookingStay("2024-11-14", "2024-11-19");
+const REQUEST_STAY = bookingStay("2024-12-05", "2024-12-10");
 const PRICE = "15 460 ₽";
 const STUDIO = {
   title: "Уютная студия в центре Москвы",
@@ -28,7 +30,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     housingTitle: STUDIO.title,
     housingAddress: STUDIO.address,
     housingPhotoUrl: STUDIO.photoUrl,
-    datesLabel: DATES,
+    stay: STAY,
     priceLabel: PRICE,
     status: {
       kind: "awaitingPrepayment",
@@ -43,7 +45,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     housingTitle: HOUSE.title,
     housingAddress: HOUSE.address,
     housingPhotoUrl: HOUSE.photoUrl,
-    datesLabel: DATES,
+    stay: STAY,
     priceLabel: PRICE,
     status: { kind: "prepaymentPaid" },
   },
@@ -55,9 +57,9 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     housingTitle: HOUSE.title,
     housingAddress: HOUSE.address,
     housingPhotoUrl: HOUSE.photoUrl,
-    datesLabel: DATES,
+    stay: REQUEST_STAY,
     priceLabel: PRICE,
-    status: { kind: "request" },
+    status: { kind: "request", request: { kind: "cancel" } },
   },
   {
     id: "confirmed-4",
@@ -67,7 +69,7 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     housingTitle: STUDIO.title,
     housingAddress: STUDIO.address,
     housingPhotoUrl: STUDIO.photoUrl,
-    datesLabel: DATES,
+    stay: STAY,
     priceLabel: PRICE,
     status: { kind: "stayCompleted" },
   },
@@ -79,8 +81,27 @@ export const CONFIRMED_BOOKINGS_MOCK: readonly ConfirmedBooking[] = [
     housingTitle: APARTMENT.title,
     housingAddress: APARTMENT.address,
     housingPhotoUrl: APARTMENT.photoUrl,
-    datesLabel: DATES,
+    stay: STAY,
     priceLabel: PRICE,
     status: { kind: "staying" },
+  },
+  {
+    id: "confirmed-6",
+    guestName: "Орлова Мария",
+    guestPhone: PHONE,
+    guestAvatarUrl: "/bookings/guest-avatar.png",
+    housingTitle: STUDIO.title,
+    housingAddress: STUDIO.address,
+    housingPhotoUrl: STUDIO.photoUrl,
+    stay: REQUEST_STAY,
+    priceLabel: PRICE,
+    status: {
+      kind: "request",
+      request: {
+        kind: "changeDates",
+        proposedStay: bookingStay("2024-12-06", "2024-12-12"),
+        proposedPriceLabel: "18 130 ₽",
+      },
+    },
   },
 ];

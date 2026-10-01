@@ -1,4 +1,5 @@
 import type { ConfirmedBookingStatus } from "./confirmedBookingStatus";
+import type { BookingStay } from "./stay/BookingStay";
 
 export type ConfirmedBooking = {
   id: string;
@@ -8,7 +9,7 @@ export type ConfirmedBooking = {
   housingTitle: string;
   housingAddress: string;
   housingPhotoUrl: string;
-  datesLabel: string;
+  stay: BookingStay;
   priceLabel: string;
   status: ConfirmedBookingStatus;
 };

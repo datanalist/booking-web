@@ -1,3 +1,5 @@
+import type { ConfirmedBookingRequest } from "./request/ConfirmedBookingRequest";
+
 export const CONFIRMED_BOOKING_STATUS_KINDS = [
   "awaitingPrepayment",
   "prepaymentPaid",
@@ -12,7 +14,7 @@ export type ConfirmedBookingStatusKind =
 export type ConfirmedBookingStatus =
   | { kind: "awaitingPrepayment"; remainingLabel: string }
   | { kind: "prepaymentPaid" }
-  | { kind: "request" }
+  | { kind: "request"; request: ConfirmedBookingRequest }
   | { kind: "stayCompleted" }
   | { kind: "staying" };
 
