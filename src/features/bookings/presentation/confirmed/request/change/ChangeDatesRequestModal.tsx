@@ -1,6 +1,9 @@
 import { BookingRequestModalFrame } from "../BookingRequestModalFrame";
 import type { ConfirmedRequestBooking } from "../ConfirmedRequestBooking";
 import type { RequestDecision } from "../RequestDecision";
+import { ChangeDatesCurrentSection } from "./ChangeDatesCurrentSection";
+import { changeDatesProposal } from "./ChangeDatesProposal";
+import { ChangeDatesProposedSection } from "./ChangeDatesProposedSection";
 
 type ChangeDatesRequestModalProps = {
   booking: ConfirmedRequestBooking;
@@ -8,12 +11,12 @@ type ChangeDatesRequestModalProps = {
   onDecision: (decision: RequestDecision) => void;
 };
 
-/** Stub: "Текущиие/Новые сроки бронирования" sections are added by the feat-bookings-request-change branch. */
 export function ChangeDatesRequestModal({
   booking,
   onClose,
   onDecision,
 }: ChangeDatesRequestModalProps) {
+  const proposal = changeDatesProposal(booking);
   return (
     <BookingRequestModalFrame
       title="Запрос на изменение сроков бронирования"
@@ -21,6 +24,13 @@ export function ChangeDatesRequestModal({
       booking={booking}
       onClose={onClose}
       onDecision={onDecision}
-    />
+    >
+      {proposal === null ? null : (
+        <>
+          <ChangeDatesCurrentSection booking={booking} />
+          <ChangeDatesProposedSection proposal={proposal} />
+        </>
+      )}
+    </BookingRequestModalFrame>
   );
 }
