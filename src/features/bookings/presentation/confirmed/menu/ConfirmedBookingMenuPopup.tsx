@@ -1,0 +1,63 @@
+import { useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+
+export type MenuAnchor = {
+  /** Distance from the viewport top to the bottom edge of the trigger. */
+  top: number;
+  /** Distance from the viewport right edge to the right edge of the trigger. */
+  right: number;
+};
+
+type ConfirmedBookingMenuPopupProps = {
+  anchor: MenuAnchor;
+  onClose: () => void;
+  children: ReactNode;
+};
+
+/** Fixed-position popup (rendered in a portal so table overflow does not clip it). */
+export function ConfirmedBookingMenuPopup({
+  anchor,
+  onClose,
+  children,
+}: ConfirmedBookingMenuPopupProps) {
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent): void {
+      if (
+        event.target instanceof Node &&
+        popupRef.current?.contains(event.target) === false &&
+        !(event.target instanceof Element && event.target.closest("[data-booking-menu-trigger]"))
+      ) {
+        onClose();
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent): void {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", onClose);
+    window.addEventListener("scroll", onClose, true);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", onClose);
+      window.removeEventListener("scroll", onClose, true);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      ref={popupRef}
+      role="menu"
+      style={{ top: anchor.top, right: anchor.right }}
+      className="fixed z-40 rounded-bl-2xl rounded-br-2xl rounded-tl-2xl bg-absolute-white py-5 pl-5 pr-7 font-sans shadow-[0px_12px_36px_0px_rgba(23,24,32,0.07),0px_0px_4px_0px_rgba(23,24,32,0.06)]"
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}

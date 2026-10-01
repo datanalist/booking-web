@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { ConfirmedBooking } from "./ConfirmedBooking";
 import type { ConfirmedBookingStatusKind } from "./confirmedBookingStatus";
+import { bookingStay } from "./stay/BookingStay";
 import { prioritizeConfirmedBookingsByStatus } from "./prioritizeConfirmedBookingsByStatus";
 
 function booking(
@@ -15,12 +16,14 @@ function booking(
     housingTitle: "Жильё",
     housingAddress: "Адрес",
     housingPhotoUrl: "/h.jpg",
-    datesLabel: "14.11.24-19.11.24",
+    stay: bookingStay("2024-11-14", "2024-11-19"),
     priceLabel: "15 460 ₽",
     status:
       kind === "awaitingPrepayment"
         ? { kind, remainingLabel: "осталось 1 час" }
-        : { kind },
+        : kind === "request"
+          ? { kind, request: { kind: "cancel" } }
+          : { kind },
   };
 }
 
