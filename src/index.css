@@ -6,6 +6,8 @@
   --color-ink: #1a1b1d;
   --color-accent: #f88a2a;
   --color-white: #ffffff;
+  --color-absolute-white: #ffffff;
+  --color-absolute-black: #171820;
   --font-sans: "Noto Sans", sans-serif;
   --radius-button: 30px;
   --radius-input: 8px;
