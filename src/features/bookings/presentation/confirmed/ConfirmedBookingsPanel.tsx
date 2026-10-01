@@ -1,7 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { BOOKING_EMPTY_COPY } from "../../bookingEmptyCopy";
 import { BookingsEmptyCard } from "../../BookingsEmptyCard";
-import { CancelBookingModal } from "./cancel/CancelBookingModal";
 import { cancelAwaitingPrepaymentBooking } from "./cancel/cancelAwaitingPrepaymentBooking";
 import type { AcceptedCancelReason } from "./cancel/parseCancelReason";
 import type { ConfirmedBooking } from "./ConfirmedBooking";
@@ -9,12 +8,14 @@ import { CONFIRMED_BOOKINGS_MOCK } from "./confirmedBookingsMock";
 import type { ConfirmedStatusSortOption } from "./confirmedStatusSortOption";
 import { ConfirmedBookingsTable } from "./ConfirmedBookingsTable";
 import { ConfirmedStatusSortControl } from "./ConfirmedStatusSortControl";
+import type { ConfirmedBookingDialog } from "./dialog/ConfirmedBookingDialog";
+import { ConfirmedBookingDialogHost } from "./dialog/ConfirmedBookingDialogHost";
 import { filterConfirmedBookings } from "./filterConfirmedBookings";
 import { prioritizeConfirmedBookingsByStatus } from "./prioritizeConfirmedBookingsByStatus";
-import { asRequestBooking } from "./request/asRequestBooking";
-import { BookingRequestModal } from "./request/BookingRequestModal";
 import type { RequestDecision } from "./request/RequestDecision";
 import { resolveBookingRequest } from "./request/resolveBookingRequest";
+import type { BookingReview } from "./review/BookingReview";
+import { bookingReviewsStore } from "./review/bookingReviewsStore";
 
 type ConfirmedBookingsPanelProps = {
   query: string;
@@ -28,36 +29,32 @@ export function ConfirmedBookingsPanel({
   const [sort, setSort] = useState<ConfirmedStatusSortOption>("all");
   const [bookings, setBookings] =
     useState<readonly ConfirmedBooking[]>(CONFIRMED_BOOKINGS_MOCK);
-  const [openedRequestId, setOpenedRequestId] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<ConfirmedBookingDialog | null>(null);
 
-  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+  const closeDialog = (): void => setDialog(null);
 
-  const closeRequest = useCallback(() => setOpenedRequestId(null), []);
-
-  const openedRequest = useMemo(() => {
-    const opened = bookings.find((item) => item.id === openedRequestId);
-    return opened === undefined ? null : asRequestBooking(opened);
-  }, [bookings, openedRequestId]);
-
-  function decideRequest(decision: RequestDecision): void {
-    if (openedRequestId !== null) {
-      setBookings((current) =>
-        resolveBookingRequest(current, openedRequestId, decision),
-      );
-    }
-    closeRequest();
+  function decideRequest(
+    bookingId: ConfirmedBooking["id"],
+    decision: RequestDecision,
+  ): void {
+    setBookings((current) => resolveBookingRequest(current, bookingId, decision));
+    closeDialog();
   }
 
-  function submitCancellation(reason: AcceptedCancelReason): void {
-    if (cancelTargetId !== null) {
-      const result = cancelAwaitingPrepaymentBooking(
-        bookings,
-        cancelTargetId,
-        reason,
-      );
-      setBookings(result.bookings);
-    }
-    setCancelTargetId(null);
+  function submitCancellation(
+    bookingId: ConfirmedBooking["id"],
+    reason: AcceptedCancelReason,
+  ): void {
+    setBookings(
+      (current) =>
+        cancelAwaitingPrepaymentBooking(current, bookingId, reason).bookings,
+    );
+    closeDialog();
+  }
+
+  function submitReview(review: BookingReview): void {
+    bookingReviewsStore.save(review);
+    closeDialog();
   }
 
   const visibleItems = useMemo(() => {
@@ -78,23 +75,15 @@ export function ConfirmedBookingsPanel({
       <div className="flex w-full shrink-0 items-center justify-end">
         <ConfirmedStatusSortControl value={sort} onChange={setSort} />
       </div>
-      <ConfirmedBookingsTable
-        items={visibleItems}
-        onOpenRequest={setOpenedRequestId}
-        onCancelBooking={setCancelTargetId}
+      <ConfirmedBookingsTable items={visibleItems} onOpenDialog={setDialog} />
+      <ConfirmedBookingDialogHost
+        dialog={dialog}
+        bookings={bookings}
+        onClose={closeDialog}
+        onDecideRequest={decideRequest}
+        onSubmitCancel={submitCancellation}
+        onSubmitReview={submitReview}
       />
-      <CancelBookingModal
-        open={cancelTargetId !== null}
-        onClose={() => setCancelTargetId(null)}
-        onSubmit={submitCancellation}
-      />
-      {openedRequest === null ? null : (
-        <BookingRequestModal
-          booking={openedRequest}
-          onClose={closeRequest}
-          onDecision={decideRequest}
-        />
-      )}
     </div>
   );
 }

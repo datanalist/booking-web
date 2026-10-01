@@ -1,44 +1,33 @@
 import { X } from "lucide-react";
-import { useEffect, useId, useState, type MouseEvent, type RefObject } from "react";
+import { useId, useRef, useState, type MouseEvent, type RefObject } from "react";
 import { createPortal } from "react-dom";
+import { useDialogFocusTrap } from "../dialog/useDialogFocusTrap";
 import {
   CANCEL_REASON_MAX_LENGTH,
   parseCancelReason,
   type AcceptedCancelReason,
 } from "./parseCancelReason";
-import { useCancelBookingFocusTrap } from "./useCancelBookingFocusTrap";
 
 const EXPLANATION =
-  "Бронирование будет отменено в одностороннем порядке. Освободившиеся даты будут доступны другим пользоватлеям для бронирования";
+  "Бронирование будет отменено в одностороннем порядке. Освободившиеся даты будут доступны другим пользователям для бронирования";
 
 const CARD_CLASS =
   "flex w-96 flex-col gap-10 rounded-xl bg-absolute-white p-6 outline-none shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03),0px_20px_24px_-4px_rgba(16,24,40,0.08)]";
 
 type CancelBookingModalProps = {
-  open: boolean;
   onClose: () => void;
   onSubmit: (reason: AcceptedCancelReason) => void;
 };
 
 export function CancelBookingModal({
-  open,
   onClose,
   onSubmit,
 }: CancelBookingModalProps) {
   const titleId = useId();
   const reasonId = useId();
-  const dialogRef = useCancelBookingFocusTrap(open, onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocusTrap(dialogRef, onClose);
   const [reason, setReason] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setReason("");
-    }
-  }, [open]);
-
-  if (!open) {
-    return null;
-  }
 
   return createPortal(
     <CancelBookingDialogSurface

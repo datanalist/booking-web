@@ -5,7 +5,7 @@ import { BookingRequestModalFooter } from "./BookingRequestModalFooter";
 import { BookingRequestModalHeader } from "./BookingRequestModalHeader";
 import type { ConfirmedRequestBooking } from "./ConfirmedRequestBooking";
 import type { RequestDecision } from "./RequestDecision";
-import { useDialogFocusTrap } from "./useDialogFocusTrap";
+import { useDialogFocusTrap } from "../dialog/useDialogFocusTrap";
 
 type BookingRequestModalFrameProps = {
   title: string;

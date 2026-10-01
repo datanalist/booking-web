@@ -1,24 +1,24 @@
 import { Eye, MoreVertical, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { ConfirmedBooking } from "../ConfirmedBooking";
+import type { ConfirmedBookingDialog } from "../dialog/ConfirmedBookingDialog";
 import { ConfirmedBookingMenuItem } from "./ConfirmedBookingMenuItem";
 import {
   ConfirmedBookingMenuPopup,
   type MenuAnchor,
 } from "./ConfirmedBookingMenuPopup";
 import { resolveConfirmedBookingMenuEntry } from "./resolveConfirmedBookingMenuEntry";
+import { ReviewMenuItem } from "./ReviewMenuItem";
 
 type ConfirmedBookingMenuProps = {
   booking: ConfirmedBooking;
-  onOpenRequest: (bookingId: string) => void;
-  onCancelBooking: (bookingId: string) => void;
+  onOpenDialog: (dialog: ConfirmedBookingDialog) => void;
 };
 
 /** "Три точки" menu; statuses without actions keep a disabled trigger. */
 export function ConfirmedBookingMenu({
   booking,
-  onOpenRequest,
-  onCancelBooking,
+  onOpenDialog,
 }: ConfirmedBookingMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
@@ -37,6 +37,13 @@ export function ConfirmedBookingMenu({
         right: window.innerWidth - rect.right,
       });
     }
+  }
+
+  function openDialog(kind: ConfirmedBookingDialog["kind"]): void {
+    setAnchor(null);
+    // The dialog focus trap restores focus to the element focused when it opens: the trigger.
+    triggerRef.current?.focus();
+    onOpenDialog({ kind, bookingId: booking.id });
   }
 
   return (
@@ -59,28 +66,39 @@ export function ConfirmedBookingMenu({
           anchor={anchor}
           onClose={() => setAnchor(null)}
         >
-          {entry === "openRequest" ? (
-            <ConfirmedBookingMenuItem
-              icon={Eye}
-              label="Открыть"
-              onSelect={() => {
-                setAnchor(null);
-                onOpenRequest(booking.id);
-              }}
-            />
-          ) : (
-            <ConfirmedBookingMenuItem
-              icon={Trash2}
-              label="Отменить бронирование"
-              tone="danger"
-              onSelect={() => {
-                setAnchor(null);
-                onCancelBooking(booking.id);
-              }}
-            />
-          )}
+          {renderEntry(entry, booking, openDialog)}
         </ConfirmedBookingMenuPopup>
       ) : null}
     </>
   );
+}
+
+function renderEntry(
+  entry: Exclude<ReturnType<typeof resolveConfirmedBookingMenuEntry>, "none">,
+  booking: ConfirmedBooking,
+  openDialog: (kind: ConfirmedBookingDialog["kind"]) => void,
+) {
+  switch (entry) {
+    case "review":
+      return (
+        <ReviewMenuItem booking={booking} onSelect={() => openDialog("review")} />
+      );
+    case "cancel":
+      return (
+        <ConfirmedBookingMenuItem
+          icon={Trash2}
+          label="Отменить бронирование"
+          tone="danger"
+          onSelect={() => openDialog("cancel")}
+        />
+      );
+    case "openRequest":
+      return (
+        <ConfirmedBookingMenuItem
+          icon={Eye}
+          label="Открыть"
+          onSelect={() => openDialog("request")}
+        />
+      );
+  }
 }
