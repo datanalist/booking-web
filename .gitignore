@@ -9,3 +9,5 @@ dist/
 .superpowers/
 /data/*
 !/data/.gitkeep
+*.pem
+*.key
