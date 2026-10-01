@@ -8,3 +8,7 @@ dist/
 *.tsbuildinfo
 .superpowers/
 .worktrees
+/data/*
+!/data/.gitkeep
+*.pem
+*.key

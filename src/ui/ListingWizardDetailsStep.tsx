@@ -1,6 +1,7 @@
 import { DESCRIPTION_MAX } from "../config";
-import { ListingWizardStepper } from "./ListingWizardStepper";
+import { WizardBackButton } from "./WizardBackButton";
 import { WizardMultilineField } from "./WizardMultilineField";
+import { WizardSteps } from "./WizardSteps";
 
 export type ListingWizardDetailsValues = {
   accessInfo: string;
@@ -13,6 +14,9 @@ type ListingWizardDetailsStepProps = {
   errors: Record<string, string>;
   pending: boolean;
   onChange: (partial: Partial<ListingWizardDetailsValues>) => void;
+  /** Стрелка в шапке: выход в список объявлений. */
+  onExit: () => void;
+  /** Кнопка «Вернуться»: предыдущий шаг мастера. */
   onBack: () => void;
   onNext: () => void;
 };
@@ -23,27 +27,20 @@ export function ListingWizardDetailsStep({
   errors,
   pending,
   onChange,
+  onExit,
   onBack,
   onNext,
 }: ListingWizardDetailsStepProps) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-8 overflow-auto bg-[rgba(251,192,40,0.06)] px-8 py-8 font-sans">
       <header className="flex w-full items-center gap-5">
-        <button
-          type="button"
-          aria-label="Назад"
-          className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[30px] border border-[#ffe4b8] bg-white p-2"
-          onClick={onBack}
-          disabled={pending}
-        >
-          <img src="/icon-arrow-left.svg" alt="" width={24} height={24} />
-        </button>
+        <WizardBackButton disabled={pending} onClick={onExit} />
         <h1 className="text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
           Создание объявления
         </h1>
       </header>
 
-      <ListingWizardStepper current={5} />
+      <WizardSteps current={5} />
 
       <section className="flex w-full grow shrink-0 flex-col items-center rounded-[16px] border border-[rgba(251,192,40,0.17)] bg-white">
         <div className="flex w-full max-w-[437px] shrink-0 flex-col gap-8 py-10">

@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { resolveLocation } from "./guards";
 import { useSession } from "./session";
+import { AllListingsProvider } from "../features/listings";
 import { AuthLayout } from "../pages/AuthLayout";
 import { CabinetLayout } from "../pages/CabinetLayout";
 import { ForgotPasswordPage } from "../pages/ForgotPasswordPage";
@@ -50,9 +51,11 @@ function AuthShell() {
 function CabinetShell() {
   return (
     <Guarded>
-      <CabinetLayout>
-        <Outlet />
-      </CabinetLayout>
+      <AllListingsProvider>
+        <CabinetLayout>
+          <Outlet />
+        </CabinetLayout>
+      </AllListingsProvider>
     </Guarded>
   );
 }

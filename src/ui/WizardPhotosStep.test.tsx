@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { PHOTO_UPLOAD_IDLE } from "../features/listings";
 import { WIZARD_PHOTO_DRAG_MIME } from "../lib/wizardPhotoDragMime";
 import { WizardPhotosStep } from "./WizardPhotosStep";
 
@@ -22,6 +23,7 @@ describe("WizardPhotosStep", () => {
     render(
       <WizardPhotosStep
         photos={[]}
+        uploadStatus={PHOTO_UPLOAD_IDLE}
         onPhotosChange={vi.fn()}
         onFilesSelected={vi.fn()}
         onBack={vi.fn()}
@@ -35,6 +37,66 @@ describe("WizardPhotosStep", () => {
     expect(screen.getAllByRole("button", { name: /Добавить/ })).toHaveLength(9);
   });
 
+  test("shows loading indicator and keeps next disabled without enough photos", () => {
+    render(
+      <WizardPhotosStep
+        photos={[]}
+        uploadStatus={{ kind: "loading" }}
+        onPhotosChange={vi.fn()}
+        onFilesSelected={vi.fn()}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Обработка фото…");
+    expect(screen.getByRole("button", { name: "Далее" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Вернуться" })).toBeDisabled();
+  });
+
+  test("keeps next enabled while loading when minimum photos already present", () => {
+    render(
+      <WizardPhotosStep
+        photos={sixPhotos}
+        uploadStatus={{ kind: "loading" }}
+        onPhotosChange={vi.fn()}
+        onFilesSelected={vi.fn()}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Обработка фото…");
+    expect(screen.getByRole("button", { name: "Далее" })).toBeEnabled();
+  });
+
+  test("shows upload error and enables next after enough photos", async () => {
+    const user = userEvent.setup();
+    const onNext = vi.fn();
+
+    render(
+      <WizardPhotosStep
+        photos={sixPhotos}
+        uploadStatus={{
+          kind: "error",
+          message: "Не удалось обработать 1 из 7 фото. Остальные добавлены.",
+        }}
+        onPhotosChange={vi.fn()}
+        onFilesSelected={vi.fn()}
+        onBack={vi.fn()}
+        onNext={onNext}
+      />,
+    );
+
+    expect(
+      screen.getByText("Не удалось обработать 1 из 7 фото. Остальные добавлены."),
+    ).toBeInTheDocument();
+    const next = screen.getByRole("button", { name: "Далее" });
+    expect(next).toBeEnabled();
+    await user.click(next);
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
   test("shows previews and enables next with enough photos", async () => {
     const user = userEvent.setup();
     const onPhotosChange = vi.fn();
@@ -42,6 +104,7 @@ describe("WizardPhotosStep", () => {
     render(
       <WizardPhotosStep
         photos={sixPhotos}
+        uploadStatus={PHOTO_UPLOAD_IDLE}
         onPhotosChange={onPhotosChange}
         onFilesSelected={vi.fn()}
         onBack={vi.fn()}
@@ -72,6 +135,7 @@ describe("WizardPhotosStep", () => {
     const { container } = render(
       <WizardPhotosStep
         photos={sixPhotos}
+        uploadStatus={PHOTO_UPLOAD_IDLE}
         onPhotosChange={onPhotosChange}
         onFilesSelected={vi.fn()}
         onBack={vi.fn()}
@@ -118,6 +182,7 @@ describe("WizardPhotosStep", () => {
     render(
       <WizardPhotosStep
         photos={sixPhotos}
+        uploadStatus={PHOTO_UPLOAD_IDLE}
         onPhotosChange={vi.fn()}
         onFilesSelected={vi.fn()}
         onBack={vi.fn()}

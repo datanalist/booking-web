@@ -14,6 +14,7 @@ test("renders mockup labels and counters", () => {
       errors={{}}
       pending={false}
       onChange={() => {}}
+      onExit={() => {}}
       onBack={() => {}}
       onNext={() => {}}
     />,
@@ -43,6 +44,7 @@ test("typing updates counters and calls onChange", async () => {
       errors={{}}
       pending={false}
       onChange={onChange}
+      onExit={() => {}}
       onBack={() => {}}
       onNext={() => {}}
     />,
@@ -68,6 +70,7 @@ test("next and back are interactive", async () => {
       errors={{}}
       pending={false}
       onChange={() => {}}
+      onExit={() => {}}
       onBack={onBack}
       onNext={onNext}
     />,

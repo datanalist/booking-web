@@ -1,133 +1,214 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSession } from "../app/session";
-import { STATUS_LABELS } from "../config";
-import { LISTING_TABS, type ListingTabId } from "../lib/listingTabs";
-import type { Listing } from "../api/types";
+import { useState, type ReactElement } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  AllListingsTable,
+  DeleteAnnouncementDialog,
+  filterListingsByQuery,
+  PublishAnnouncementDialog,
+  UnpublishAnnouncementDialog,
+  useAllListings,
+  type ListingPreviewLocationState,
+  type ListingRowMenuActionId,
+  type ListingTableRow,
+} from "../features/listings";
+import {
+  isListingTabId,
+  LISTING_TABS,
+  type ListingTabId,
+  type ListingsLocationState,
+} from "../lib/listingTabs";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
-import { ListingCard } from "../ui/ListingCard";
-import { Modal } from "../ui/Modal";
+import { Search } from "../ui/Search";
 import { Tabs } from "../ui/Tabs";
 
+const TAB_ARIA_LABELS: Record<ListingTabId, string> = {
+  all: "Все объявления",
+  published: "Опубликованы",
+  moderation: "На модерации",
+  archived: "Архив",
+};
+
+function itemsForTab(
+  items: readonly ListingTableRow[],
+  tab: ListingTabId,
+): ListingTableRow[] {
+  switch (tab) {
+    case "all":
+      return [...items];
+    case "published":
+      return items.filter((item) => item.status === "published");
+    case "moderation":
+      return items.filter((item) => item.status === "moderation");
+    case "archived":
+      return items.filter(
+        (item) => item.status === "unpublished" || item.status === "draft",
+      );
+  }
+}
+
 export function ListingsPage() {
-  const { listings } = useSession();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<ListingTabId>("all");
-  const [items, setItems] = useState<Listing[]>([]);
-  const [publishOpen, setPublishOpen] = useState(false);
+  const location = useLocation();
+  const { items, remove, setStatus } = useAllListings();
+  const [tab, setTab] = useState<ListingTabId>(() => {
+    const state = location.state as ListingsLocationState | null;
+    return isListingTabId(state?.tab) ? state.tab : "all";
+  });
+  const [query, setQuery] = useState("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [unpublishId, setUnpublishId] = useState<string | null>(null);
+  const [publishId, setPublishId] = useState<string | null>(null);
 
-  const reload = useCallback(async (): Promise<void> => {
-    const next = await listings.list({ tab, query: "" });
-    setItems(next);
-  }, [listings, tab]);
+  const visibleItems = filterListingsByQuery(itemsForTab(items, tab), query);
 
-  useEffect(() => {
-    void reload();
-  }, [reload]);
-
-  async function confirmDelete(): Promise<void> {
-    if (!deleteId) {
+  function handleMenuAction(
+    listingId: string,
+    actionId: ListingRowMenuActionId,
+  ): void {
+    if (actionId === "edit") {
+      const state: ListingPreviewLocationState = { fromTab: tab };
+      navigate(`/listings/${listingId}/edit?step=1`, { state });
       return;
     }
-    await listings.remove(deleteId);
-    setDeleteId(null);
-    await reload();
+    if (actionId === "calendar") {
+      return;
+    }
+    if (actionId === "delete") {
+      setDeleteId(listingId);
+      return;
+    }
+    if (actionId === "unpublish") {
+      setUnpublishId(listingId);
+      return;
+    }
+    if (actionId === "publish") {
+      setPublishId(listingId);
+    }
   }
 
-  const empty = tab === "published" || items.length === 0;
+  function confirmDelete(): void {
+    if (deleteId === null) {
+      return;
+    }
+    remove(deleteId);
+    setDeleteId(null);
+  }
+
+  function confirmUnpublish(): void {
+    if (unpublishId === null) {
+      return;
+    }
+    setStatus(unpublishId, "unpublished");
+    setUnpublishId(null);
+  }
+
+  function confirmPublish(): void {
+    if (publishId === null) {
+      return;
+    }
+    setStatus(publishId, "published");
+    setPublishId(null);
+  }
+
+  function renderEmptyState(): ReactElement {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 rounded-2xl border border-amber-400/20 bg-white">
+        <EmptyState
+          title="Нет объявлений"
+          description="Создайте свое первое объявление о жилье!"
+          illustration={
+            <img
+              src="/listings-empty.svg"
+              alt=""
+              width={214}
+              height={200}
+              className="mb-0"
+            />
+          }
+        />
+      </div>
+    );
+  }
+
+  function renderTable(): ReactElement {
+    if (visibleItems.length === 0) {
+      return renderEmptyState();
+    }
+    return (
+      <AllListingsTable
+        ariaLabel={TAB_ARIA_LABELS[tab]}
+        items={visibleItems}
+        openMenuId={openMenuId}
+        onOpenMenuChange={setOpenMenuId}
+        onMenuAction={handleMenuAction}
+        onOpenListing={(listingId) => {
+          const state: ListingPreviewLocationState = { fromTab: tab };
+          navigate(`/listings/${listingId}/preview`, { state });
+        }}
+      />
+    );
+  }
 
   return (
-    <div className="flex h-full w-full flex-col gap-8 bg-[rgba(251,192,40,0.06)] p-8 font-sans">
+    <div className="flex h-full w-full flex-col gap-8 bg-amber-400/5 p-8 font-sans">
       <div className="flex w-full shrink-0 items-center justify-between">
         <h1 className="m-0 text-[24px] font-bold leading-[1.2] text-[var(--color-ink)]">
           Мои объявления
         </h1>
-        <Button size="sm" onClick={() => navigate("/listings/new")}>
-          Создать объявление
-        </Button>
-      </div>
-
-      <Tabs
-        items={LISTING_TABS.map((item) => ({
-          id: item.id,
-          label: item.label,
-        }))}
-        value={tab}
-        onChange={(id) => setTab(id as ListingTabId)}
-      />
-
-      {empty ? (
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 rounded-2xl border border-[rgba(251,192,40,0.17)] bg-white">
-          <EmptyState
-            title="Нет объявлений"
-            description="Создайте свое первое объявление о жилье!"
-            illustration={
-              <img
-                src="/listings-empty.svg"
-                alt=""
-                width={214}
-                height={200}
-                className="mb-0"
-              />
-            }
-          />
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {items.map((item) => (
-            <ListingCard
-              key={item.id}
-              title={item.title}
-              address={item.address}
-              photoUrl={item.photos[0]}
-              statusLabel={STATUS_LABELS[item.status]}
-              onOpen={() => navigate(`/listings/${item.id}/preview`)}
-              onEdit={() => navigate(`/listings/${item.id}/edit`)}
-              onPublish={() => setPublishOpen(true)}
-              onDelete={() => setDeleteId(item.id)}
-            />
-          ))}
-        </div>
-      )}
-
-      <Modal
-        open={publishOpen}
-        title="Публикация"
-        onClose={() => setPublishOpen(false)}
-      >
-        <p className="text-[16px] text-[var(--color-text)]">
-          Публикацию выполняет администратор, раздел появится позже
-        </p>
-      </Modal>
-
-      <Modal
-        open={deleteId !== null}
-        title="Удалить объявление?"
-        onClose={() => setDeleteId(null)}
-      >
-        <p className="mb-6 text-[16px] text-[var(--color-text)]">
-          Это действие нельзя отменить.
-        </p>
-        <div className="flex gap-3">
-          <Button
-            variant="outlined"
-            className="flex-1"
-            onClick={() => setDeleteId(null)}
-          >
-            Отмена
+        <div className="flex items-center gap-3">
+          <Button size="sm" variant="outlined">
+            Импорт из TravelLine
           </Button>
           <Button
-            className="flex-1"
+            size="sm"
             onClick={() => {
-              void confirmDelete();
+              const state: ListingPreviewLocationState = { fromTab: tab };
+              navigate("/listings/new", { state });
             }}
           >
-            Удалить
+            Создать объявление
           </Button>
         </div>
-      </Modal>
+      </div>
+
+      <div className="flex w-full shrink-0 items-start justify-between gap-4">
+        <Tabs
+          items={LISTING_TABS.map((item) => ({
+            id: item.id,
+            label: item.label,
+          }))}
+          value={tab}
+          onChange={(id) => {
+            setTab(id as ListingTabId);
+            setOpenMenuId(null);
+          }}
+        />
+        <Search
+          value={query}
+          onChange={setQuery}
+          placeholder="Введите название или адрес жилья"
+        />
+      </div>
+
+      {renderTable()}
+
+      <DeleteAnnouncementDialog
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+      />
+      <UnpublishAnnouncementDialog
+        open={unpublishId !== null}
+        onClose={() => setUnpublishId(null)}
+        onConfirm={confirmUnpublish}
+      />
+      <PublishAnnouncementDialog
+        open={publishId !== null}
+        onClose={() => setPublishId(null)}
+        onConfirm={confirmPublish}
+      />
     </div>
   );
 }

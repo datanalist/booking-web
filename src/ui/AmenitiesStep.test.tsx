@@ -36,6 +36,7 @@ function AmenitiesHarness() {
           return next;
         });
       }}
+      onExit={() => undefined}
       onBack={() => undefined}
       onNext={() => undefined}
     />
