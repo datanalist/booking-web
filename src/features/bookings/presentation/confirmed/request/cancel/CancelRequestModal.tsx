@@ -1,6 +1,8 @@
 import { BookingRequestModalFrame } from "../BookingRequestModalFrame";
 import type { ConfirmedRequestBooking } from "../ConfirmedRequestBooking";
 import type { RequestDecision } from "../RequestDecision";
+import { CancelRequestDatesSection } from "./CancelRequestDatesSection";
+import { CancelRequestPriceSection } from "./CancelRequestPriceSection";
 
 type CancelRequestModalProps = {
   booking: ConfirmedRequestBooking;
@@ -8,7 +10,6 @@ type CancelRequestModalProps = {
   onDecision: (decision: RequestDecision) => void;
 };
 
-/** Stub: sections "Даты" and "Стоимость" are added by the feat-bookings-request-cancel branch. */
 export function CancelRequestModal({
   booking,
   onClose,
@@ -21,6 +22,9 @@ export function CancelRequestModal({
       booking={booking}
       onClose={onClose}
       onDecision={onDecision}
-    />
+    >
+      <CancelRequestDatesSection booking={booking} />
+      <CancelRequestPriceSection booking={booking} />
+    </BookingRequestModalFrame>
   );
 }
