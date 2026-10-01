@@ -1,9 +1,11 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 export type MenuAnchor = {
   /** Distance from the viewport top to the bottom edge of the trigger. */
   top: number;
+  /** Distance from the viewport bottom to the top edge of the trigger. */
+  bottom: number;
   /** Distance from the viewport right edge to the right edge of the trigger. */
   right: number;
 };
@@ -21,6 +23,13 @@ export function ConfirmedBookingMenuPopup({
   children,
 }: ConfirmedBookingMenuPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
+  const [placeAbove, setPlaceAbove] = useState(false);
+
+  // Flip above the trigger when the popup would overflow the viewport bottom.
+  useLayoutEffect(() => {
+    const height = popupRef.current?.offsetHeight ?? 0;
+    setPlaceAbove(anchor.top + height > window.innerHeight);
+  }, [anchor]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent): void {
@@ -53,8 +62,12 @@ export function ConfirmedBookingMenuPopup({
     <div
       ref={popupRef}
       role="menu"
-      style={{ top: anchor.top, right: anchor.right }}
-      className="fixed z-40 rounded-bl-2xl rounded-br-2xl rounded-tl-2xl bg-absolute-white py-5 pl-5 pr-7 font-sans shadow-[0px_12px_36px_0px_rgba(23,24,32,0.07),0px_0px_4px_0px_rgba(23,24,32,0.06)]"
+      style={
+        placeAbove
+          ? { bottom: anchor.bottom, right: anchor.right }
+          : { top: anchor.top, right: anchor.right }
+      }
+      className={`fixed z-40 rounded-2xl ${placeAbove ? "rounded-br-none" : "rounded-tr-none"} bg-absolute-white py-5 pl-5 pr-7 font-sans shadow-[0px_12px_36px_0px_rgba(23,24,32,0.07),0px_0px_4px_0px_rgba(23,24,32,0.06)]`}
     >
       {children}
     </div>,

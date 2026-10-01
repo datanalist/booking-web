@@ -30,6 +30,7 @@ export function ConfirmedBookingMenu({
     if (rect !== undefined) {
       setAnchor({
         top: rect.bottom + 4,
+        bottom: window.innerHeight - rect.top + 4,
         right: window.innerWidth - rect.right,
       });
     }
