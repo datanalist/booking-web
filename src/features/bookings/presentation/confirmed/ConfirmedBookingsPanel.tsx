@@ -6,6 +6,7 @@ import type { ConfirmedStatusSortOption } from "./confirmedStatusSortOption";
 import { ConfirmedBookingsTable } from "./ConfirmedBookingsTable";
 import { ConfirmedStatusSortControl } from "./ConfirmedStatusSortControl";
 import { filterConfirmedBookings } from "./filterConfirmedBookings";
+import { prioritizeConfirmedBookingsByStatus } from "./prioritizeConfirmedBookingsByStatus";
 
 type ConfirmedBookingsPanelProps = {
   query: string;
@@ -22,7 +23,9 @@ export function ConfirmedBookingsPanel({
     if (forceEmpty) {
       return [];
     }
-    return filterConfirmedBookings(CONFIRMED_BOOKINGS_MOCK, query, sort);
+    const filtered = filterConfirmedBookings(CONFIRMED_BOOKINGS_MOCK, query);
+    const selected = sort === "all" ? [] : [sort];
+    return prioritizeConfirmedBookingsByStatus(filtered, selected);
   }, [forceEmpty, query, sort]);
 
   if (visibleItems.length === 0) {
