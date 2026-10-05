@@ -1,23 +1,19 @@
-/**
- * Временный статус ключа до этапа B: затем заменить на `ApiKeyStatus` из `./api-key-card`.
- * `empty` — кадр 1:17900, `connected` — 636:11531, `error` — 636:11620.
- */
-type ProfileDemoApiKeyStatus = "empty" | "connected" | "error";
+import type { ApiKeyStatus } from "./api-key-card";
 
 type ProfileDemo = {
   /** Рубли, как на карточке «34 670 ₽». */
   balanceRub: number;
   apiKey: {
-    status: ProfileDemoApiKeyStatus;
+    status: ApiKeyStatus;
     key: string;
   };
 };
 
-/** Макет главной профиля, Figma 1:17900: баланс 34 670 ₽, ключ ещё не введён. */
+/** Макет главной профиля, Figma 1:17900: баланс 34 670 ₽, ключ ещё не подключён. */
 export const PROFILE_DEMO: ProfileDemo = {
   balanceRub: 34670,
   apiKey: {
-    status: "empty",
+    status: "disconnected",
     key: "",
   },
 };
