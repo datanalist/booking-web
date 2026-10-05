@@ -19,8 +19,8 @@ import { LoginPage } from "../pages/LoginPage";
 import { OnboardingPage } from "../pages/OnboardingPage";
 import { RegisterPage } from "../pages/RegisterPage";
 import { ResetPasswordPage } from "../pages/ResetPasswordPage";
-import { ProfilePage } from "../pages/ProfilePage";
 import { BookingsPage } from "../features/bookings";
+import { ProfilePage } from "../features/profile";
 import { StubPage } from "../pages/StubPage";
 
 function Guarded({ children }: { children: ReactNode }) {
