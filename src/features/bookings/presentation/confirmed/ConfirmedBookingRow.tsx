@@ -1,13 +1,19 @@
-import { MoreVertical } from "lucide-react";
 import type { ConfirmedBooking } from "./ConfirmedBooking";
+import { ConfirmedBookingMenu } from "./menu/ConfirmedBookingMenu";
+import type { ConfirmedBookingRowActions } from "./menu/ConfirmedBookingRowActions";
 import { ConfirmedBookingChatIcon } from "./ConfirmedBookingChatIcon";
 import { ConfirmedStatusCell } from "./ConfirmedStatusCell";
+import { formatStayTable } from "./stay/formatStayTable";
 
 type ConfirmedBookingRowProps = {
   booking: ConfirmedBooking;
+  actions: ConfirmedBookingRowActions;
 };
 
-export function ConfirmedBookingRow({ booking }: ConfirmedBookingRowProps) {
+export function ConfirmedBookingRow({
+  booking,
+  actions,
+}: ConfirmedBookingRowProps) {
   return (
     <div
       role="row"
@@ -57,7 +63,7 @@ export function ConfirmedBookingRow({ booking }: ConfirmedBookingRowProps) {
         role="cell"
         className="flex h-full items-center px-5 text-sm leading-5 text-[var(--color-ink)]"
       >
-        {booking.datesLabel}
+        {formatStayTable(booking.stay)}
       </div>
 
       <div
@@ -75,14 +81,7 @@ export function ConfirmedBookingRow({ booking }: ConfirmedBookingRowProps) {
         role="cell"
         className="flex h-full items-center justify-center px-5 py-2.5"
       >
-        <button
-          type="button"
-          aria-label="Меню бронирования"
-          disabled
-          className="inline-flex size-6 cursor-not-allowed items-center justify-center border-0 bg-transparent p-0 text-[var(--color-ink)] opacity-50"
-        >
-          <MoreVertical aria-hidden className="size-5" strokeWidth={1.75} />
-        </button>
+        <ConfirmedBookingMenu booking={booking} actions={actions} />
       </div>
     </div>
   );

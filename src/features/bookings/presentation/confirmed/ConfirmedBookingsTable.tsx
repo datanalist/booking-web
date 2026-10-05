@@ -1,8 +1,10 @@
 import type { ConfirmedBooking } from "./ConfirmedBooking";
 import { ConfirmedBookingRow } from "./ConfirmedBookingRow";
+import type { ConfirmedBookingRowActions } from "./menu/ConfirmedBookingRowActions";
 
 type ConfirmedBookingsTableProps = {
   items: readonly ConfirmedBooking[];
+  actions: ConfirmedBookingRowActions;
 };
 
 const HEADER_CELLS = [
@@ -15,7 +17,10 @@ const HEADER_CELLS = [
   "",
 ] as const;
 
-export function ConfirmedBookingsTable({ items }: ConfirmedBookingsTableProps) {
+export function ConfirmedBookingsTable({
+  items,
+  actions,
+}: ConfirmedBookingsTableProps) {
   return (
     <div
       role="table"
@@ -39,7 +44,11 @@ export function ConfirmedBookingsTable({ items }: ConfirmedBookingsTableProps) {
         ))}
       </div>
       {items.map((item) => (
-        <ConfirmedBookingRow key={item.id} booking={item} />
+        <ConfirmedBookingRow
+          key={item.id}
+          booking={item}
+          actions={actions}
+        />
       ))}
     </div>
   );
