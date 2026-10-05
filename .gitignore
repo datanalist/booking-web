@@ -11,3 +11,4 @@ dist/
 !/data/.gitkeep
 *.pem
 *.key
+.worktrees

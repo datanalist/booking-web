@@ -12,13 +12,15 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
   const location = useLocation();
   const { session } = useSession();
   const isListingsHome = location.pathname === "/listings";
+  const isBookingsHome = location.pathname === "/bookings";
   const isListingWizard =
     location.pathname === "/listings/new" ||
     /^\/listings\/[^/]+\/edit$/.test(location.pathname);
   const isListingPreview = /^\/listings\/[^/]+\/preview$/.test(
     location.pathname,
   );
-  const isFullBleed = isListingsHome || isListingWizard || isListingPreview;
+  const isFullBleed =
+    isListingsHome || isListingWizard || isListingPreview || isBookingsHome;
 
   return (
     <div
