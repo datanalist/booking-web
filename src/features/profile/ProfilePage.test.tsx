@@ -1,20 +1,20 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { createApi } from "../../api";
+import { SESSION_KEY } from "../../api/keys";
 import { SessionProvider } from "../../app/session";
 import { ProfilePage } from "./ProfilePage";
 
 beforeEach(async () => {
   localStorage.clear();
   const api = createApi(localStorage);
-  const session = await api.auth.register("hello@gmail.com", "secret12");
+  await api.auth.register("hello@gmail.com", "secret12");
   await api.auth.completeOnboarding({
     name: "Анна Иваненко",
     phone: "+7 (900) 123-45-67",
   });
-  expect(session.email).toBe("hello@gmail.com");
 });
 
 afterEach(() => {
@@ -29,31 +29,96 @@ function renderProfile(): void {
         <Routes>
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/chats" element={<div>chats-page</div>} />
+          <Route path="/login" element={<div>login-page</div>} />
         </Routes>
       </MemoryRouter>
     </SessionProvider>,
   );
 }
 
-test("opens edit and logout dialogs from the header and keeps demo data", async () => {
-  const user = userEvent.setup();
+test("renders personal data, api key and balance cards", () => {
   renderProfile();
 
-  const root = document.querySelector("[data-dialog]");
-  expect(root).toHaveAttribute("data-dialog", "none");
-  expect(root).toHaveAttribute("data-profile-name", "Анна Иваненко");
-  expect(root).toHaveAttribute("data-profile-email", "hello@gmail.com");
-  expect(root).toHaveAttribute("data-balance", "34670");
-  expect(root).toHaveAttribute("data-api-key-status", "empty");
-  expect(root).toHaveAttribute("data-api-key", "");
+  expect(screen.getByLabelText("Имя")).toHaveValue("Анна Иваненко");
+  expect(screen.getByLabelText("Номер телефона")).toHaveValue(
+    "+7 (900) 123-45-67",
+  );
+  expect(screen.getByLabelText("Email:")).toHaveValue("hello@gmail.com");
+  expect(screen.getByText("API Key TravelLine")).toBeInTheDocument();
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  expect(screen.getByText("Доступный баланс")).toBeInTheDocument();
+  expect(screen.getByText(/34\s670\s₽/)).toBeInTheDocument();
+  expect(document.querySelector("[data-dialog]")).toBeNull();
+});
+
+test("opens and closes the edit and logout alerts", async () => {
+  const user = userEvent.setup();
+  renderProfile();
 
   await user.click(
     screen.getByRole("button", { name: "Редактировать профиль" }),
   );
-  expect(root).toHaveAttribute("data-dialog", "edit");
+  const editDialog = screen.getByRole("dialog", {
+    name: "Редактировать данные профиля",
+  });
+  expect(editDialog).toBeInTheDocument();
+  await user.click(within(editDialog).getByRole("button", { name: "Закрыть" }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
   await user.click(screen.getByRole("button", { name: "Выйти из аккаунта" }));
-  expect(root).toHaveAttribute("data-dialog", "logout");
+  const logoutDialog = screen.getByRole("dialog", {
+    name: "Выйти из аккаунта?",
+  });
+  expect(logoutDialog).toBeInTheDocument();
+  await user.click(
+    within(logoutDialog).getByRole("button", { name: "Вернуться" }),
+  );
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+test("confirm logout clears the session and opens login", async () => {
+  const user = userEvent.setup();
+  renderProfile();
+
+  await user.click(screen.getByRole("button", { name: "Выйти из аккаунта" }));
+  await user.click(screen.getByRole("button", { name: "Да, выйти" }));
+
+  expect(await screen.findByText("login-page")).toBeInTheDocument();
+  expect(localStorage.getItem(SESSION_KEY)).toBeNull();
+});
+
+test("connecting a key shows connected or error", async () => {
+  const user = userEvent.setup();
+  renderProfile();
+  const field = screen.getByLabelText("API Key");
+
+  await user.type(field, "12345");
+  await user.click(screen.getByRole("button", { name: "Подключить" }));
+  expect(screen.getByRole("status")).toHaveTextContent("Ошибка подключения");
+
+  await user.clear(field);
+  await user.type(field, "123456");
+  await user.click(screen.getByRole("button", { name: "Подключить" }));
+  expect(screen.getByRole("status")).toHaveTextContent("Подключено");
+});
+
+test("saving the edit alert updates the personal card", async () => {
+  const user = userEvent.setup();
+  renderProfile();
+
+  await user.click(
+    screen.getByRole("button", { name: "Редактировать профиль" }),
+  );
+  const dialog = screen.getByRole("dialog", {
+    name: "Редактировать данные профиля",
+  });
+  const name = within(dialog).getByLabelText("Имя");
+  await user.clear(name);
+  await user.type(name, "Мария Петрова");
+  await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Имя")).toHaveValue("Мария Петрова");
 });
 
 test("support button opens the chats route", async () => {
