@@ -16,7 +16,11 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
   const isListingWizard =
     location.pathname === "/listings/new" ||
     /^\/listings\/[^/]+\/edit$/.test(location.pathname);
-  const isFullBleed = isListingsHome || isListingWizard || isBookingsHome;
+  const isListingPreview = /^\/listings\/[^/]+\/preview$/.test(
+    location.pathname,
+  );
+  const isFullBleed =
+    isListingsHome || isListingWizard || isListingPreview || isBookingsHome;
 
   return (
     <div

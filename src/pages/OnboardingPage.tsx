@@ -27,8 +27,11 @@ export function OnboardingPage() {
     if (!file) {
       return;
     }
-    const source = await compressImage(file);
-    setCropSource(source);
+    if (cropSource?.startsWith("blob:")) {
+      URL.revokeObjectURL(cropSource);
+    }
+    const blob = await compressImage(file);
+    setCropSource(URL.createObjectURL(blob));
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -46,10 +49,16 @@ export function OnboardingPage() {
   }
 
   function onCropCancel(): void {
+    if (cropSource?.startsWith("blob:")) {
+      URL.revokeObjectURL(cropSource);
+    }
     setCropSource(undefined);
   }
 
   function onCropConfirm(croppedDataUrl: string): void {
+    if (cropSource?.startsWith("blob:")) {
+      URL.revokeObjectURL(cropSource);
+    }
     setPhoto(croppedDataUrl);
     setCropSource(undefined);
   }
