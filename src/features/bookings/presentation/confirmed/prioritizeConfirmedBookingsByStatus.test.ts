@@ -1,27 +1,14 @@
 import { describe, expect, test } from "vitest";
 import type { ConfirmedBooking } from "./ConfirmedBooking";
 import type { ConfirmedBookingStatusKind } from "./confirmedBookingStatus";
+import { confirmedBookingFixture, statusFixture } from "./confirmedBookingFixture";
 import { prioritizeConfirmedBookingsByStatus } from "./prioritizeConfirmedBookingsByStatus";
 
 function booking(
   id: string,
   kind: ConfirmedBookingStatusKind,
 ): ConfirmedBooking {
-  return {
-    id,
-    guestName: id,
-    guestPhone: "+7 (900) 123-45-67",
-    guestAvatarUrl: "/a.png",
-    housingTitle: "Жильё",
-    housingAddress: "Адрес",
-    housingPhotoUrl: "/h.jpg",
-    datesLabel: "14.11.24-19.11.24",
-    priceLabel: "15 460 ₽",
-    status:
-      kind === "awaitingPrepayment"
-        ? { kind, remainingLabel: "осталось 1 час" }
-        : { kind },
-  };
+  return confirmedBookingFixture(id, statusFixture(kind));
 }
 
 const source = [
