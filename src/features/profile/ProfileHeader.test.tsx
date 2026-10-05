@@ -26,6 +26,15 @@ test("exposes edit and logout by aria-label and support by its text", () => {
     screen.getByRole("button", { name: "Написать в поддержку" }),
   ).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Профиль" })).toBeInTheDocument();
+
+  const editIcon = screen
+    .getByRole("button", { name: "Редактировать профиль" })
+    .querySelector("span");
+  const logoutIcon = screen
+    .getByRole("button", { name: "Выйти из аккаунта" })
+    .querySelector("span");
+  expect(editIcon?.style.maskImage).toContain("/profile/icon-edit.svg");
+  expect(logoutIcon?.style.maskImage).toContain("/profile/icon-logout.svg");
 });
 
 test("calls the matching callback for each header action", async () => {

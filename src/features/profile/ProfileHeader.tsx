@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 
 export type ProfileHeaderProps = {
   onEditClick: () => void;
@@ -7,7 +7,25 @@ export type ProfileHeaderProps = {
 };
 
 const iconButtonClass =
-  "flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[30px] border border-[#f88a2a] bg-transparent p-2";
+  "flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[30px] bg-transparent p-2 shadow-[inset_0_0_0_1px_#f88a2a]";
+
+/** Обводка inset: кнопка 40×40 и глиф 24×24 при padding 8px. */
+function ProfileActionIcon({ src }: { src: string }): ReactElement {
+  const mask: CSSProperties = {
+    maskImage: `url("${src}")`,
+    WebkitMaskImage: `url("${src}")`,
+    maskRepeat: "no-repeat",
+    WebkitMaskRepeat: "no-repeat",
+    maskPosition: "center",
+    WebkitMaskPosition: "center",
+    maskSize: "24px 24px",
+    WebkitMaskSize: "24px 24px",
+  };
+
+  return (
+    <span aria-hidden className="inline-block size-6 shrink-0 bg-[#f88a2a]" style={mask} />
+  );
+}
 
 /** Шапка главной профиля, Figma 1:17904: заголовок и три действия справа. */
 export function ProfileHeader({
@@ -27,13 +45,7 @@ export function ProfileHeader({
           aria-label="Редактировать профиль"
           onClick={onEditClick}
         >
-          <img
-            src="/profile/icon-edit.svg"
-            alt=""
-            width={24}
-            height={24}
-            className="size-6"
-          />
+          <ProfileActionIcon src="/profile/icon-edit.svg" />
         </button>
         <button
           type="button"
@@ -41,13 +53,7 @@ export function ProfileHeader({
           aria-label="Выйти из аккаунта"
           onClick={onLogoutClick}
         >
-          <img
-            src="/profile/icon-logout.svg"
-            alt=""
-            width={24}
-            height={24}
-            className="size-6"
-          />
+          <ProfileActionIcon src="/profile/icon-logout.svg" />
         </button>
         <button
           type="button"
