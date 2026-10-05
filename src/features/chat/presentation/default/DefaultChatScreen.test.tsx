@@ -18,7 +18,7 @@ test("дефолтный экран показывает пустое состо
 });
 
 test("страница чата ставит заголовок над пустым состоянием", () => {
-  render(<ChatPage />);
+  render(<ChatPage threads={[]} />);
 
   expect(screen.getByRole("heading", { level: 1, name: "Чаты" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { level: 2, name: "Нет чатов" })).toBeInTheDocument();

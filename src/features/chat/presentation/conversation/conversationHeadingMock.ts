@@ -1,16 +1,15 @@
-import type { ConversationHeading } from "../../domain/ConversationHeading";
+import { chatSeedById } from "../../data/chatSeeds";
+import { chatId } from "../../domain/ChatId";
 import { chatAssets } from "../assets/chatAssets";
+import { headingFromSeed } from "./headingFromSeed";
 
-export const conversationHeadingMock: ConversationHeading = {
-  peerName: "Екатерина Кондратьева",
-  peerAvatarUrl: chatAssets.guestMessageAvatar,
-  listingTitle: "Уютная студия в центре Москвы",
-  city: "Москва",
-  datesLabel: "12.09.24 - 15.09.24",
-  guestsLabel: "4 гостя",
-  listingThumbUrl: chatAssets.listingThumbnail,
-};
+const ekaterina = chatSeedById(chatId("chat-ekaterina"));
+if (ekaterina === undefined) {
+  throw new Error("В сиде нет чата Екатерины");
+}
+
+export const conversationHeadingMock = headingFromSeed(ekaterina);
 
 export const conversationSelfAvatarUrl = chatAssets.moderatorAvatar;
 
-export const conversationDateLabel = "10 сентября";
+export const conversationDateLabel = ekaterina.dateLabel;

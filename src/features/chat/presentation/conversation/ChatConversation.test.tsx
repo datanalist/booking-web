@@ -2,10 +2,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { chatMessagesMock } from "../../data/chatMessageMocks";
+import { chatId } from "../../domain/ChatId";
 import { chatPhotoUrl } from "../../domain/ChatPhoto";
 import { chatAssets } from "../assets/chatAssets";
 import { ChatConversation } from "./ChatConversation";
-import { conversationChatId } from "./ConversationChatId";
 import {
   conversationDateLabel,
   conversationHeadingMock,
@@ -13,14 +13,13 @@ import {
 } from "./conversationHeadingMock";
 
 function renderConversation() {
-  const chatId = conversationChatId("chat-ekaterina");
   const photoUrl = chatPhotoUrl(chatAssets.messagePhoto);
-  if (chatId === null || photoUrl === null) {
+  if (photoUrl === null) {
     throw new Error("мок чата");
   }
   return render(
     <ChatConversation
-      chatId={chatId}
+      chatId={chatId("chat-ekaterina")}
       heading={conversationHeadingMock}
       dateLabel={conversationDateLabel}
       messages={chatMessagesMock({ url: photoUrl, alt: "Фото помещения у лифта" })}

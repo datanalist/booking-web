@@ -1,47 +1,22 @@
-import { chatId } from "../domain/ChatId";
-import {
-  chatClockLabel,
-  unreadCount,
-  type ChatThread,
-} from "../domain/ChatThread";
+import { chatClockLabel, unreadCount, type ChatThread } from "../domain/ChatThread";
+import { CHAT_SEEDS } from "./chatSeeds";
+import { chatSeedTurns, type ChatSeed } from "./defineChatSeed";
 
-const SENT_AT = chatClockLabel("13:40");
+/** Строки списка: превью, время и бейдж берутся из сида переписки. */
+export const CHAT_THREAD_MOCKS: readonly ChatThread[] = CHAT_SEEDS.map(threadFromSeed);
 
-export const CHAT_THREAD_MOCKS: readonly ChatThread[] = [
-  {
-    id: chatId("chat-ekaterina"),
-    counterpartName: "Екатерина Кондратьева",
-    counterpartRole: "guest",
-    avatarKey: "ekaterina",
-    preview: "Добрый день, бронирование оплачено",
-    sentAt: SENT_AT,
-    unread: { status: "unread", count: unreadCount(2) },
-  },
-  {
-    id: chatId("chat-ignat"),
-    counterpartName: "Игнат Прокопенко",
-    counterpartRole: "guest",
-    avatarKey: "ignat",
-    preview: "Хочу уточнить время заселения на 12 число",
-    sentAt: SENT_AT,
-    unread: { status: "none" },
-  },
-  {
-    id: chatId("chat-anna"),
-    counterpartName: "Анна Иваненко",
-    counterpartRole: "guest",
-    avatarKey: "anna",
-    preview: "Можно ли подвинуть бронь на два дня?",
-    sentAt: SENT_AT,
-    unread: { status: "none" },
-  },
-  {
-    id: chatId("chat-ilya"),
-    counterpartName: "Илья Филипов",
-    counterpartRole: "guest",
-    avatarKey: "ilya",
-    preview: "Понял, спасибо за быстрый ответ",
-    sentAt: SENT_AT,
-    unread: { status: "none" },
-  },
-];
+function threadFromSeed(seed: ChatSeed): ChatThread {
+  const unread = chatSeedTurns(seed).filter((turn) => turn.receipt === "unread").length;
+  return {
+    id: seed.id,
+    counterpartName: seed.counterpartName,
+    counterpartRole: seed.counterpartRole,
+    avatarKey: seed.avatarKey,
+    preview: seed.last.body,
+    sentAt: chatClockLabel(seed.last.time),
+    unread:
+      unread === 0
+        ? { status: "none" }
+        : { status: "unread", count: unreadCount(unread) },
+  };
+}

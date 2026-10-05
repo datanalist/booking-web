@@ -1,14 +1,14 @@
+import type { ChatId } from "../../domain/ChatId";
 import type { ChatMessage } from "../../domain/ChatMessage";
 import type { ConversationHeading } from "../../domain/ConversationHeading";
 import { ChatComposer } from "./ChatComposer";
 import { ChatConversationHeader } from "./ChatConversationHeader";
 import { ChatDayLabel } from "./ChatDayLabel";
 import { ChatMessageList } from "./ChatMessageList";
-import type { ConversationChatId } from "./ConversationChatId";
 import { useOutgoingMessages } from "./useOutgoingMessages";
 
 export type ChatConversationProps = {
-  chatId: ConversationChatId;
+  chatId: ChatId;
   heading: ConversationHeading;
   dateLabel: string;
   messages: readonly ChatMessage[];
