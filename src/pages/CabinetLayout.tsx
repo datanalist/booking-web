@@ -13,6 +13,7 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
   const { session } = useSession();
   const isListingsHome = location.pathname === "/listings";
   const isBookingsHome = location.pathname === "/bookings";
+  const isChatsHome = location.pathname === "/chats";
   const isListingWizard =
     location.pathname === "/listings/new" ||
     /^\/listings\/[^/]+\/edit$/.test(location.pathname);
@@ -20,7 +21,11 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
     location.pathname,
   );
   const isFullBleed =
-    isListingsHome || isListingWizard || isListingPreview || isBookingsHome;
+    isListingsHome ||
+    isListingWizard ||
+    isListingPreview ||
+    isBookingsHome ||
+    isChatsHome;
 
   return (
     <div
