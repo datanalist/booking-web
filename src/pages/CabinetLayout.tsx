@@ -14,6 +14,7 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
   const isListingsHome = location.pathname === "/listings";
   const isBookingsHome = location.pathname === "/bookings";
   const isChatsHome = location.pathname === "/chats";
+  const isProfile = location.pathname === "/profile";
   const isListingWizard =
     location.pathname === "/listings/new" ||
     /^\/listings\/[^/]+\/edit$/.test(location.pathname);
@@ -25,7 +26,8 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
     isListingWizard ||
     isListingPreview ||
     isBookingsHome ||
-    isChatsHome;
+    isChatsHome ||
+    isProfile;
 
   return (
     <div
