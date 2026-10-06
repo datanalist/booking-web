@@ -27,7 +27,7 @@ test("сид согласован: уникальные id, переписка �
     }
     const thread = CHAT_THREAD_MOCKS.find((item) => item.id === seed.id);
     expect(thread?.preview).toBe(seed.last.body);
-    expect(thread?.sentAt).toBe(seed.last.time);
+    expect(thread?.sentAt).toBe(seed.listedAt);
     expect(thread?.unread).toEqual(expectedUnread(turns));
   }
 

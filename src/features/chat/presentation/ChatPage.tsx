@@ -8,10 +8,16 @@ import { ChatsScreen } from "./list/ChatsScreen";
 
 type ChatPageProps = {
   readonly threads?: readonly ChatThread[];
+  readonly initialChatId?: ChatId | null;
 };
 
-export function ChatPage({ threads = CHAT_THREAD_MOCKS }: ChatPageProps) {
-  const [selectedChatId, setSelectedChatId] = useState<ChatId | null>(null);
+export function ChatPage({
+  threads = CHAT_THREAD_MOCKS,
+  initialChatId = null,
+}: ChatPageProps) {
+  const [selectedChatId, setSelectedChatId] = useState<ChatId | null>(() =>
+    openedChatId(threads, initialChatId),
+  );
 
   return (
     <div className="flex h-full w-full flex-col gap-8 bg-[rgba(251,192,40,0.06)] p-8 font-sans">
@@ -38,4 +44,14 @@ export function ChatPage({ threads = CHAT_THREAD_MOCKS }: ChatPageProps) {
 
 function renderOpenChat(chatId: ChatId): ReactNode {
   return <OpenChatConversation chatId={chatId} />;
+}
+
+function openedChatId(
+  threads: readonly ChatThread[],
+  initialChatId: ChatId | null,
+): ChatId | null {
+  if (initialChatId === null) {
+    return null;
+  }
+  return threads.some((thread) => thread.id === initialChatId) ? initialChatId : null;
 }

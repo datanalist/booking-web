@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useSearchParams } from "react-router-dom";
 import { createApi } from "../../api";
 import { SESSION_KEY } from "../../api/keys";
 import { SessionProvider } from "../../app/session";
@@ -28,7 +28,7 @@ function renderProfile(): void {
       <MemoryRouter initialEntries={["/profile"]}>
         <Routes>
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/chats" element={<div>chats-page</div>} />
+          <Route path="/chats" element={<ChatsProbe />} />
           <Route path="/login" element={<div>login-page</div>} />
         </Routes>
       </MemoryRouter>
@@ -152,5 +152,10 @@ test("support button opens the chats route", async () => {
   await user.click(
     screen.getByRole("button", { name: "Написать в поддержку" }),
   );
-  expect(await screen.findByText("chats-page")).toBeInTheDocument();
+  expect(await screen.findByText("chats-page:chat-support")).toBeInTheDocument();
 });
+
+function ChatsProbe() {
+  const [params] = useSearchParams();
+  return <div>chats-page:{params.get("chat")}</div>;
+}

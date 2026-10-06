@@ -3,7 +3,6 @@ import type { ChatMessage } from "../../domain/ChatMessage";
 import type { ConversationHeading } from "../../domain/ConversationHeading";
 import { ChatComposer } from "./ChatComposer";
 import { ChatConversationHeader } from "./ChatConversationHeader";
-import { ChatDayLabel } from "./ChatDayLabel";
 import { ChatMessageList } from "./ChatMessageList";
 import { useOutgoingMessages } from "./useOutgoingMessages";
 
@@ -32,8 +31,8 @@ export function ChatConversation({
       className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden rounded-2xl border border-[rgba(251,192,40,0.17)] bg-white"
     >
       <ChatConversationHeader heading={heading} />
-      <ChatDayLabel label={dateLabel} />
       <ChatMessageList
+        dateLabel={dateLabel}
         messages={thread}
         selfAvatarUrl={selfAvatarUrl}
         peerAvatarUrl={heading.peerAvatarUrl}

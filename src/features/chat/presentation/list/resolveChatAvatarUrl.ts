@@ -2,6 +2,7 @@ import type { ChatAvatarKey } from "../../domain/ChatThread";
 import { chatAssets } from "../assets/chatAssets";
 
 const AVATAR_URL: Record<ChatAvatarKey, string> = {
+  support: chatAssets.avatarSupport,
   ekaterina: chatAssets.avatarEkaterina,
   ignat: chatAssets.avatarIgnat,
   anna: chatAssets.avatarAnna,

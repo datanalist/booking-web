@@ -20,7 +20,7 @@ import { OnboardingPage } from "../pages/OnboardingPage";
 import { RegisterPage } from "../pages/RegisterPage";
 import { ResetPasswordPage } from "../pages/ResetPasswordPage";
 import { BookingsPage } from "../features/bookings";
-import { ChatPage } from "../features/chat";
+import { ChatsRoute } from "../features/chat";
 import { ProfilePage } from "../features/profile";
 import { StubPage } from "../pages/StubPage";
 
@@ -112,7 +112,7 @@ export function createAppRouter() {
         { path: "/listings/:id/edit", element: <ListingWizardPage /> },
         { path: "/listings/:id/preview", element: <ListingPreviewPage /> },
         { path: "/bookings", element: <BookingsPage /> },
-        { path: "/chats", element: <ChatPage /> },
+        { path: "/chats", element: <ChatsRoute /> },
         { path: "/notifications", element: <StubPage title="Уведомления" /> },
         { path: "/profile", element: <ProfilePage /> },
       ],

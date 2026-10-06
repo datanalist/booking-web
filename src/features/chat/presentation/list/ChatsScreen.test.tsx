@@ -25,12 +25,13 @@ function renderScreen(
 
 test("рендерит список чатов из моков", () => {
   renderScreen();
+  expect(screen.getByRole("button", { name: /Поддержка/ })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /Екатерина Кондратьева/ })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /Игнат Прокопенко/ })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /Анна Иваненко/ })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /Илья Филипов/ })).toBeInTheDocument();
   expect(screen.getByText("Добрый день, бронирование оплачено")).toBeInTheDocument();
-  expect(screen.getAllByText("13:40")).toHaveLength(4);
+  expect(screen.getAllByText("13:40")).toHaveLength(5);
 });
 
 test("бейдж непрочитанных жёлтый и только у чата с новыми сообщениями", () => {

@@ -1,8 +1,8 @@
 import type { ChatId } from "./ChatId";
 
-export type ChatCounterpartRole = "guest" | "moderator";
+export type ChatCounterpartRole = "guest" | "moderator" | "support";
 
-export type ChatAvatarKey = "ekaterina" | "ignat" | "anna" | "ilya";
+export type ChatAvatarKey = "support" | "ekaterina" | "ignat" | "anna" | "ilya";
 
 export type UnreadCount = number & { readonly __brand: "UnreadCount" };
 

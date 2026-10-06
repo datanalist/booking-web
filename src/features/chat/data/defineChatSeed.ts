@@ -2,7 +2,7 @@ import { chatId, type ChatId } from "../domain/ChatId";
 import { chatMessageId, type ChatMessageId } from "../domain/ChatMessageId";
 import type { MessageAuthor } from "../domain/MessageAuthor";
 import { messageTimeLabel, type MessageTimeLabel } from "../domain/MessageTimeLabel";
-import type { ChatAvatarKey, ChatCounterpartRole } from "../domain/ChatThread";
+import type { ChatAvatarKey } from "../domain/ChatThread";
 
 export type ChatSeedReceipt = "read" | "unread";
 
@@ -29,20 +29,33 @@ export type ChatSeedPhoto = {
 
 export type ChatSeedTurn = ChatSeedText | ChatSeedPhoto;
 
-/** Демо-чат: профиль строки списка и реплики. Последняя реплика всегда текст. */
-export type ChatSeed = {
+type ChatSeedBase = {
   readonly id: ChatId;
   readonly counterpartName: string;
-  readonly counterpartRole: ChatCounterpartRole;
   readonly avatarKey: ChatAvatarKey;
   readonly dateLabel: string;
+  readonly earlier: readonly ChatSeedTurn[];
+  readonly last: ChatSeedText;
+  /** Время в строке списка. У поддержки не совпадает с временем последней реплики. */
+  readonly listedAt: MessageTimeLabel;
+};
+
+/** Гостевой чат: в шапке есть объявление. */
+export type GuestChatSeed = ChatSeedBase & {
+  readonly counterpartRole: "guest" | "moderator";
   readonly listingTitle: string;
   readonly city: string;
   readonly datesLabel: string;
   readonly guestsLabel: string;
-  readonly earlier: readonly ChatSeedTurn[];
-  readonly last: ChatSeedText;
 };
+
+/** Чат поддержки: объявления нет. */
+export type SupportChatSeed = ChatSeedBase & {
+  readonly counterpartRole: "support";
+};
+
+/** Демо-чат: профиль строки списка и реплики. Последняя реплика всегда текст. */
+export type ChatSeed = GuestChatSeed | SupportChatSeed;
 
 type RawText = {
   readonly kind: "text";
@@ -63,43 +76,68 @@ type RawPhoto = {
   readonly receipt: ChatSeedReceipt;
 };
 
-export type RawChatSeed = {
+type RawSeedCommon = {
   readonly id: string;
   readonly counterpartName: string;
-  readonly counterpartRole: ChatCounterpartRole;
   readonly avatarKey: ChatAvatarKey;
   readonly dateLabel: string;
+  readonly earlier: readonly (RawText | RawPhoto)[];
+  readonly last: RawText;
+  readonly listedAt?: string;
+};
+
+export type RawGuestChatSeed = RawSeedCommon & {
+  readonly counterpartRole: "guest" | "moderator";
   readonly listingTitle: string;
   readonly city: string;
   readonly datesLabel: string;
   readonly guestsLabel: string;
-  readonly earlier: readonly (RawText | RawPhoto)[];
-  readonly last: RawText;
 };
+
+export type RawSupportChatSeed = RawSeedCommon & {
+  readonly counterpartRole: "support";
+};
+
+export type RawChatSeed = RawGuestChatSeed | RawSupportChatSeed;
 
 /** Собирает брендированный сид. Пустые строки и кривое время не проходят. */
 export function defineChatSeed(raw: RawChatSeed): ChatSeed {
   const earlier = raw.earlier.map(parseTurn);
   const last = parseText(raw.last);
   assertChronological([...earlier, last]);
+  const base = seedBase(raw, earlier, last);
+  if (raw.counterpartRole === "support") {
+    return { ...base, counterpartRole: "support" };
+  }
   return {
-    id: chatId(raw.id),
-    counterpartName: requiredText(raw.counterpartName, "имя собеседника"),
+    ...base,
     counterpartRole: raw.counterpartRole,
-    avatarKey: raw.avatarKey,
-    dateLabel: requiredText(raw.dateLabel, "дата переписки"),
     listingTitle: requiredText(raw.listingTitle, "название жилья"),
     city: requiredText(raw.city, "город"),
     datesLabel: requiredText(raw.datesLabel, "даты брони"),
     guestsLabel: requiredText(raw.guestsLabel, "число гостей"),
-    earlier,
-    last,
   };
 }
 
 /** Реплики по времени: ранние, затем последняя. */
 export function chatSeedTurns(seed: ChatSeed): readonly ChatSeedTurn[] {
   return [...seed.earlier, seed.last];
+}
+
+function seedBase(
+  raw: RawChatSeed,
+  earlier: readonly ChatSeedTurn[],
+  last: ChatSeedText,
+): ChatSeedBase {
+  return {
+    id: chatId(raw.id),
+    counterpartName: requiredText(raw.counterpartName, "имя собеседника"),
+    avatarKey: raw.avatarKey,
+    dateLabel: requiredText(raw.dateLabel, "дата переписки"),
+    earlier,
+    last,
+    listedAt: mustTime(raw.listedAt ?? raw.last.time),
+  };
 }
 
 function parseTurn(raw: RawText | RawPhoto): ChatSeedTurn {

@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
+import { supportChatHref } from "../chat";
 import { ApiKeyCard } from "./api-key-card";
 import { BalanceCard } from "./balance-card";
 import { EditProfileModal } from "./edit-profile-modal";
@@ -50,7 +51,7 @@ export function ProfilePage(): ReactElement {
             onEditClick={model.openEdit}
             onLogoutClick={model.openLogout}
             onSupportClick={() => {
-              navigate("/chats");
+              navigate(supportChatHref());
             }}
           />
         }

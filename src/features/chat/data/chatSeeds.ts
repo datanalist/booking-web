@@ -5,6 +5,41 @@ import type { ChatId } from "../domain/ChatId";
  * Единый сид чатов. Превью, время и непрочитанные списка считаются отсюда,
  * а не дублируются в строках списка.
  */
+const SUPPORT = defineChatSeed({
+  id: "chat-support",
+  counterpartName: "Поддержка",
+  counterpartRole: "support",
+  avatarKey: "support",
+  dateLabel: "10 сентября",
+  listedAt: "13:40",
+  earlier: [
+    {
+      kind: "text",
+      id: "d4000001-0001-4001-8001-000000000001",
+      author: "self",
+      time: "10:05",
+      body: "Здравствуйте, у меня не выводятся деньги с баланса",
+      receipt: "read",
+    },
+    {
+      kind: "text",
+      id: "d4000002-0002-4002-8002-000000000002",
+      author: "peer",
+      time: "10:05",
+      body: "Добрый день, такое случалось ранее?",
+      receipt: "read",
+    },
+  ],
+  last: {
+    kind: "text",
+    id: "d4000003-0003-4003-8003-000000000003",
+    author: "self",
+    time: "10:07",
+    body: "Нет это в первый раз",
+    receipt: "read",
+  },
+});
+
 const EKATERINA = defineChatSeed({
   id: "chat-ekaterina",
   counterpartName: "Екатерина Кондратьева",
@@ -231,7 +266,7 @@ const ILYA = defineChatSeed({
   },
 });
 
-export const CHAT_SEEDS: readonly ChatSeed[] = [EKATERINA, IGNAT, ANNA, ILYA];
+export const CHAT_SEEDS: readonly ChatSeed[] = [SUPPORT, EKATERINA, IGNAT, ANNA, ILYA];
 
 export function chatSeedById(id: ChatId): ChatSeed | undefined {
   return CHAT_SEEDS.find((seed) => seed.id === id);

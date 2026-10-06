@@ -1,10 +1,10 @@
-import type { ConversationHeading } from "../../domain/ConversationHeading";
 import { ChatMetaDot } from "./ChatMetaDot";
 
-type ChatListingMetaProps = Pick<
-  ConversationHeading,
-  "city" | "datesLabel" | "guestsLabel"
->;
+type ChatListingMetaProps = {
+  city: string;
+  datesLabel: string;
+  guestsLabel: string;
+};
 
 export function ChatListingMeta({
   city,

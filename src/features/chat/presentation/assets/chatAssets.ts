@@ -1,8 +1,10 @@
 import attachPhotoIcon from "./attach-photo-icon.svg";
 import avatarAnna from "./avatar-anna.jpg";
 import avatarEkaterina from "./avatar-ekaterina.jpg";
+import avatarHost from "./avatar-host.png";
 import avatarIgnat from "./avatar-ignat.png";
 import avatarIlya from "./avatar-ilya.jpg";
+import avatarSupport from "./avatar-support.png";
 import avatarSidebar from "./avatar-sidebar.jpg";
 import brandLogo from "./brand-logo.svg";
 import listingCover from "./listing-cover.jpg";
@@ -36,11 +38,13 @@ export const chatAssets = {
   sidebarIconChatsActive,
   sidebarIconNotifications,
   sidebarIconProfile,
+  avatarSupport,
+  avatarHost,
   avatarEkaterina,
   guestMessageAvatar: avatarEkaterina,
   avatarIgnat,
   avatarAnna,
-  moderatorAvatar: avatarAnna,
+  moderatorAvatar: avatarHost,
   avatarIlya,
   avatarSidebar,
   listingCover,

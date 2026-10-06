@@ -1,6 +1,7 @@
 import { chatMessagesFromSeed } from "../../data/chatMessageMocks";
 import { chatSeedById } from "../../data/chatSeeds";
 import type { ChatId } from "../../domain/ChatId";
+import { chatAssets } from "../assets/chatAssets";
 import { ChatConversation } from "./ChatConversation";
 import { chatSeedPhotoUrls } from "./chatSeedPhotoUrls";
 import { conversationSelfAvatarUrl } from "./conversationHeadingMock";
@@ -18,7 +19,9 @@ export function OpenChatConversation({ chatId }: { chatId: ChatId }) {
       heading={headingFromSeed(seed)}
       dateLabel={seed.dateLabel}
       messages={chatMessagesFromSeed(seed, chatSeedPhotoUrls)}
-      selfAvatarUrl={conversationSelfAvatarUrl}
+      selfAvatarUrl={
+        seed.counterpartRole === "support" ? chatAssets.avatarHost : conversationSelfAvatarUrl
+      }
     />
   );
 }

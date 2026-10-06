@@ -13,7 +13,7 @@ function threadFromSeed(seed: ChatSeed): ChatThread {
     counterpartRole: seed.counterpartRole,
     avatarKey: seed.avatarKey,
     preview: seed.last.body,
-    sentAt: chatClockLabel(seed.last.time),
+    sentAt: chatClockLabel(seed.listedAt),
     unread:
       unread === 0
         ? { status: "none" }

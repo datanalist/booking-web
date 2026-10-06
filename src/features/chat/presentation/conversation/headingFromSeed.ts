@@ -5,9 +5,15 @@ import { resolveChatAvatarUrl } from "../list/resolveChatAvatarUrl";
 
 /** Шапка открытого чата из сида: имя и аватар собеседника не копируются отдельно. */
 export function headingFromSeed(seed: ChatSeed): ConversationHeading {
+  const peerName = seed.counterpartName;
+  const peerAvatarUrl = resolveChatAvatarUrl(seed.avatarKey);
+  if (seed.counterpartRole === "support") {
+    return { kind: "direct", peerName, peerAvatarUrl };
+  }
   return {
-    peerName: seed.counterpartName,
-    peerAvatarUrl: resolveChatAvatarUrl(seed.avatarKey),
+    kind: "listing",
+    peerName,
+    peerAvatarUrl,
     listingTitle: seed.listingTitle,
     city: seed.city,
     datesLabel: seed.datesLabel,
