@@ -2,7 +2,9 @@ import { NAME_MAX, NAME_MIN, PASSWORD_MIN } from "../config";
 import { sha256Hex } from "../lib/hash";
 import { createId } from "../lib/id";
 import { SESSION_KEY, USERS_KEY } from "./keys";
-import type { AuthApi, Session, UserRecord } from "./types";
+import type { AuthApi, Session, UpdateProfileInput, UserRecord } from "./types";
+
+const RESET_KEY_PREFIX = "gs.reset.";
 
 type AuthErrorCode =
   | "EMAIL_TAKEN"
@@ -36,6 +38,113 @@ function validatePassword(password: string): void {
   if (password.length < PASSWORD_MIN) {
     throw authError("INVALID_PASSWORD", "Минимум 8 символов");
   }
+}
+
+function validateName(name: string): string {
+  const normalizedName = name.trim();
+  if (normalizedName.length < NAME_MIN || normalizedName.length > NAME_MAX) {
+    throw authError("INVALID_NAME", "Введите имя от 2 до 50 символов");
+  }
+  return normalizedName;
+}
+
+function validatePhone(phone: string): string {
+  const phoneDigits = phone.replace(/\D/g, "");
+  if (phoneDigits.length !== 11 || !phoneDigits.startsWith("7")) {
+    throw authError("INVALID_PHONE", "Введите корректный номер телефона");
+  }
+  return `+${phoneDigits}`;
+}
+
+function readSessionUserIndex(storage: Storage, users: UserRecord[]): number {
+  const sessionValue = storage.getItem(SESSION_KEY);
+  if (sessionValue === null) {
+    throw authError("INVALID_CREDENTIALS", "Неверный email или пароль");
+  }
+  // Сессию пишет writeSession, форма совпадает с Session.
+  const session = JSON.parse(sessionValue) as Session;
+  const userIndex = users.findIndex((user) => user.id === session.userId);
+  if (userIndex < 0) {
+    throw authError("INVALID_CREDENTIALS", "Неверный email или пароль");
+  }
+  return userIndex;
+}
+
+function userAt(users: UserRecord[], userIndex: number): UserRecord {
+  const user = users[userIndex];
+  if (user === undefined) {
+    throw authError("INVALID_CREDENTIALS", "Неверный email или пароль");
+  }
+  return user;
+}
+
+function assertEmailAvailable(
+  users: UserRecord[],
+  email: string,
+  userId: string,
+): void {
+  const taken = users.some((user) => user.email === email && user.id !== userId);
+  if (taken) {
+    throw authError("EMAIL_TAKEN", "Такой email уже зарегистрирован");
+  }
+}
+
+function withoutPhoto(user: UserRecord): UserRecord {
+  return {
+    id: user.id,
+    email: user.email,
+    passwordHash: user.passwordHash,
+    name: user.name,
+    phone: user.phone,
+    onboardingComplete: user.onboardingComplete,
+  };
+}
+
+function applyPhotoUrl(user: UserRecord, photoUrl: string | undefined): UserRecord {
+  const trimmed = photoUrl?.trim() ?? "";
+  if (trimmed.length === 0) {
+    return withoutPhoto(user);
+  }
+  return { ...user, photoUrl: trimmed };
+}
+
+function retargetResetTokens(
+  storage: Storage,
+  fromEmail: string,
+  toEmail: string,
+): void {
+  if (fromEmail === toEmail) {
+    return;
+  }
+  const keys: string[] = [];
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index);
+    if (key !== null && key.startsWith(RESET_KEY_PREFIX)) {
+      keys.push(key);
+    }
+  }
+  for (const key of keys) {
+    if (storage.getItem(key) === fromEmail) {
+      storage.setItem(key, toEmail);
+    }
+  }
+}
+
+function profileUser(
+  current: UserRecord,
+  input: UpdateProfileInput,
+): UserRecord {
+  return applyPhotoUrl(
+    {
+      id: current.id,
+      email: validateEmail(input.email),
+      passwordHash: current.passwordHash,
+      name: validateName(input.name),
+      phone: validatePhone(input.phone),
+      onboardingComplete: current.onboardingComplete,
+    },
+    input.photoUrl,
+  );
 }
 
 function toSession(user: UserRecord): Session {
@@ -101,32 +210,15 @@ export function createAuthApi(storage: Storage): AuthApi {
     },
 
     async completeOnboarding({ name, phone, photo }) {
-      const sessionValue = storage.getItem(SESSION_KEY);
-      if (!sessionValue) {
-        throw authError("INVALID_CREDENTIALS", "Неверный email или пароль");
-      }
-
-      const normalizedName = name.trim();
-      if (normalizedName.length < NAME_MIN || normalizedName.length > NAME_MAX) {
-        throw authError("INVALID_NAME", "Введите имя от 2 до 50 символов");
-      }
-
-      const phoneDigits = phone.replace(/\D/g, "");
-      if (phoneDigits.length !== 11 || !phoneDigits.startsWith("7")) {
-        throw authError("INVALID_PHONE", "Введите корректный номер телефона");
-      }
-
-      const session = JSON.parse(sessionValue) as Session;
+      const normalizedName = validateName(name);
+      const normalizedPhone = validatePhone(phone);
       const users = readUsers();
-      const userIndex = users.findIndex((user) => user.id === session.userId);
-      if (userIndex < 0) {
-        throw authError("INVALID_CREDENTIALS", "Неверный email или пароль");
-      }
-
+      const userIndex = readSessionUserIndex(storage, users);
+      const current = userAt(users, userIndex);
       const updatedUser: UserRecord = {
-        ...users[userIndex],
+        ...current,
         name: normalizedName,
-        phone: `+${phoneDigits}`,
+        phone: normalizedPhone,
         ...(photo !== undefined ? { photoUrl: photo } : {}),
         onboardingComplete: true,
       };
@@ -135,15 +227,27 @@ export function createAuthApi(storage: Storage): AuthApi {
       return writeSession(updatedUser);
     },
 
+    async updateProfile(input) {
+      const users = readUsers();
+      const userIndex = readSessionUserIndex(storage, users);
+      const current = userAt(users, userIndex);
+      const updatedUser = profileUser(current, input);
+      assertEmailAvailable(users, updatedUser.email, current.id);
+      users[userIndex] = updatedUser;
+      writeUsers(users);
+      retargetResetTokens(storage, current.email, updatedUser.email);
+      return writeSession(updatedUser);
+    },
+
     async requestPasswordReset(email) {
       const normalizedEmail = validateEmail(email);
       const token = createId();
-      storage.setItem(`gs.reset.${token}`, normalizedEmail);
+      storage.setItem(`${RESET_KEY_PREFIX}${token}`, normalizedEmail);
       return token;
     },
 
     async confirmPasswordReset(token, password) {
-      const resetKey = `gs.reset.${token}`;
+      const resetKey = `${RESET_KEY_PREFIX}${token}`;
       const email = storage.getItem(resetKey);
       if (!email) {
         throw authError("INVALID_TOKEN", "Ссылка недействительна");

@@ -60,6 +60,7 @@ export interface AuthApi {
   login(email: string, password: string): Promise<Session>;
   logout(): Promise<void>;
   completeOnboarding(input: { name: string; phone: string; photo?: string }): Promise<Session>;
+  updateProfile(input: UpdateProfileInput): Promise<Session>;
   requestPasswordReset(email: string): Promise<string>;
   confirmPasswordReset(token: string, password: string): Promise<void>;
 }
@@ -84,6 +85,13 @@ export interface ListingsApi {
   archive(id: string): Promise<Listing>;
   remove(id: string): Promise<void>;
 }
+
+export type UpdateProfileInput = {
+  name: string;
+  phone: string;
+  email: string;
+  photoUrl?: string;
+};
 
 export type UserRecord = {
   id: string;
