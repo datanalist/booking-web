@@ -7,8 +7,8 @@ dist/
 .DS_Store
 *.tsbuildinfo
 .superpowers/
-.worktrees
 /data/*
 !/data/.gitkeep
 *.pem
 *.key
+.worktrees
