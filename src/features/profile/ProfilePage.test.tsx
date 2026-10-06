@@ -117,8 +117,33 @@ test("saving the edit alert updates the personal card", async () => {
   await user.type(name, "Мария Петрова");
   await user.click(screen.getByRole("button", { name: "Сохранить" }));
 
+  expect(await screen.findByDisplayValue("Мария Петрова")).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  expect(screen.getByLabelText("Имя")).toHaveValue("Мария Петрова");
+});
+
+test("занятый email оставляет алерт открытым и показывает ошибку", async () => {
+  const api = createApi(localStorage);
+  await api.auth.register("other@mail.ru", "secret12");
+  await api.auth.login("hello@gmail.com", "secret12");
+  const user = userEvent.setup();
+  renderProfile();
+
+  await user.click(
+    screen.getByRole("button", { name: "Редактировать профиль" }),
+  );
+  const dialog = screen.getByRole("dialog", {
+    name: "Редактировать данные профиля",
+  });
+  const email = within(dialog).getByLabelText("Email");
+  await user.clear(email);
+  await user.type(email, "other@mail.ru");
+  await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+  expect(
+    await within(dialog).findByText("Такой email уже зарегистрирован"),
+  ).toBeInTheDocument();
+  expect(dialog).toBeInTheDocument();
+  expect(screen.getByLabelText("Email:")).toHaveValue("hello@gmail.com");
 });
 
 test("support button opens the chats route", async () => {

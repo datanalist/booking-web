@@ -8,13 +8,14 @@ import { ProfilePhotoField } from "./ProfilePhotoField";
 import type { ProfileEditDraft } from "./useProfileEditDraft";
 import { useProfileEditDraft } from "./useProfileEditDraft";
 import { useEditProfileEscape } from "./useEditProfileEscape";
+import type { ProfileEditSaveHandler } from "./ProfileEditSaveResult";
 import type { ProfileEditValues } from "./ProfileEditValues";
 
 export type EditProfileModalProps = {
   open: boolean;
   initial: ProfileEditValues;
   onClose: () => void;
-  onSave: (values: ProfileEditValues) => void;
+  onSave: ProfileEditSaveHandler;
 };
 
 const DIALOG_CLASS = [

@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { formatPhoneMask } from "../../../lib/formatPhoneMask";
 import type { ProfileEditFieldErrors } from "./ProfileEditFieldErrors";
+import type {
+  ProfileEditSaveHandler,
+  ProfileEditSaveResult,
+} from "./ProfileEditSaveResult";
 import type { ProfileEditValues } from "./ProfileEditValues";
 import { parseProfileEditValues } from "./parseProfileEditValues";
 import { useProfilePhotoDraft } from "./useProfilePhotoDraft";
@@ -19,13 +23,13 @@ export type ProfileEditDraft = {
   onDeletePhoto: () => void;
   confirmCrop: (croppedDataUrl: string) => void;
   cancelCrop: () => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
 };
 
 type UseProfileEditDraftArgs = {
   open: boolean;
   initial: ProfileEditValues;
-  onSave: (values: ProfileEditValues) => void;
+  onSave: ProfileEditSaveHandler;
 };
 
 type ProfileEditFieldState = {
@@ -84,18 +88,40 @@ function useProfileEditFields(initial: ProfileEditValues): ProfileEditFieldState
   };
 }
 
-function submitDraft(
+function currentDraft(
+  name: string,
+  phone: string,
+  email: string,
+  photoUrl: string | undefined,
+): ProfileEditValues {
+  return {
+    name,
+    phone,
+    email,
+    ...(photoUrl !== undefined ? { photoUrl } : {}),
+  };
+}
+
+function isSaveErrors(
+  outcome: void | ProfileEditSaveResult,
+): outcome is Extract<ProfileEditSaveResult, { status: "errors" }> {
+  return outcome !== undefined && outcome.status === "errors";
+}
+
+async function submitDraft(
   draft: ProfileEditValues,
-  onSave: (values: ProfileEditValues) => void,
+  onSave: ProfileEditSaveHandler,
   setErrors: (errors: ProfileEditFieldErrors) => void,
-): void {
+): Promise<void> {
   const result = parseProfileEditValues(draft);
   if (result.status === "errors") {
     setErrors(result.errors);
     return;
   }
-  setErrors({});
-  onSave(result.values);
+  const outcome = await onSave(result.values);
+  if (isSaveErrors(outcome)) {
+    setErrors(outcome.errors);
+  }
 }
 
 export function useProfileEditDraft({
@@ -110,15 +136,10 @@ export function useProfileEditDraft({
     photo.applyPhoto(values.photoUrl);
   });
 
-  function onSubmit(event: FormEvent<HTMLFormElement>): void {
+  async function onSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    submitDraft(
-      {
-        name: fields.name,
-        phone: fields.phone,
-        email: fields.email,
-        ...(photo.photoUrl !== undefined ? { photoUrl: photo.photoUrl } : {}),
-      },
+    await submitDraft(
+      currentDraft(fields.name, fields.phone, fields.email, photo.photoUrl),
       onSave,
       fields.setErrors,
     );

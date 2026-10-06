@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { EditProfileModal } from "./index";
-import type { ProfileEditValues } from "./index";
+import type { ProfileEditSaveResult, ProfileEditValues } from "./index";
 
 const INITIAL: ProfileEditValues = {
   name: "Ирина Иванова",
@@ -209,6 +209,33 @@ test("повторное открытие заново берёт initial, а н
   rerender(<EditProfileModal open={false} {...props} />);
   rerender(<EditProfileModal open {...props} />);
   expect(screen.getByLabelText("Имя")).toHaveValue("Ирина Иванова");
+});
+
+test("ошибка сохранения остаётся у поля и диалог не закрывается", async () => {
+  const user = userEvent.setup();
+  const onSave = vi.fn(
+    async (): Promise<ProfileEditSaveResult> => ({
+      status: "errors",
+      errors: { email: "Такой email уже зарегистрирован" },
+    }),
+  );
+  render(
+    <EditProfileModal
+      open
+      initial={INITIAL}
+      onClose={() => undefined}
+      onSave={onSave}
+    />,
+  );
+
+  await user.click(screen.getByRole("button", { name: "Сохранить" }));
+  expect(onSave).toHaveBeenCalledTimes(1);
+  expect(
+    await screen.findByText("Такой email уже зарегистрирован"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("dialog", { name: "Редактировать данные профиля" }),
+  ).toBeInTheDocument();
 });
 
 test("пока диалог открыт, новый объект initial не затирает ввод", async () => {
