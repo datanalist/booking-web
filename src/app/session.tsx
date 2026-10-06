@@ -66,6 +66,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
         setSession(next);
         return next;
       },
+      updateProfile: async (input) => {
+        const next = await api.auth.updateProfile(input);
+        api.setCurrentUserId(next.userId);
+        setSession(next);
+        return next;
+      },
       requestPasswordReset: (email) => api.auth.requestPasswordReset(email),
       confirmPasswordReset: (token, password) =>
         api.auth.confirmPasswordReset(token, password),
