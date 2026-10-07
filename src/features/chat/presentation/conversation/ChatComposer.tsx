@@ -27,7 +27,7 @@ export function ChatComposer({ onSend }: { onSend: (draft: ComposerSend) => void
         attachment={composer.attachment}
         onRemove={composer.clearAttachment}
       />
-      <form className="flex w-full items-center gap-2" onSubmit={onSubmit}>
+      <form className="flex w-full items-end gap-2" onSubmit={onSubmit}>
         <ChatComposerField
           text={composer.text}
           onTextChange={composer.setText}

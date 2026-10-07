@@ -5,7 +5,7 @@ import { chatBubbleRadiusClass } from "./chatBubbleRadiusClass";
 export function chatTextBubbleClass(author: MessageAuthor): string {
   const fill = chatTextBubbleFill(author);
   const radius = chatBubbleRadiusClass(author);
-  return `flex w-fit max-w-[419px] flex-col items-end border border-[rgba(251,192,40,0.17)] p-3 ${radius} ${fill}`;
+  return `flex w-fit min-w-0 max-w-[419px] flex-col items-end overflow-hidden border border-[rgba(251,192,40,0.17)] p-3 ${radius} ${fill}`;
 }
 
 function chatTextBubbleFill(author: MessageAuthor): string {

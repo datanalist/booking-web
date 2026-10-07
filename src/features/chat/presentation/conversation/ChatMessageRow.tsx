@@ -18,7 +18,7 @@ export function ChatMessageRow({
 }: ChatMessageRowProps) {
   return (
     <div className={chatMessageRowClass(message.author)} data-author={message.author}>
-      <div className="flex items-end gap-4">
+      <div className="flex min-w-0 max-w-full items-end gap-4">
         <ChatMessageAvatarSlot
           author={message.author}
           slot="leading"

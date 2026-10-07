@@ -111,3 +111,29 @@ test("отправляет текстовое сообщение в ленту",
   const sent = screen.getByText("Багаж оставим");
   expect(sent.closest("[data-author]")?.getAttribute("data-author")).toBe("self");
 });
+
+test("длинный текст без пробелов переносится в поле и в пузыре", async () => {
+  const user = userEvent.setup();
+  renderConversation();
+  const longWord = "sdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd";
+  const field = screen.getByPlaceholderText("Напишите сообщение...");
+  expect(field.tagName).toBe("TEXTAREA");
+  expect(field.className).toContain("[overflow-wrap:anywhere]");
+  expect(field.className).toContain("whitespace-pre-wrap");
+  await user.type(field, longWord);
+  await user.click(screen.getByRole("button", { name: "Отправить" }));
+  const sent = screen.getByText(longWord);
+  expect(sent.className).toContain("[overflow-wrap:anywhere]");
+  expect(sent.className).toContain("whitespace-pre-wrap");
+  expect(sent.closest("[data-author]")?.getAttribute("data-author")).toBe("self");
+});
+
+test("явный перевод строки сохраняется в пузыре", async () => {
+  const user = userEvent.setup();
+  renderConversation();
+  const field = screen.getByPlaceholderText("Напишите сообщение...");
+  fireEvent.change(field, { target: { value: "первая\nвторая" } });
+  await user.click(screen.getByRole("button", { name: "Отправить" }));
+  const sent = screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "первая\nвторая");
+  expect(sent).toBeInTheDocument();
+});
