@@ -12,4 +12,7 @@ dist/
 *.pem
 *.key
 .worktrees
+.worktrees/
+deploy/pocketbase/pb_data/
+deploy/pocketbase/.env
 src/app/localDevAuth.local.ts

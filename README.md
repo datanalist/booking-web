@@ -99,7 +99,7 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 План: [`docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md`](docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md)
 
-Хостинг PocketBase на мини-ПК описан в [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md) (отчёт ревью: [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md)). Кабинет по-прежнему на моках: этот документ задаёт сервер, а не подключение `dist/` к API.
+Хостинг PocketBase на мини-ПК описан в [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md) (отчёт ревью: [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md), план реализации: [`docs/superpowers/plans/2026-10-18-pocketbase-mini-pc-multiagent-plan.md`](docs/superpowers/plans/2026-10-18-pocketbase-mini-pc-multiagent-plan.md)). Кабинет по-прежнему на моках: этот документ задаёт сервер, а не подключение `dist/` к API.
 
 ## Чаты
 
