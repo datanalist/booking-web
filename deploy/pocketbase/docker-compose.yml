@@ -1,0 +1,23 @@
+services:
+  pocketbase:
+    build: .
+    container_name: pocketbase
+    restart: unless-stopped
+    user: "1000:1000"
+    init: true
+    stop_grace_period: 30s
+    ports:
+      - "127.0.0.1:8090:8090"
+    env_file: .env
+    volumes:
+      - ./pb_data:/pb/pb_data
+      - ./pb_hooks:/pb/pb_hooks:ro
+      - ./pb_migrations:/pb/pb_migrations:ro
+      - ./pb_schema.json:/pb/pb_schema.json:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8090/api/health || exit 1"]
