@@ -102,6 +102,11 @@ function guardBookingDates(e) {
       }
 
       function scanBlocks(listing, checkIn, checkOut, reqIn, reqOut) {
+        try {
+          txApp.findCollectionByNameOrId("listing_blocks")
+        } catch (_) {
+          return
+        }
         const found = txApp.findRecordsByFilter(
           "listing_blocks",
           "listing = {:listing}",

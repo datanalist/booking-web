@@ -1,6 +1,6 @@
 // Удаляет из памяти процесса просроченные ключи входа и смены почты, к которым уже никто не обращается.
 
-cronAdd("cleanupVallomeStore", "*/10 * * * *", () => {
+cronAdd("sweepAuthStore", "*/10 * * * *", () => {
   function str(value) {
     return value == null ? "" : String(value)
   }
@@ -8,15 +8,16 @@ cronAdd("cleanupVallomeStore", "*/10 * * * *", () => {
   function allowed(key) {
     return (
       key.indexOf("vallome_mcode_") === 0 ||
-      key.indexOf("vallome_mwait_") === 0 ||
-      key.indexOf("vallome_echg_") === 0
+      key.indexOf("magicWait:") === 0 ||
+      key.indexOf("emailChange:") === 0 ||
+      key.indexOf("emailChangeUser:") === 0
     )
   }
 
   function loadIndex() {
     var raw = ""
     try {
-      raw = str($app.store().get("vallome_store_keys"))
+      raw = str($app.store().get("vallome_store_index"))
     } catch (err) {}
     if (!raw || raw === "null" || raw === "undefined") return []
     try {
@@ -60,5 +61,5 @@ cronAdd("cleanupVallomeStore", "*/10 * * * *", () => {
     }
     keep.push(item)
   }
-  $app.store().set("vallome_store_keys", JSON.stringify(keep))
+  $app.store().set("vallome_store_index", JSON.stringify(keep))
 })

@@ -69,7 +69,7 @@ routerAdd("POST", "/api/vallome/change-email", (e) => {
   function mutateIndex(key, expires, drop) {
     var raw = ""
     try {
-      raw = str($app.store().get("vallome_store_keys"))
+      raw = str($app.store().get("vallome_store_index"))
     } catch (err) {}
     var list = []
     try {
@@ -82,7 +82,7 @@ routerAdd("POST", "/api/vallome/change-email", (e) => {
       next.push(list[i])
     }
     if (!drop) next.push({ key: key, expires: expires })
-    $app.store().set("vallome_store_keys", JSON.stringify(next))
+    $app.store().set("vallome_store_index", JSON.stringify(next))
   }
 
   function forgetKey(key) {
@@ -97,13 +97,13 @@ routerAdd("POST", "/api/vallome/change-email", (e) => {
   }
 
   function clearPrevious(userId) {
-    const userKey = "vallome_echg_user_" + userId
+    const userKey = "emailChangeUser:" + userId
     try {
       const raw = str($app.store().get(userKey))
       if (raw && raw !== "null" && raw !== "undefined") {
         const prev = JSON.parse(raw)
         const oldEmail = str(prev && prev.email).trim().toLowerCase()
-        if (oldEmail) forgetKey("vallome_echg_" + oldEmail)
+        if (oldEmail) forgetKey("emailChange:" + oldEmail)
       }
     } catch (err) {}
     forgetKey(userKey)
@@ -134,7 +134,7 @@ routerAdd("POST", "/api/vallome/change-email", (e) => {
     if (existing && existing.id !== record.id) return occupied()
 
     try {
-      const raw = str($app.store().get("vallome_echg_" + email))
+      const raw = str($app.store().get("emailChange:" + email))
       if (raw && raw !== "null" && raw !== "undefined") {
         const other = JSON.parse(raw)
         if (
@@ -151,8 +151,8 @@ routerAdd("POST", "/api/vallome/change-email", (e) => {
     clearPrevious(auth.id)
     const expires = Date.now() + TTL_MS
     const payload = JSON.stringify({ userId: auth.id, email: email, expires: expires })
-    const emailKey = "vallome_echg_" + email
-    const userKey = "vallome_echg_user_" + auth.id
+    const emailKey = "emailChange:" + email
+    const userKey = "emailChangeUser:" + auth.id
     $app.store().set(emailKey, payload)
     $app.store().set(userKey, payload)
     rememberKey(emailKey, expires)

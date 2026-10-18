@@ -62,8 +62,14 @@ onRecordUpdateRequest((e) => {
   function datesOrdered() {
     const start = dayKey(record.get("requested_check_in"))
     const end = dayKey(record.get("requested_check_out"))
-    if (!start && !end) return true
     return !!(start && end && start < end)
+  }
+
+  function dayEq(left, right) {
+    const a = dayKey(left)
+    const b = dayKey(right)
+    if (!a && !b) return str(left) === str(right)
+    return a === b
   }
 
   function guestAllowed(from, to, reason) {
@@ -122,6 +128,32 @@ onRecordUpdateRequest((e) => {
     throw new BadRequestError("Дату предоплаты может записать только администратор")
   }
   if (!allowed(actor, from, to, reason)) throw new BadRequestError(DENY)
+  const checksSame =
+    dayEq(previous.get("check_in"), record.get("check_in")) &&
+    dayEq(previous.get("check_out"), record.get("check_out"))
+  const hostAccepts = actor === "host" && from === "change_requested" && to === "confirmed"
+  const explicitReject =
+    hostAccepts &&
+    !str(record.get("requested_check_in")) &&
+    !str(record.get("requested_check_out")) &&
+    checksSame
+  const checksMatchRequested =
+    dayEq(record.get("check_in"), previous.get("requested_check_in")) &&
+    dayEq(record.get("check_out"), previous.get("requested_check_out"))
+  if (actor !== "super" && !hostAccepts && !checksSame) {
+    throw new BadRequestError("Даты заезда и выезда меняет только перенос брони")
+  }
+  if (hostAccepts && !explicitReject && !checksSame && !checksMatchRequested) {
+    throw new BadRequestError("Даты заезда можно заменить только на запрошенные")
+  }
+  if (hostAccepts) {
+    if (!explicitReject && str(previous.get("requested_check_in")) && str(previous.get("requested_check_out"))) {
+      record.set("check_in", previous.get("requested_check_in"))
+      record.set("check_out", previous.get("requested_check_out"))
+    }
+    record.set("requested_check_in", "")
+    record.set("requested_check_out", "")
+  }
   if (actor === "host" && from === "pending_host" && to === "awaiting_prepayment") {
     if (!str(record.get("prepay_until"))) {
       record.set("prepay_until", new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString())

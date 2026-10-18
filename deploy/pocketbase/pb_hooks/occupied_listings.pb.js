@@ -1,12 +1,7 @@
-// Отдаёт id занятых объявлений, отбирая занимающие брони фильтром PocketBase, а не полной выгрузкой.
+// Отдаёт id занятых объявлений и диапазоны календаря, отбирая брони фильтром PocketBase.
+
 routerAdd("GET", "/api/vallome/occupied-listings", (e) => {
-  // Same keys as BookingStatus.upcomingApiKeys (Брони → Предстоящие).
-  const OCCUPYING = [
-    "pending_host",
-    "awaiting_prepayment",
-    "confirmed",
-    "change_requested",
-  ]
+  const OCCUPYING = ["pending_host", "awaiting_prepayment", "confirmed", "change_requested"]
 
   function str(value) {
     return value == null ? "" : String(value)
@@ -19,42 +14,29 @@ routerAdd("GET", "/api/vallome/occupied-listings", (e) => {
     } catch (err) {}
     try {
       const info = e.requestInfo()
-      const query = (info && info.query) || {}
-      return str(query[name]).trim()
+      return str((info && info.query && info.query[name]) || "").trim()
     } catch (err) {}
     return ""
   }
 
   function dayKey(value) {
-    const raw = str(value).trim()
-    const match = raw.match(/(\d{4}-\d{2}-\d{2})/)
+    const match = str(value).trim().match(/(\d{4}-\d{2}-\d{2})/)
     return match ? match[1] : ""
   }
 
   function listingIdOf(record) {
     var raw = ""
-    try {
-      raw = record.get("listing")
-    } catch (err) {}
+    try { raw = record.get("listing") } catch (err) {}
     if (raw && typeof raw === "object") {
-      try {
-        if (raw.length) return str(raw[0]).trim()
-      } catch (err) {}
-      try {
-        if (raw.id) return str(raw.id).trim()
-      } catch (err) {}
+      try { if (raw.length) return str(raw[0]).trim() } catch (err) {}
+      try { if (raw.id) return str(raw.id).trim() } catch (err) {}
     }
     const id = str(raw).trim()
     if (id && id !== "null" && id !== "undefined") return id
-    try {
-      return str(record.getString("listing")).trim()
-    } catch (err) {}
+    try { return str(record.getString("listing")).trim() } catch (err) {}
     return ""
   }
 
-  // Half-open nights [check_in, check_out): compare calendar days only.
-  // PocketBase may store "YYYY-MM-DD HH:MM:SS.sssZ" or an ISO "T" form;
-  // a full-timestamp filter then misses a same-day overlap.
   function stayOverlaps(startRaw, endRaw, checkInDay, checkOutDay) {
     const start = dayKey(startRaw)
     const end = dayKey(endRaw)
@@ -62,121 +44,57 @@ routerAdd("GET", "/api/vallome/occupied-listings", (e) => {
     return start < checkOutDay && end > checkInDay
   }
 
-  function collectionExists(name) {
-    try {
-      return !!e.app.findCollectionByNameOrId(name)
-    } catch (err) {
-      return false
-    }
-  }
-
   function collectListingIds(collection, filter, params) {
     const ids = []
     var offset = 0
-    const limit = 200
     while (offset < 10000) {
       var found
-      try {
-        found = e.app.findRecordsByFilter(
-          collection,
-          filter,
-          "",
-          limit,
-          offset,
-          params,
-        )
-      } catch (err) {
-        try {
-          console.log("occupied-listings: " + collection + " " + err)
-        } catch (logErr) {}
-        break
-      }
+      try { found = e.app.findRecordsByFilter(collection, filter, "", 200, offset, params) } catch (err) { break }
       if (!found || found.length === 0) break
       for (var i = 0; i < found.length; i++) {
-        if (collection === "bookings") {
-          var status = ""
-          try {
-            status = str(found[i].get("status")).trim()
-          } catch (err) {}
-          var occupies = false
-          for (var s = 0; s < OCCUPYING.length; s++) {
-            if (status === OCCUPYING[s]) occupies = true
-          }
-          if (!occupies) continue
-        }
         const id = listingIdOf(found[i])
         if (!id) continue
         const startField = collection === "listing_blocks" ? "start" : "check_in"
         const endField = collection === "listing_blocks" ? "end" : "check_out"
-        var overlapsStay = stayOverlaps(
-          found[i].get(startField),
-          found[i].get(endField),
-          checkInDay,
-          checkOutDay,
-        )
-        if (!overlapsStay && collection === "bookings") {
+        var overlaps = stayOverlaps(found[i].get(startField), found[i].get(endField), checkInDay, checkOutDay)
+        if (!overlaps && collection === "bookings") {
           try {
-            overlapsStay = stayOverlaps(
-              found[i].get("requested_check_in"),
-              found[i].get("requested_check_out"),
-              checkInDay,
-              checkOutDay,
-            )
+            overlaps = stayOverlaps(found[i].get("requested_check_in"), found[i].get("requested_check_out"), checkInDay, checkOutDay)
           } catch (err) {}
         }
-        if (!overlapsStay) continue
-        ids.push(id)
+        if (overlaps) ids.push(id)
       }
-      if (found.length < limit) break
-      offset += limit
+      if (found.length < 200) break
+      offset += 200
     }
     return ids
   }
 
   const checkInDay = dayKey(readQuery("checkIn") || readQuery("check_in"))
   const checkOutDay = dayKey(readQuery("checkOut") || readQuery("check_out"))
-  if (!checkInDay || !checkOutDay || checkInDay >= checkOutDay) {
-    return e.json(200, { listingIds: [] })
-  }
+  if (!checkInDay || !checkOutDay || checkInDay >= checkOutDay) return e.json(200, { listingIds: [] })
 
-  const unique = {}
-  const bookingParams = { from: checkInDay + " 00:00:00.000Z" }
+  const from = checkInDay + " 00:00:00.000Z"
+  const bookingParams = { from: from }
   const statusParts = []
   for (var s = 0; s < OCCUPYING.length; s++) {
     bookingParams["status" + s] = OCCUPYING[s]
     statusParts.push("status = {:status" + s + "}")
   }
-  const bookingFilter =
-    "(" +
-    statusParts.join(" || ") +
-    ") && (check_out > {:from} || requested_check_out > {:from})"
+  const bookingFilter = "(" + statusParts.join(" || ") + ") && (check_out > {:from} || requested_check_out > {:from})"
+  const unique = {}
   const fromBookings = collectListingIds("bookings", bookingFilter, bookingParams)
-  for (var b = 0; b < fromBookings.length; b++) {
-    unique[fromBookings[b]] = true
-  }
-
-  if (collectionExists("listing_blocks")) {
-    const fromBlocks = collectListingIds("listing_blocks", "end > {:from}", {
-      from: checkInDay + " 00:00:00.000Z",
-    })
-    for (var i = 0; i < fromBlocks.length; i++) {
-      unique[fromBlocks[i]] = true
-    }
-  }
-
+  for (var b = 0; b < fromBookings.length; b++) unique[fromBookings[b]] = true
+  try {
+    e.app.findCollectionByNameOrId("listing_blocks")
+    const fromBlocks = collectListingIds("listing_blocks", "end > {:from}", { from: from })
+    for (var i = 0; i < fromBlocks.length; i++) unique[fromBlocks[i]] = true
+  } catch (err) {}
   return e.json(200, { listingIds: Object.keys(unique) })
 })
 
-// Sibling route: occupied ranges for one listing's calendar.
-// Do not return guest/host PII — only start/end. Helpers stay nested.
 routerAdd("GET", "/api/vallome/occupied-dates", (e) => {
-  // Same keys as BookingStatus.upcomingApiKeys (Брони → Предстоящие).
-  const OCCUPYING = [
-    "pending_host",
-    "awaiting_prepayment",
-    "confirmed",
-    "change_requested",
-  ]
+  const OCCUPYING = ["pending_host", "awaiting_prepayment", "confirmed", "change_requested"]
 
   function str(value) {
     return value == null ? "" : String(value)
@@ -189,8 +107,7 @@ routerAdd("GET", "/api/vallome/occupied-dates", (e) => {
     } catch (err) {}
     try {
       const info = e.requestInfo()
-      const query = (info && info.query) || {}
-      return str(query[name]).trim()
+      return str((info && info.query && info.query[name]) || "").trim()
     } catch (err) {}
     return ""
   }
@@ -202,115 +119,57 @@ routerAdd("GET", "/api/vallome/occupied-dates", (e) => {
   }
 
   function dayValue(value) {
-    const raw = str(value).trim()
-    const match = raw.match(/^(\d{4}-\d{2}-\d{2})/)
+    const match = str(value).trim().match(/^(\d{4}-\d{2}-\d{2})/)
     return match ? match[1] : ""
-  }
-
-  function collectionExists(name) {
-    try {
-      return !!e.app.findCollectionByNameOrId(name)
-    } catch (err) {
-      return false
-    }
   }
 
   function pushRange(ranges, startRaw, endRaw) {
     const start = dayValue(startRaw)
     const end = dayValue(endRaw)
-    if (!start || !end || start >= end) return
-    ranges.push({ start: start, end: end })
+    if (start && end && start < end) ranges.push({ start: start, end: end })
   }
 
-  function collectRanges(
-    collection,
-    filter,
-    params,
-    startField,
-    endField,
-    altStart,
-    altEnd,
-  ) {
+  function collectRanges(collection, filter, params, startField, endField, altStart, altEnd) {
     const ranges = []
     var offset = 0
-    const limit = 200
     while (offset < 10000) {
       var found
-      try {
-        found = e.app.findRecordsByFilter(
-          collection,
-          filter,
-          "",
-          limit,
-          offset,
-          params,
-        )
-      } catch (err) {
-        break
-      }
+      try { found = e.app.findRecordsByFilter(collection, filter, "", 200, offset, params) } catch (err) { break }
       if (!found || found.length === 0) break
       for (var i = 0; i < found.length; i++) {
         pushRange(ranges, found[i].get(startField), found[i].get(endField))
         if (altStart && altEnd) {
           var altFrom = ""
           var altTo = ""
-          try {
-            altFrom = found[i].get(altStart)
-          } catch (err) {}
-          try {
-            altTo = found[i].get(altEnd)
-          } catch (err) {}
+          try { altFrom = found[i].get(altStart) } catch (err) {}
+          try { altTo = found[i].get(altEnd) } catch (err) {}
           pushRange(ranges, altFrom, altTo)
         }
       }
-      if (found.length < limit) break
-      offset += limit
+      if (found.length < 200) break
+      offset += 200
     }
     return ranges
   }
 
   const listing = bindId(readQuery("listing"))
-  if (!listing) {
-    return e.json(200, { ranges: [] })
-  }
-
+  if (!listing) return e.json(200, { ranges: [] })
   const params = { listing: listing }
   const statusExpr = OCCUPYING.map(function (status, i) {
     params["status" + i] = status
     return "status = {:status" + i + "}"
   }).join(" || ")
-
   var filter = "listing = {:listing} && (" + statusExpr + ")"
-  const excludeId = bindId(
-    readQuery("excludeBookingId") || readQuery("exclude_booking_id"),
-  )
+  const excludeId = bindId(readQuery("excludeBookingId") || readQuery("exclude_booking_id"))
   if (excludeId) {
     params.excludeId = excludeId
     filter += " && id != {:excludeId}"
   }
-
-  const ranges = collectRanges(
-    "bookings",
-    filter,
-    params,
-    "check_in",
-    "check_out",
-    "requested_check_in",
-    "requested_check_out",
-  )
-
-  if (collectionExists("listing_blocks")) {
-    const blocks = collectRanges(
-      "listing_blocks",
-      "listing = {:listing}",
-      { listing: listing },
-      "start",
-      "end",
-    )
-    for (var i = 0; i < blocks.length; i++) {
-      ranges.push(blocks[i])
-    }
-  }
-
+  const ranges = collectRanges("bookings", filter, params, "check_in", "check_out", "requested_check_in", "requested_check_out")
+  try {
+    e.app.findCollectionByNameOrId("listing_blocks")
+    const blocks = collectRanges("listing_blocks", "listing = {:listing}", { listing: listing }, "start", "end")
+    for (var i = 0; i < blocks.length; i++) ranges.push(blocks[i])
+  } catch (err) {}
   return e.json(200, { ranges: ranges })
 })

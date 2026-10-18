@@ -1,3 +1,5 @@
+**Исправлено:** все 5 замечаний устранены (2026-10-18). `magic_link.pb.js` — 345 строк, `occupied_listings.pb.js` — 175. Индекс `vallome_store_index`, cron `sweepAuthStore`, ключи `magicWait:`, `emailChange:` и `emailChangeUser:`. Переход `change_requested -> confirmed` копирует или сохраняет даты, JSON-запрос magic-auth требует `waitToken`.
+
 # Ревью Track B (`feat/pb-jsvm-hooks`)
 
 Дата: 2026-10-18  

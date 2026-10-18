@@ -69,7 +69,7 @@ function guardListingPublish(e) {
     HOUSING.indexOf(housing) !== -1 &&
     guests >= 1 &&
     price > 0 &&
-    (listedPhotos() >= 6 || uploadedPhotos() >= 6)
+    (listedPhotos() >= 6 || (listedPhotos() + uploadedPhotos()) >= 6)
   if (!ready) {
     throw new BadRequestError(
       "Чтобы отправить объявление, заполните поля и добавьте минимум 6 фотографий",
