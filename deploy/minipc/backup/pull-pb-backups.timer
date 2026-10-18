@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily pull of PocketBase backups from the mini-PC
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+Unit=pull-pb-backups.service
+
+[Install]
+WantedBy=timers.target
