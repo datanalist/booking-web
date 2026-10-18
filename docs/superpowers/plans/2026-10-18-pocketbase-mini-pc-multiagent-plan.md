@@ -10,6 +10,27 @@
 
 **Спецификация:** [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md`](../specs/2026-10-18-pocketbase-mini-pc-design.md). Каталог полей [`docs/pocketbase-schema.md`](../../pocketbase-schema.md) старее этого документа: правила API, новые поля и контракт клиентов берутся из спецификации.
 
+## Статус на 2026-10-19
+
+Фаза 1 публично открыта. Треки A–C, слияние, интеграционное ревью и локальный smoke не переисполнять: они уже в `dev-dns_local` (слияние `68a2ce5`, ревью `39181b8`, правка фильтра fail2ban `fda94af`). Чекбоксы внутри треков ниже оставлены текстом задач.
+
+Сделано на мини-ПК 19 октября:
+
+- Кабель `eno1` = `192.168.50.2/30` без шлюза, маршрут по умолчанию через Wi-Fi, `ping -I wlp3s0 1.1.1.1` проходит. Параметр модуля `iwlwifi power_save=N`. Бинарника `iw` на хосте нет; unit `wifi-powersave-off.service` включён.
+- PocketBase в контейнере, uid 1000, health 200 только на `127.0.0.1:8090`. Схема на диске совпадает с репозиторием. Есть `users`, `listings`, `listing_blocks`, `bookings`, поля `guests_forbidden`, `unique_prices`, `cancel_comment`. Суперпользователь в базе есть.
+- Keenetic: адрес мини-ПК закреплён, TCP 80 и 443 проброшены на `192.168.1.43`. Порты 22 и 8090 на белый адрес не проброшены.
+- A-записи `@`, `www`, `booking`, `pb.booking` в DNS Beget указывают на белый адрес роутера. Это подтвердили серверы имён Beget, `8.8.8.8` и `1.1.1.1`. Наблюдаемый TTL — 600, не 300. MX и TXT не менялись, AAAA нет. Сам адрес в git не записан.
+- Caddy `active` и включён в автозапуск. Сертификаты Let's Encrypt на четыре имени, срок до 16 января 2027. `https://pb.booking.vallome.ru/api/health` — 200, `/_/` — 200, `https://booking.vallome.ru/` — заглушка 200, `vallome.ru` и `www` — 301 на `https://booking.vallome.ru/`. У `GET /api/realtime` нет `content-encoding`.
+- LTE-проверка пройдена: `request.client_ip` у `/api/health` публичный, не адрес роутера. fail2ban `active` и включён с 01:01:57. Подняты jail `sshd`, `caddy-auth`, `caddy-magic`, `caddy-scan`, `recidive`. В живом `/etc/fail2ban/jail.local` плейсхолдера нет, в `ignoreip` уже стоит `/32` белого адреса. Ошибка сокета в ту же секунду была ранним `fail2ban-client`: сервер к этому моменту ещё не открыл сокет, затем jail стартовали без ошибок.
+
+Осталось, и это ещё Фаза 1:
+
+- Один ручной вход в `https://pb.booking.vallome.ru/_/`. Страница отдаётся, сессию суперпользователя в этой сессии не открывали.
+- Таймер `pull-pb-backups` на хосте кабеля `192.168.50.1` не установлен. ZIP в 03:00 пишутся на мини-ПК и сюда сами не приезжают. Файлы юнита лежат в `deploy/minipc/backup/`.
+- Запись с `false` в `pets_allowed` и `cancellation_allowed` на живой базе мини-ПК повторно не создавалась. На локальном smoke схема это уже позволяла.
+
+Фаза 2 не начата. Пошаговый план адаптера кабинета и Flutter пишется отдельно, после этих трёх хвостов.
+
 ## Global Constraints
 
 - Ветка интеграции: `dev-dns_local`. Имена машин в публичный DNS не входят.
@@ -793,7 +814,7 @@ iface eno1 inet static
 
 ### Task I1: Слияние
 
-- [ ] **Step 1: Влить в `dev-dns_local` последовательно** (пересечения файлов нет, порядок фиксирует историю): `feat/pb-docker-schema`, затем `feat/pb-jsvm-hooks`, затем `feat/minipc-infra`.
+- [x] **Step 1: Влить в `dev-dns_local` последовательно** (пересечения файлов нет, порядок фиксирует историю): `feat/pb-docker-schema`, затем `feat/pb-jsvm-hooks`, затем `feat/minipc-infra`. Сделано коммитом `68a2ce5`.
 
 ```bash
 git checkout dev-dns_local
@@ -802,17 +823,17 @@ git merge --no-ff feat/pb-jsvm-hooks
 git merge --no-ff feat/minipc-infra
 ```
 
-- [ ] **Step 2: Обновить `docs/pocketbase-server.md` под мини-ПК** (описание удалённого VPS больше не годится) и `README.md` — где лежит поставка, как поднять локальный compose, что секреты только в `/opt/pocketbase/.env`. Эти два файла не входили в треки специально, чтобы не конфликтовать.
+- [x] **Step 2: Обновить описание хоста и `README.md`.** Отдельный `docs/pocketbase-server.md` со старыми адресами VPS в репозиторий не кладётся. Хост описан спецификацией и разделом README «Поставка мини-ПК». Секреты остаются в `/opt/pocketbase/.env` (`600`) и в локальном `.secrets/` (каталог в `.gitignore`).
 
 ### Task I2: Интеграционный ревьюер
 
-- [ ] **Step 1: Агент `gemini-4-argon-medium` читает слитый `dev-dns_local` против спецификации целиком** (не только diff одного трека). Пишет `docs/superpowers/reviews/2026-10-18-review-integration.md`. Блокеры: дыра в API Rules, хук до `e.next()`, порт не на `127.0.0.1`, секрет в git, файл хука с двумя ответственностями, Caddy прокидывает клиентский `X-Forwarded-For`.
+- [x] **Step 1: Агент `gemini-4-argon-medium` читает слитый `dev-dns_local` против спецификации целиком** (не только diff одного трека). Отчёт: [`docs/superpowers/reviews/2026-10-18-integration-review.md`](../reviews/2026-10-18-integration-review.md), вердикт `APPROVED`. Блокеры: дыра в API Rules, хук до `e.next()`, порт не на `127.0.0.1`, секрет в git, файл хука с двумя ответственностями, Caddy прокидывает клиентский `X-Forwarded-For`.
 
-- [ ] **Step 2: Исполнитель `grok-4.7-high-fast` закрывает блокеры коммитом на `dev-dns_local`.** Мелкую правку, которая снова разъезжается по двум трекам, не раскидывать по старым веткам — один fix-коммит на базе.
+- [x] **Step 2: Исполнитель закрывает блокеры коммитом на `dev-dns_local`.** Отдельных блокеров ревью не оставило. Поздняя правка разбора времени Caddy — `fda94af`, на базе, не в старых ветках треков.
 
 ### Task I3: Локальный Docker smoke
 
-- [ ] **Step 1: Каталог данных с владельцем 1000 и пустой `pb_hooks` не подменять чужим `pb_data`.**
+- [x] **Step 1: Каталог данных с владельцем 1000 и пустой `pb_hooks` не подменять чужим `pb_data`.** Временный контейнер `pb-smoke-test` из интеграционного ревью остановлен, каталоги `/tmp/pb_smoke_data.*` удалены.
 
 ```bash
 mkdir -p deploy/pocketbase/pb_data
@@ -820,7 +841,7 @@ sudo chown -R 1000:1000 deploy/pocketbase/pb_data
 docker compose -f deploy/pocketbase/docker-compose.yml up -d --build
 ```
 
-- [ ] **Step 2: Проверки.**
+- [x] **Step 2: Проверки.** Результат записан в интеграционном ревью: health 200, uid 1000, 12 хуков без panic, коллекции схемы и `listing_blocks`, повторный старт коллекцию не дублирует. `caddy validate` — `Valid configuration`.
 
 ```bash
 curl -fsS http://127.0.0.1:8090/api/health
@@ -841,17 +862,17 @@ docker compose -f deploy/pocketbase/docker-compose.yml logs pocketbase
 
 Повторный рестарт контейнера не дублирует `listing_blocks` и не стирает созданную суперпользователем запись (суперпользователя на локальном smoke можно создать тем же `compose run` из §4.1 с локальным `.env` вне git).
 
-- [ ] **Step 3: Если health или схема не сошлись, DNS не менять.** Чинить на месте, smoke повторить.
+- [x] **Step 3: Если health или схема не сошлись, DNS не менять.** Чинить на месте, smoke повторить. Расхождения не было, DNS меняли уже после smoke.
 
 ### Task I4: Cutover на мини-ПК
 
 Человек делает шаги панели роутера и Beget. Агент готовит команды и сверяет проверки. Порядок — §5 спецификации, без перестановки.
 
-- [ ] **Step 1: Мини-ПК.** Wi-Fi со шлюзом по умолчанию, `ping -I wlp3s0 1.1.1.1`, power save выключен (`iw dev wlp3s0 get power_save` → `Power save: off`). Затем `switch-eno1-to-30.sh`. Docker-сборка с SHA256. `chown -R 1000:1000` на `/opt/pocketbase/pb_data` (и пустые каталоги хуков/миграций до старта). Файлы хуков, миграция и `pb_schema.json` на месте. `/opt/pocketbase/.env` в режиме `600`. Caddy установлен, `caddy validate` проходит, сервис Caddy ещё не запущен. fail2ban не запущен.
+- [x] **Step 1: Мини-ПК.** Wi-Fi со шлюзом по умолчанию, `ping -I wlp3s0 1.1.1.1` проходит, `eno1` уже `192.168.50.2/30`. Power save выключен параметром модуля (`power_save=N`); команды `iw` на хосте нет, поэтому формулировка `iw dev wlp3s0 get power_save` не проверялась. Docker-сборка, каталоги `1000:1000`, хуки, миграция, `pb_schema.json` и `/opt/pocketbase/.env` (`600`) на месте. `caddy validate` прошёл до запуска сервиса.
 
-- [ ] **Step 2: Человек в панели роутера** закрепляет Wi-Fi мини-ПК по MAC `wlp3s0` и пробрасывает только TCP 80 и 443. Порты 22 и 8090 не пробрасываются.
+- [x] **Step 2: Человек в панели роутера** закрепляет Wi-Fi мини-ПК по MAC `wlp3s0` и пробрасывает только TCP 80 и 443 на `192.168.1.43`. Форма Keenetic — «Трансляция сетевых адресов (NAT)»: интерфейс провайдера, «Пакеты на адрес» и маска пустые, протокол TCP, порт 80 или 443. Порты 22 и 8090 на белый адрес отвечают отказом.
 
-- [ ] **Step 3: `docker compose up -d` на мини-ПК.** Суперпользователь — одноразовый контейнер от `1000:1000`, пароль из `.env`, не из истории:
+- [x] **Step 3: `docker compose up -d` на мини-ПК.** Суперпользователь — одноразовый контейнер от `1000:1000`, пароль из `.env`, не из истории:
 
 ```bash
 set -a
@@ -861,13 +882,13 @@ docker compose -f /opt/pocketbase/docker-compose.yml run --rm pocketbase \
   /pb/pocketbase superuser upsert "$PB_ADMIN_EMAIL" "$PB_ADMIN_PASSWORD" --dir=/pb/pb_data
 ```
 
-С мини-ПК `http://127.0.0.1:8090/api/health` — 200. В базе есть `users`, `listings`, `listing_blocks`, `bookings`.
+С мини-ПК `http://127.0.0.1:8090/api/health` — 200. В базе есть `users`, `listings`, `listing_blocks`, `bookings`, одна запись суперпользователя. Контейнер `pocketbase` слушает только `127.0.0.1:8090`.
 
-- [ ] **Step 4: Человек в панели Beget** меняет A у `@`, `www`, `booking`, `pb.booking` на белый IP, снятый с роутера в момент переключения. TTL 300. MX и TXT не меняются. AAAA нет. Значение IP в репозиторий не кладётся. Агент проверяет, что `8.8.8.8` и `1.1.1.1` отдают этот адрес, и только потом запускает Caddy и ждёт сертификаты Let's Encrypt.
+- [x] **Step 4: Человек в панели Beget** меняет A у `@`, `www`, `booking`, `pb.booking` на белый IP, снятый с роутера в момент переключения. MX (`mx1.beget.com`, `mx2.beget.com`) и TXT (`v=spf1 redirect=beget.com`) не менялись. AAAA нет. Значение IP в репозиторий не кладётся. Серверы имён Beget, `8.8.8.8` и `1.1.1.1` отдают этот адрес. Фактический TTL в ответе — 600. После этого Caddy запущен и получил сертификаты Let's Encrypt.
 
-- [ ] **Step 5: LTE-проверка до fail2ban.** С телефона через мобильный интернет (не домашний Wi-Fi) открыть `https://pb.booking.vallome.ru/api/health`. В `/var/log/caddy/access.log` поле `request.client_ip` этой строки — публичный IP телефона. Если там `192.168.1.1` или другой LAN-адрес роутера, jail не включаются: сначала чинится проброс, проверка повторяется. Когда IP настоящий, на мини-ПК в `ignoreip` подставляется `<WAN_PUBLIC_IP>/32` (правка только на диске мини-ПК) и включается fail2ban.
+- [x] **Step 5: LTE-проверка до fail2ban.** С телефона через мобильный интернет открыт `https://pb.booking.vallome.ru/api/health`. `request.client_ip` этой строки публичный, не `192.168.1.1` и не другой LAN-адрес. В живом `ignoreip` белый адрес уже стоял как `/32`. fail2ban включён, пять jail стартовали. Сам IP телефона и белый адрес в git не записываются.
 
-- [ ] **Step 6: Чеклист §6.**
+- [ ] **Step 6: Чеклист §6.** Публичные проверки ниже пройдены 19 октября. Не закрыто: ручной вход в `/_/` и запись `false` в `pets_allowed` / `cancellation_allowed` на живой базе. Таймер бэкапов на `192.168.50.1` — отдельный хвост, файлы уже в `deploy/minipc/backup/`.
 
 До DNS, на мини-ПК: маршрут по умолчанию через Wi-Fi; power save off; `eno1` = `192.168.50.2/30` без шлюза; SSH с `fox-pc` (`192.168.50.1/30`) на `.2`; health 200 на loopback; 8090 не на `0.0.0.0`; uid контейнера 1000; поля `guests_forbidden`, `unique_prices`, `cancel_comment` и коллекция `listing_blocks`; запись bool `false` в `pets_allowed` / `cancellation_allowed` создаётся.
 
@@ -896,7 +917,7 @@ curl --resolve pb.booking.vallome.ru:443:<LAN_IP_МИНИ_ПК> https://pb.booki
 
 ## 4. Фаза 2 — отдельный эпик
 
-В Фазу 1 не входит. Старт после того, как `https://pb.booking.vallome.ru/api/health` стабильно открывается с LTE. Детальный пошаговый план этого эпика пишется отдельно, когда Фаза 1 принята. Ниже — границы, чтобы эпик сразу разошёлся по изолированным трекам.
+В Фазу 1 не входит. `https://pb.booking.vallome.ru/api/health` с LTE уже открывается. Детальный пошаговый план этого эпика ещё не написан: его пишут после хвостов из раздела «Статус на 2026-10-19» (вход в `/_/`, таймер бэкапов, запись `false` в два bool-поля). Ниже — границы, чтобы эпик сразу разошёлся по изолированным трекам.
 
 Тот же цикл: worktree `.worktrees/<track>`, ветка `feat/<track>` от `dev-dns_local`, исполнитель `grok-4.7-high-fast`, ревьюер `gemini-4-argon-medium`, затем `git worktree remove`.
 

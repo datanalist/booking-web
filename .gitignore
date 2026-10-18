@@ -19,3 +19,5 @@ deploy/pocketbase/pb_data/
 pb_data/
 deploy/pocketbase/.env
 src/app/localDevAuth.local.ts
+# Локальный перенос ключей и секретов. В git не входит.
+.secrets/

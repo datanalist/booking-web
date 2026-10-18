@@ -99,7 +99,9 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 План: [`docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md`](docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md)
 
-Хостинг PocketBase на мини-ПК описан в [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md) (отчёт ревью: [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md), план реализации: [`docs/superpowers/plans/2026-10-18-pocketbase-mini-pc-multiagent-plan.md`](docs/superpowers/plans/2026-10-18-pocketbase-mini-pc-multiagent-plan.md)). Кабинет по-прежнему на моках: этот документ задаёт сервер, а не подключение `dist/` к API.
+Хостинг PocketBase на мини-ПК описан в [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md) (отчёт ревью: [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md), план реализации: [`docs/superpowers/plans/2026-10-18-pocketbase-mini-pc-multiagent-plan.md`](docs/superpowers/plans/2026-10-18-pocketbase-mini-pc-multiagent-plan.md)). Кабинет по-прежнему на моках: спецификация задаёт сервер, а не подключение `dist/` к API.
+
+Публичные имена с 19 октября 2026 обслуживает домашний мини-ПК. `https://pb.booking.vallome.ru/api/health` отвечает 200, сертификат Let's Encrypt. Кабель мини-ПК — `192.168.50.2/30`, эта машина на другом конце — `192.168.50.1/30`. Белый IP в репозиторий не пишется. Не закрыто: один ручной вход в `/_/`, таймер стягивания ZIP-бэкапов на хост `192.168.50.1`, запись `false` в `pets_allowed` и `cancellation_allowed` на живой базе. Подробности — в разделе «Статус на 2026-10-19» плана.
 
 ### Поставка мини-ПК (`deploy/`) и отчёты ревью
 
@@ -125,7 +127,7 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 ## Секреты
 
-В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли, белый IP. Публичный URL API можно держать в коде или в `VITE_*` без секретов. В `deploy/minipc/fail2ban/jail.local` адрес для Hairpin NAT записан плейсхолдером `<WAN_PUBLIC_IP>/32`; живое значение только в `/etc/fail2ban/jail.local` на мини-ПК.
+В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли, белый IP. Публичный URL API можно держать в коде или в `VITE_*` без секретов. В `deploy/minipc/fail2ban/jail.local` адрес для Hairpin NAT записан плейсхолдером `<WAN_PUBLIC_IP>/32`; живое значение только в `/etc/fail2ban/jail.local` на мини-ПК. Локальная папка переноса `.secrets/` закрыта `.gitignore` и в коммиты не входит.
 
 ## Новая машина
 
@@ -140,9 +142,10 @@ npm install
 
 Файлы с секретами в git не входят, их кладут вручную:
 
-- веб-кабинет — `.env.local` в корне репозитория (этот файл закрыт `.gitignore`);
+- веб-кабинет — `.env.local` в корне репозитория и `src/app/localDevAuth.local.ts` (оба закрыты `.gitignore`);
 - локальный compose PocketBase — `deploy/pocketbase/.env` из шаблона `deploy/pocketbase/.env.example` (`PB_PUBLIC_URL`, `PB_ADMIN_EMAIL`, `PB_ADMIN_PASSWORD`);
-- на мини-ПК тот же смысл у `/opt/pocketbase/.env`, режим `600`.
+- на мини-ПК тот же смысл у `/opt/pocketbase/.env`, режим `600`;
+- пачка ключей и паролей для переноса машины — каталог `.secrets/` в корне, режим каталога `700`. В git его нет.
 
 Фильтры `deploy/minipc/fail2ban/filter.d/caddy-auth.conf`, `caddy-magic.conf` и `caddy-scan.conf` разбирают JSON-время Caddy так: `datepattern = {EPOCH}` (поле `ts` — секунды Unix). Каталог полей — [`docs/pocketbase-schema.md`](docs/pocketbase-schema.md). Хост мини-ПК — [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md). Runbook старого VPS с живыми адресами в репозиторий не входит.
 
