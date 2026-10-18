@@ -1,0 +1,12 @@
+[Unit]
+Description=Turn off Intel Wi-Fi power save on wlp3s0
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/iw dev wlp3s0 set power_save off
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

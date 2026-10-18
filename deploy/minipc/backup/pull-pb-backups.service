@@ -1,0 +1,10 @@
+[Unit]
+Description=Pull PocketBase ZIP backups from the mini-PC
+After=network-online.target
+# На fox-pc: этот юнит в /etc/systemd/system/, скрипт в /usr/local/sbin/.
+
+[Service]
+Type=oneshot
+User=mk
+Group=mk
+ExecStart=/usr/local/sbin/pull-pb-backups.sh

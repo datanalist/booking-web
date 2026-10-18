@@ -1,0 +1,55 @@
+# <WAN_PUBLIC_IP> заменяется на мини-ПК после LTE-проверки. Живой адрес в git не коммитится.
+
+[DEFAULT]
+ignoreip = 127.0.0.0/8 ::1 192.168.50.0/24 192.168.1.0/24 <WAN_PUBLIC_IP>/32
+banaction = nftables-multiport
+banaction_allports = nftables-allports
+
+[sshd]
+enabled = true
+backend = systemd
+mode = extra
+maxretry = 4
+findtime = 10m
+bantime = 1h
+bantime.increment = true
+bantime.maxtime = 1w
+
+[caddy-auth]
+enabled = true
+backend = auto
+port = http,https
+filter = caddy-auth
+logpath = /var/log/caddy/access.log
+maxretry = 5
+findtime = 10m
+bantime = 1h
+
+[caddy-magic]
+enabled = true
+backend = auto
+port = http,https
+filter = caddy-magic
+logpath = /var/log/caddy/access.log
+maxretry = 5
+findtime = 10m
+bantime = 1h
+
+[caddy-scan]
+enabled = true
+backend = auto
+port = http,https
+filter = caddy-scan
+logpath = /var/log/caddy/access.log
+maxretry = 6
+findtime = 10m
+bantime = 12h
+
+[recidive]
+enabled = true
+backend = auto
+logpath = /var/log/fail2ban.log
+banaction = %(banaction_allports)s
+maxretry = 3
+findtime = 1d
+bantime = 1w
