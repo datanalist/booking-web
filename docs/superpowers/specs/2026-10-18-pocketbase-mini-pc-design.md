@@ -105,7 +105,7 @@ ExecStart=/usr/sbin/iw dev wlp3s0 set power_save off
 
 Мини-ПК — Debian 13 (trixie), amd64. Docker уже поставлен установкой PXE. Образ PocketBase официально не публикуется. Контейнер собирается по минимальному Dockerfile из документации PocketBase, версия **0.40.4**, архив `linux_amd64`. Чужой образ из реестра не используется.
 
-Dockerfile скачивает `pocketbase_0.40.4_linux_amd64.zip` и `checksums.txt` одного и того же релиза GitHub и до распаковки выполняет `sha256sum -c` по строке этого архива. `ENTRYPOINT` у образа пустой. `CMD`:
+Dockerfile скачивает `pocketbase_0.40.4_linux_amd64.zip` релиза GitHub и до распаковки выполняет `sha256sum -c` по проверенной официальной контрольной сумме `PB_SHA256=9042ec818570e79c3628dadcd0a756c1496d9e1173918ec409d133c02f82e5fa` (из `checksums.txt` релиза `v0.40.4`). `ENTRYPOINT` у образа пустой. `CMD`:
 
 ```text
 /pb/pocketbase serve --http=0.0.0.0:8090 --dir=/pb/pb_data --hooksDir=/pb/pb_hooks --migrationsDir=/pb/pb_migrations

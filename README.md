@@ -101,6 +101,20 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 Хостинг PocketBase на мини-ПК описан в [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md) (отчёт ревью: [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md), план реализации: [`docs/superpowers/plans/2026-10-18-pocketbase-mini-pc-multiagent-plan.md`](docs/superpowers/plans/2026-10-18-pocketbase-mini-pc-multiagent-plan.md)). Кабинет по-прежнему на моках: этот документ задаёт сервер, а не подключение `dist/` к API.
 
+### Поставка мини-ПК (`deploy/`) и отчёты ревью
+
+Конфигурация для выката на домашний мини-ПК собрана в каталоге `deploy/`:
+
+- `deploy/pocketbase/` — `Dockerfile` (PocketBase `0.40.4` с проверкой SHA-256), `docker-compose.yml` (`127.0.0.1:8090:8090`, `user: "1000:1000"`, `init: true`, `stop_grace_period: 30s`), шаблон `.env.example`, исправленная схема `pb_schema.json`, идемпотентная миграция `pb_migrations/1729200000_import_schema.js` и 12 хуков JSVM в `pb_hooks/`.
+- `deploy/minipc/` — `caddy/Caddyfile` (обратный прокси без буферизации и сжатия SSE `/api/realtime*`, сброс `X-Forwarded-For`, передача `X-Real-IP`), `fail2ban/` (`jail.local` и фильтры `caddy-auth`, `caddy-magic`, `caddy-scan`), `network/` (перевод кабеля `eno1` в `/30` без потери сессии и отключение энергосбережения Wi-Fi `wlp3s0`), `backup/` (systemd-таймер и скрипт выгрузки ZIP-бэкапов на `fox-pc`).
+
+Отчёты код-ревью и интеграционного smoke-теста:
+
+- Track A (Docker и схема): [`docs/superpowers/reviews/2026-10-18-track-a-review.md`](docs/superpowers/reviews/2026-10-18-track-a-review.md)
+- Track B (JSVM-хуки): [`docs/superpowers/reviews/2026-10-18-track-b-review.md`](docs/superpowers/reviews/2026-10-18-track-b-review.md)
+- Track C (инфраструктура мини-ПК): [`docs/superpowers/reviews/2026-10-18-track-c-review.md`](docs/superpowers/reviews/2026-10-18-track-c-review.md)
+- Финальное интеграционное ревью и Docker smoke-тест: [`docs/superpowers/reviews/2026-10-18-integration-review.md`](docs/superpowers/reviews/2026-10-18-integration-review.md)
+
 ## Чаты
 
 Экран `/chats`. Если в сиде есть переписки, слева список (`ChatsScreen`), справа открытый чат (`ChatConversation`) после выбора строки. Если переписок нет — прежний экран «Нет чатов».
