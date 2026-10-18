@@ -106,7 +106,7 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 Конфигурация для выката на домашний мини-ПК собрана в каталоге `deploy/`:
 
 - `deploy/pocketbase/` — `Dockerfile` (PocketBase `0.40.4` с проверкой SHA-256), `docker-compose.yml` (`127.0.0.1:8090:8090`, `user: "1000:1000"`, `init: true`, `stop_grace_period: 30s`), шаблон `.env.example`, исправленная схема `pb_schema.json`, идемпотентная миграция `pb_migrations/1729200000_import_schema.js` и 12 хуков JSVM в `pb_hooks/`.
-- `deploy/minipc/` — `caddy/Caddyfile` (обратный прокси без буферизации и сжатия SSE `/api/realtime*`, сброс `X-Forwarded-For`, передача `X-Real-IP`), `fail2ban/` (`jail.local` и фильтры `caddy-auth`, `caddy-magic`, `caddy-scan`), `network/` (перевод кабеля `eno1` в `/30` без потери сессии и отключение энергосбережения Wi-Fi `wlp3s0`), `backup/` (systemd-таймер и скрипт выгрузки ZIP-бэкапов на `fox-pc`).
+- `deploy/minipc/` — `caddy/Caddyfile` (обратный прокси без буферизации и сжатия SSE `/api/realtime*`, сброс `X-Forwarded-For`, передача `X-Real-IP`), `fail2ban/` (`jail.local` с плейсхолдером `<WAN_PUBLIC_IP>` и фильтры `caddy-auth`, `caddy-magic`, `caddy-scan` с `datepattern = {EPOCH}`), `network/` (перевод кабеля `eno1` в `/30` без потери сессии и отключение энергосбережения Wi-Fi `wlp3s0`), `backup/` (systemd-таймер и скрипт выгрузки ZIP-бэкапов на `fox-pc`).
 
 Отчёты код-ревью и интеграционного smoke-теста:
 
@@ -125,7 +125,26 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 ## Секреты
 
-В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли. Публичный URL API можно держать в коде или в `VITE_*` без секретов.
+В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли, белый IP. Публичный URL API можно держать в коде или в `VITE_*` без секретов. В `deploy/minipc/fail2ban/jail.local` адрес для Hairpin NAT записан плейсхолдером `<WAN_PUBLIC_IP>/32`; живое значение только в `/etc/fail2ban/jail.local` на мини-ПК.
+
+## Новая машина
+
+Актуальная ветка — `dev-dns_local`. В неё уже влиты `feat/pb-docker-schema`, `feat/pb-jsvm-hooks` и `feat/minipc-infra`. `main` и `dev` — более ранние линии; для кабинета и мини-ПК оставаться на `dev-dns_local`.
+
+```bash
+git clone git@github.com:datanalist/booking-web.git
+cd booking-web
+git checkout dev-dns_local
+npm install
+```
+
+Файлы с секретами в git не входят, их кладут вручную:
+
+- веб-кабинет — `.env.local` в корне репозитория (этот файл закрыт `.gitignore`);
+- локальный compose PocketBase — `deploy/pocketbase/.env` из шаблона `deploy/pocketbase/.env.example` (`PB_PUBLIC_URL`, `PB_ADMIN_EMAIL`, `PB_ADMIN_PASSWORD`);
+- на мини-ПК тот же смысл у `/opt/pocketbase/.env`, режим `600`.
+
+Фильтры `deploy/minipc/fail2ban/filter.d/caddy-auth.conf`, `caddy-magic.conf` и `caddy-scan.conf` разбирают JSON-время Caddy так: `datepattern = {EPOCH}` (поле `ts` — секунды Unix). Каталог полей — [`docs/pocketbase-schema.md`](docs/pocketbase-schema.md). Хост мини-ПК — [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md). Runbook старого VPS с живыми адресами в репозиторий не входит.
 
 ## Запуск
 

@@ -4,6 +4,8 @@
 node_modules/
 dist/
 *.local
+# Шаблон jail отслеживается. Живой белый IP только в /etc/fail2ban/jail.local на мини-ПК.
+!deploy/minipc/fail2ban/jail.local
 .DS_Store
 *.tsbuildinfo
 .superpowers/
@@ -14,5 +16,6 @@ dist/
 .worktrees
 .worktrees/
 deploy/pocketbase/pb_data/
+pb_data/
 deploy/pocketbase/.env
 src/app/localDevAuth.local.ts

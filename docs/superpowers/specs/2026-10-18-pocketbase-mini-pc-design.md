@@ -4,7 +4,7 @@
 Статус: ревью учтено (К-1…К-5, В-1…В-5, С-1…С-5, У-1…У-3)  
 Ветка: `dev-dns_local`  
 Схема данных: [`docs/pocketbase-schema.md`](../../pocketbase-schema.md) — каталог полей; правила API, новые поля и контракт клиентов в этом документе новее каталога, пока каталог не обновлён  
-Прежний хост (машина удалена): [`docs/pocketbase-server.md`](../../pocketbase-server.md)
+Прежний VPS Beget снят. Runbook с живыми адресами в репозиторий не входит; актуальное описание хоста — этот документ.
 
 ## 1. Цель
 
@@ -141,7 +141,7 @@ logging:
 
 `.env`, `pb_data`, пароли и белый IP в git не коммитятся. `.env` уже покрыт ignore; новые файлы с секретами туда же.
 
-В репозитории появятся `deploy/pocketbase/Dockerfile`, `deploy/pocketbase/compose.yaml`, `deploy/pocketbase/Caddyfile`, `deploy/pocketbase/pb_schema.json`, `deploy/pocketbase/pb_migrations/1729200000_import_schema.js` и каталог `deploy/pocketbase/pb_hooks/`. На мини-ПК это лежит в `/opt/pocketbase` (Caddyfile — в `/etc/caddy/Caddyfile`). `docs/pocketbase-server.md` переписывается под мини-ПК: описание удалённого VPS туда больше не годится.
+В репозитории появятся `deploy/pocketbase/Dockerfile`, `deploy/pocketbase/compose.yaml`, `deploy/pocketbase/Caddyfile`, `deploy/pocketbase/pb_schema.json`, `deploy/pocketbase/pb_migrations/1729200000_import_schema.js` и каталог `deploy/pocketbase/pb_hooks/`. На мини-ПК это лежит в `/opt/pocketbase` (Caddyfile — в `/etc/caddy/Caddyfile`). Описание удалённого VPS в репозиторий не кладётся: его заменяет этот документ.
 
 ### 4.1 Суперпользователь
 
