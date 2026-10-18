@@ -2,7 +2,9 @@
 Description=Daily pull of PocketBase backups from the mini-PC
 
 [Timer]
-OnCalendar=*-*-* 03:30:00
+# Cron бэкапа PocketBase — 03:00 UTC (контейнер без TZ). На fox-pc часы MSK,
+# поэтому 03:30 без пояса попало бы на 00:30 UTC, раньше ZIP.
+OnCalendar=*-*-* 03:30:00 UTC
 Persistent=true
 Unit=pull-pb-backups.service
 
