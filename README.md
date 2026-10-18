@@ -99,6 +99,8 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 План: [`docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md`](docs/superpowers/plans/2026-09-20-owner-cabinet-first-slice.md)
 
+Хостинг PocketBase на мини-ПК описан в [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design.md) (отчёт ревью: [`docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md`](docs/superpowers/specs/2026-10-18-pocketbase-mini-pc-design-review.md)). Кабинет по-прежнему на моках: этот документ задаёт сервер, а не подключение `dist/` к API.
+
 ## Чаты
 
 Экран `/chats`. Если в сиде есть переписки, слева список (`ChatsScreen`), справа открытый чат (`ChatConversation`) после выбора строки. Если переписок нет — прежний экран «Нет чатов».
