@@ -1,0 +1,125 @@
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { chatId } from "../../domain/ChatId";
+import type { ChatMessage } from "../../domain/ChatMessage";
+import { chatMessageId } from "../../domain/ChatMessageId";
+import { messageTimeLabel } from "../../domain/MessageTimeLabel";
+import type { ChatConversationModel, ChatSource } from "../../pocketbase";
+import { OpenChatConversation } from "./OpenChatConversation";
+
+function peerText(id: string, body: string): ChatMessage {
+  const messageId = chatMessageId(id);
+  const timeLabel = messageTimeLabel("10:07");
+  if (messageId === null || timeLabel === null) {
+    throw new Error("мок сообщения");
+  }
+  return { kind: "text", id: messageId, author: "peer", timeLabel, body };
+}
+
+function conversation(peerName: string, body: string, messageId: string): ChatConversationModel {
+  return {
+    heading: {
+      kind: "direct",
+      peerName,
+      peerAvatarUrl: "https://example.test/peer.png",
+    },
+    dateLabel: "10 сентября",
+    messages: [peerText(messageId, body)],
+  };
+}
+
+function sourceFor(
+  loadConversation: ChatSource["loadConversation"],
+  sendText: ChatSource["sendText"] = async () => {},
+): ChatSource {
+  return {
+    listThreads: async () => [],
+    loadConversation,
+    sendText,
+    markRead: async () => {},
+  };
+}
+
+afterEach(() => {
+  cleanup();
+});
+
+beforeEach(() => {
+  let n = 0;
+  URL.createObjectURL = () => {
+    n += 1;
+    return `blob:preview-${n}`;
+  };
+  URL.revokeObjectURL = vi.fn();
+});
+
+test("смена чата не показывает прошлую переписку, пока новая не загрузилась", async () => {
+  const first = conversation("Анна", "Первое сообщение", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  const second = conversation("Борис", "Второе сообщение", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+  let releaseNext: ((loaded: ChatConversationModel) => void) | null = null;
+  const source = sourceFor((id) => {
+    if (id === "chat-b") {
+      return new Promise((resolve) => {
+        releaseNext = resolve;
+      });
+    }
+    return Promise.resolve(first);
+  });
+  const { rerender } = render(
+    <OpenChatConversation chatId={chatId("chat-a")} source={source} hostId="user1" />,
+  );
+  expect(await screen.findByText("Первое сообщение")).toBeInTheDocument();
+
+  rerender(<OpenChatConversation chatId={chatId("chat-b")} source={source} hostId="user1" />);
+
+  expect(screen.queryByText("Первое сообщение")).not.toBeInTheDocument();
+  expect(screen.queryByPlaceholderText("Напишите сообщение...")).not.toBeInTheDocument();
+  if (releaseNext === null) {
+    throw new Error("загрузка второго чата не началась");
+  }
+  releaseNext(second);
+  expect(await screen.findByText("Второе сообщение")).toBeInTheDocument();
+  expect(screen.queryByText("Первое сообщение")).not.toBeInTheDocument();
+});
+
+test("фото в живом чате остаётся в ленте и не вызывает sendText", async () => {
+  const user = userEvent.setup();
+  const sendText = vi.fn(async () => {});
+  const source = sourceFor(
+    async () => conversation("Анна", "Первое сообщение", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+    sendText,
+  );
+  render(<OpenChatConversation chatId={chatId("chat-a")} source={source} hostId="user1" />);
+  expect(await screen.findByText("Первое сообщение")).toBeInTheDocument();
+
+  const file = new File([new Uint8Array([1, 2, 3])], "lift.png", { type: "image/png" });
+  await user.upload(screen.getByLabelText("Файл фото"), file);
+  await user.click(screen.getByRole("button", { name: "Отправить" }));
+
+  expect(screen.getByAltText("Прикреплённое фото")).toHaveAttribute("src", "blob:preview-1");
+  expect(screen.queryByAltText("Предпросмотр фото")).not.toBeInTheDocument();
+  expect(sendText).not.toHaveBeenCalled();
+});
+
+test("текст живого чата уходит в sendText, фото из того же черновика остаётся", async () => {
+  const user = userEvent.setup();
+  const sendText = vi.fn(async () => {});
+  const source = sourceFor(
+    async () => conversation("Анна", "Первое сообщение", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+    sendText,
+  );
+  render(<OpenChatConversation chatId={chatId("chat-a")} source={source} hostId="user1" />);
+  expect(await screen.findByText("Первое сообщение")).toBeInTheDocument();
+
+  await user.type(screen.getByPlaceholderText("Напишите сообщение..."), "Смотрите фото");
+  const file = new File([new Uint8Array([1, 2, 3])], "lift.png", { type: "image/png" });
+  await user.upload(screen.getByLabelText("Файл фото"), file);
+  await user.click(screen.getByRole("button", { name: "Отправить" }));
+
+  expect(screen.getByAltText("Прикреплённое фото")).toBeInTheDocument();
+  await waitFor(() => {
+    expect(sendText).toHaveBeenCalledWith("chat-a", "user1", "Смотрите фото");
+  });
+  expect(sendText).toHaveBeenCalledTimes(1);
+});

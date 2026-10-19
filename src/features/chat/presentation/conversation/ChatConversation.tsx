@@ -4,6 +4,7 @@ import type { ConversationHeading } from "../../domain/ConversationHeading";
 import { ChatComposer } from "./ChatComposer";
 import { ChatConversationHeader } from "./ChatConversationHeader";
 import { ChatMessageList } from "./ChatMessageList";
+import type { ComposerSend } from "./ComposerSend";
 import { useOutgoingMessages } from "./useOutgoingMessages";
 
 export type ChatConversationProps = {
@@ -12,6 +13,7 @@ export type ChatConversationProps = {
   dateLabel: string;
   messages: readonly ChatMessage[];
   selfAvatarUrl: string;
+  onSendMessage?: (draft: ComposerSend) => void;
 };
 
 export function ChatConversation({
@@ -20,9 +22,10 @@ export function ChatConversation({
   dateLabel,
   messages,
   selfAvatarUrl,
+  onSendMessage,
 }: ChatConversationProps) {
   const outgoing = useOutgoingMessages();
-  const thread = [...messages, ...outgoing.outgoing];
+  const thread = onSendMessage === undefined ? [...messages, ...outgoing.outgoing] : messages;
 
   return (
     <section
@@ -37,7 +40,7 @@ export function ChatConversation({
         selfAvatarUrl={selfAvatarUrl}
         peerAvatarUrl={heading.peerAvatarUrl}
       />
-      <ChatComposer onSend={outgoing.send} />
+      <ChatComposer onSend={onSendMessage ?? outgoing.send} />
     </section>
   );
 }
