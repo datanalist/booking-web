@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BOOKING_REQUEST_MOCKS } from "../../data/bookingRequestMocks";
 import type {
   BookingRequest,
@@ -13,14 +13,29 @@ import { RequestsTable } from "./RequestsTable";
 type RequestsPanelProps = {
   query: string;
   forceEmpty: boolean;
+  items?: readonly BookingRequest[];
+  onAccept?: (id: BookingRequestId) => void;
+  onReject?: (id: BookingRequestId, comment: string) => void;
 };
 
-export function RequestsPanel({ query, forceEmpty }: RequestsPanelProps) {
-  const [items, setItems] = useState<BookingRequest[]>(() => [
-    ...BOOKING_REQUEST_MOCKS,
-  ]);
+export function RequestsPanel({
+  query,
+  forceEmpty,
+  items: itemsProp,
+  onAccept,
+  onReject,
+}: RequestsPanelProps) {
+  const [items, setItems] = useState<BookingRequest[]>(() =>
+    itemsProp === undefined ? [...BOOKING_REQUEST_MOCKS] : [...itemsProp],
+  );
   const [acceptOpen, setAcceptOpen] = useState(false);
   const [rejectId, setRejectId] = useState<BookingRequestId | null>(null);
+
+  useEffect(() => {
+    if (itemsProp !== undefined) {
+      setItems([...itemsProp]);
+    }
+  }, [itemsProp]);
 
   const visible = useMemo(() => {
     if (forceEmpty) {
@@ -30,14 +45,16 @@ export function RequestsPanel({ query, forceEmpty }: RequestsPanelProps) {
   }, [forceEmpty, items, query]);
 
   function handleAccept(id: BookingRequestId): void {
+    onAccept?.(id);
     setItems((prev) => prev.filter((item) => item.id !== id));
     setAcceptOpen(true);
   }
 
-  function handleRejectSubmit(): void {
+  function handleRejectSubmit(comment: string): void {
     if (!rejectId) {
       return;
     }
+    onReject?.(rejectId, comment);
     setItems((prev) => prev.filter((item) => item.id !== rejectId));
     setRejectId(null);
   }
@@ -56,7 +73,7 @@ export function RequestsPanel({ query, forceEmpty }: RequestsPanelProps) {
         <RejectRequestModal
           open={rejectId !== null}
           onClose={() => setRejectId(null)}
-          onSubmit={() => handleRejectSubmit()}
+          onSubmit={(reason) => handleRejectSubmit(reason)}
         />
       </>
     );
@@ -76,7 +93,7 @@ export function RequestsPanel({ query, forceEmpty }: RequestsPanelProps) {
       <RejectRequestModal
         open={rejectId !== null}
         onClose={() => setRejectId(null)}
-        onSubmit={() => handleRejectSubmit()}
+        onSubmit={(reason) => handleRejectSubmit(reason)}
       />
     </>
   );

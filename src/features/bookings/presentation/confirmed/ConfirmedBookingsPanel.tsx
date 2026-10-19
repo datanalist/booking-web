@@ -24,11 +24,15 @@ import { useConfirmedBookings } from "./useConfirmedBookings";
 type ConfirmedBookingsPanelProps = {
   query: string;
   forceEmpty: boolean;
+  onHostCancel?: (id: ConfirmedBookingId, comment: string) => void;
+  onResolveRequest?: (booking: ConfirmedBooking, decision: RequestDecision) => void;
 };
 
 export function ConfirmedBookingsPanel({
   query,
   forceEmpty,
+  onHostCancel,
+  onResolveRequest,
 }: ConfirmedBookingsPanelProps) {
   const [sort, setSort] = useState<ConfirmedStatusSortOption>("all");
   const bookings = useConfirmedBookings();
@@ -54,6 +58,10 @@ export function ConfirmedBookingsPanel({
     bookingId: ConfirmedBookingId,
     decision: RequestDecision,
   ): void {
+    const booking = bookings.find((item) => item.id === bookingId);
+    if (booking !== undefined && booking.status.kind === "request") {
+      onResolveRequest?.(booking, decision);
+    }
     applyBookingsTransition(resolveBookingRequest(bookings, bookingId, decision));
     closeDialog();
   }
@@ -64,6 +72,7 @@ export function ConfirmedBookingsPanel({
   ): void {
     const result = cancelAwaitingPrepaymentBooking(bookings, bookingId, reason);
     if (result.outcome === "cancelled") {
+      onHostCancel?.(bookingId, reason.text);
       applyBookingsTransition(result.transition);
     }
     closeDialog();

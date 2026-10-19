@@ -24,3 +24,6 @@ export {
   pbBookingToRejected,
   pbBookingToRequest,
 } from "./pbBookingMapper";
+
+export type { BookingsSnapshot, BookingsSource } from "./bookingsSource";
+export { createPbBookingsSource } from "./createPbBookingsSource";
