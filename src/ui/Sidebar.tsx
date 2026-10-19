@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 type SidebarAccount = {
   name: string;
   email: string;
@@ -33,7 +35,7 @@ const DEFAULT_ITEMS: SidebarItem[] = [
 ];
 
 type SidebarProps = {
-  /** Текущий путь для подсветки без react-router (тесты / SSR). */
+  /** Текущий путь для подсветки. Передаётся снаружи, чтобы тесты не зависели от роутера. */
   activePath?: string;
   account: SidebarAccount;
   items?: SidebarItem[];
@@ -73,9 +75,9 @@ export function Sidebar({
           const active =
             activePath === item.to || activePath.startsWith(`${item.to}/`);
           return (
-            <a
+            <Link
               key={item.to}
-              href={item.to}
+              to={item.to}
               className={`flex w-[208px] shrink-0 items-center gap-4 rounded-lg p-4 text-[16px] font-bold leading-[1.2] no-underline ${
                 active
                   ? "bg-[var(--color-accent)] text-white"
@@ -99,7 +101,7 @@ export function Sidebar({
                   </span>
                 ) : null}
               </span>
-            </a>
+            </Link>
           );
         })}
       </nav>

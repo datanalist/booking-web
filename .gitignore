@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 node_modules/
+node_modules
 dist/
 *.local
 # Шаблон jail отслеживается. Живой белый IP только в /etc/fail2ban/jail.local на мини-ПК.

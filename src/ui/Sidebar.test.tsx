@@ -1,18 +1,31 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test } from "vitest";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
+
+function PathProbe() {
+  const { pathname } = useLocation();
+  return <div data-testid="path">{pathname}</div>;
+}
+
+function renderSidebar(activePath: string) {
+  return render(
+    <MemoryRouter initialEntries={[activePath]}>
+      <Sidebar
+        activePath={activePath}
+        account={{ name: "Ирина Иванова", email: "hello@gmail.com" }}
+      />
+    </MemoryRouter>,
+  );
+}
 
 afterEach(() => {
   cleanup();
 });
 
 test("shows account block, nav icons, and logo image", () => {
-  render(
-    <Sidebar
-      activePath="/listings"
-      account={{ name: "Ирина Иванова", email: "hello@gmail.com" }}
-    />,
-  );
+  renderSidebar("/listings");
 
   expect(screen.getByText("Ирина Иванова")).toBeInTheDocument();
   expect(screen.getByText("hello@gmail.com")).toBeInTheDocument();
@@ -28,12 +41,7 @@ test("shows account block, nav icons, and logo image", () => {
 });
 
 test("keeps «Мои объявления» on one line", () => {
-  render(
-    <Sidebar
-      activePath="/listings"
-      account={{ name: "Ирина Иванова", email: "hello@gmail.com" }}
-    />,
-  );
+  renderSidebar("/listings");
 
   const link = screen.getByRole("link", { name: /мои объявления/i });
   const label = within(link).getByText("Мои объявления");
@@ -42,12 +50,7 @@ test("keeps «Мои объявления» on one line", () => {
 });
 
 test("renders profile icon in a fixed square with object-contain", () => {
-  render(
-    <Sidebar
-      activePath="/profile"
-      account={{ name: "Ирина Иванова", email: "hello@gmail.com" }}
-    />,
-  );
+  renderSidebar("/profile");
 
   const link = screen.getByRole("link", { name: /профиль/i });
   const icon = link.querySelector("img");
@@ -60,12 +63,7 @@ test("renders profile icon in a fixed square with object-contain", () => {
 });
 
 test("footer logo matches mockup size and frame position", () => {
-  const { container } = render(
-    <Sidebar
-      activePath="/listings"
-      account={{ name: "Ирина Иванова", email: "hello@gmail.com" }}
-    />,
-  );
+  const { container } = renderSidebar("/listings");
 
   const aside = container.querySelector("aside");
   expect(aside).not.toBeNull();
@@ -93,4 +91,21 @@ test("footer logo matches mockup size and frame position", () => {
   expect(logo).toHaveClass("bottom-[32px]");
   expect(logo).toHaveClass("absolute");
   expect(footer?.contains(logo)).toBe(true);
+});
+
+test("switches section inside the app instead of reloading the document", async () => {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={["/listings"]}>
+      <Sidebar
+        activePath="/listings"
+        account={{ name: "Ирина Иванова", email: "hello@gmail.com" }}
+      />
+      <PathProbe />
+    </MemoryRouter>,
+  );
+
+  await user.click(screen.getByRole("link", { name: /бронирования/i }));
+
+  expect(screen.getByTestId("path")).toHaveTextContent("/bookings");
 });
