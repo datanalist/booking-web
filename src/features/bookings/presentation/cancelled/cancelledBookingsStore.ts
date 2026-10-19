@@ -11,6 +11,10 @@ export const cancelledBookingsStore = {
   get: store.get,
   subscribe: store.subscribe,
   reset: store.reset,
+  /** Replaces the whole list. */
+  replace(records: readonly CancelledBooking[]): void {
+    store.set(records);
+  },
   /** Puts new records on top (in the given order); ids already present are skipped. */
   prepend(records: readonly CancelledBooking[]): void {
     const current = store.get();
