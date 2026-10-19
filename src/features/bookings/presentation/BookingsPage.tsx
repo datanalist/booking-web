@@ -91,31 +91,34 @@ export function BookingsPage() {
     };
   }, []);
 
-  function afterAction(action: (source: BookingsSource) => Promise<void>): void {
+  async function afterAction(
+    action: (source: BookingsSource) => Promise<void>,
+  ): Promise<void> {
     const source = sourceRef.current;
-    if (source === null) return;
-    void action(source)
-      .then(() => reload(source))
-      .catch(() => undefined);
+    if (source === null) {
+      throw new Error("Bookings source is unavailable");
+    }
+    await action(source);
+    await reload(source);
   }
 
-  function handleAccept(id: BookingRequestId): void {
-    afterAction((source) => source.accept(id));
+  function handleAccept(id: BookingRequestId): Promise<void> {
+    return afterAction((source) => source.accept(id));
   }
 
-  function handleReject(id: BookingRequestId, comment: string): void {
-    afterAction((source) => source.reject(id, comment));
+  function handleReject(id: BookingRequestId, comment: string): Promise<void> {
+    return afterAction((source) => source.reject(id, comment));
   }
 
-  function handleHostCancel(id: ConfirmedBookingId, comment: string): void {
-    afterAction((source) => source.hostCancel(id, comment));
+  function handleHostCancel(id: ConfirmedBookingId, comment: string): Promise<void> {
+    return afterAction((source) => source.hostCancel(id, comment));
   }
 
   function handleResolveRequest(
     booking: ConfirmedBooking,
     decision: RequestDecision,
-  ): void {
-    afterAction((source) => source.resolveRequest(booking, decision));
+  ): Promise<void> {
+    return afterAction((source) => source.resolveRequest(booking, decision));
   }
 
   function setTab(next: BookingTabId): void {

@@ -13,10 +13,13 @@ type BookingsTabBodyProps = {
   query: string;
   forceEmpty: boolean;
   requests?: readonly BookingRequest[];
-  onAccept?: (id: BookingRequestId) => void;
-  onReject?: (id: BookingRequestId, comment: string) => void;
-  onHostCancel?: (id: ConfirmedBookingId, comment: string) => void;
-  onResolveRequest?: (booking: ConfirmedBooking, decision: RequestDecision) => void;
+  onAccept?: (id: BookingRequestId) => void | Promise<void>;
+  onReject?: (id: BookingRequestId, comment: string) => void | Promise<void>;
+  onHostCancel?: (id: ConfirmedBookingId, comment: string) => void | Promise<void>;
+  onResolveRequest?: (
+    booking: ConfirmedBooking,
+    decision: RequestDecision,
+  ) => void | Promise<void>;
 };
 
 export function BookingsTabBody({

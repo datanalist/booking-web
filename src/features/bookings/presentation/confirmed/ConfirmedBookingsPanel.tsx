@@ -24,9 +24,16 @@ import { useConfirmedBookings } from "./useConfirmedBookings";
 type ConfirmedBookingsPanelProps = {
   query: string;
   forceEmpty: boolean;
-  onHostCancel?: (id: ConfirmedBookingId, comment: string) => void;
-  onResolveRequest?: (booking: ConfirmedBooking, decision: RequestDecision) => void;
+  onHostCancel?: (id: ConfirmedBookingId, comment: string) => void | Promise<void>;
+  onResolveRequest?: (
+    booking: ConfirmedBooking,
+    decision: RequestDecision,
+  ) => void | Promise<void>;
 };
+
+function isPromise(value: void | Promise<void>): value is Promise<void> {
+  return typeof value === "object" && value !== null && typeof value.then === "function";
+}
 
 export function ConfirmedBookingsPanel({
   query,
@@ -59,8 +66,16 @@ export function ConfirmedBookingsPanel({
     decision: RequestDecision,
   ): void {
     const booking = bookings.find((item) => item.id === bookingId);
-    if (booking !== undefined && booking.status.kind === "request") {
-      onResolveRequest?.(booking, decision);
+    if (
+      onResolveRequest !== undefined &&
+      booking !== undefined &&
+      booking.status.kind === "request"
+    ) {
+      const action = onResolveRequest(booking, decision);
+      if (isPromise(action)) {
+        void action.then(() => closeDialog(), () => undefined);
+        return;
+      }
     }
     applyBookingsTransition(resolveBookingRequest(bookings, bookingId, decision));
     closeDialog();
@@ -71,8 +86,14 @@ export function ConfirmedBookingsPanel({
     reason: AcceptedCancelReason,
   ): void {
     const result = cancelAwaitingPrepaymentBooking(bookings, bookingId, reason);
+    if (result.outcome === "cancelled" && onHostCancel !== undefined) {
+      const action = onHostCancel(bookingId, reason.text);
+      if (isPromise(action)) {
+        void action.then(() => closeDialog(), () => undefined);
+        return;
+      }
+    }
     if (result.outcome === "cancelled") {
-      onHostCancel?.(bookingId, reason.text);
       applyBookingsTransition(result.transition);
     }
     closeDialog();
