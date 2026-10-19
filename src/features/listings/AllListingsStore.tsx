@@ -84,6 +84,22 @@ function replaceSavedRow(
   return replaced ? next : prev;
 }
 
+function applyRowAfterSuccess(
+  revision: { current: number },
+  request: Promise<unknown>,
+  setItems: (updater: (prev: ListingTableRow[]) => ListingTableRow[]) => void,
+  apply: (prev: ListingTableRow[]) => ListingTableRow[],
+): void {
+  revision.current += 1;
+  const captured = revision.current;
+  void request.then(
+    () => {
+      setItems((prev) => (revision.current === captured ? apply(prev) : prev));
+    },
+    () => undefined,
+  );
+}
+
 function enqueueSave(
   tails: Map<string, Promise<void>>,
   key: string,
@@ -182,22 +198,26 @@ function PocketBaseAllListingsProvider({
     (): AllListingsStoreValue => ({
       items,
       remove: (id) => {
-        revision.current += 1;
-        setItems((prev) => prev.filter((item) => item.id !== id));
-        void listings.remove(id).catch(() => undefined);
+        applyRowAfterSuccess(revision, listings.remove(id), setItems, (prev) =>
+          prev.filter((item) => item.id !== id),
+        );
       },
       setStatus: (id, status) => {
-        revision.current += 1;
         const shown: ListingTableStatus =
           status === "published" || status === "moderation" ? "moderation" : status;
-        setItems((prev) => prev.map((item) => (item.id === id ? { ...item, status: shown } : item)));
-        if (status === "unpublished") {
-          void listings.archive(id).catch(() => undefined);
+        const request = status === "unpublished"
+          ? listings.archive(id)
+          : status === "published" || status === "moderation"
+            ? listings.submitForModeration(id)
+            : null;
+        if (request === null) {
+          revision.current += 1;
+          setItems((prev) => prev.map((item) => (item.id === id ? { ...item, status: shown } : item)));
           return;
         }
-        if (status === "published" || status === "moderation") {
-          void listings.submitForModeration(id).catch(() => undefined);
-        }
+        applyRowAfterSuccess(revision, request, setItems, (prev) =>
+          prev.map((item) => (item.id === id ? { ...item, status: shown } : item)),
+        );
       },
       upsert: (row) => {
         revision.current += 1;

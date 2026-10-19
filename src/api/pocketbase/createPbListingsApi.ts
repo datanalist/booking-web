@@ -92,7 +92,7 @@ export function createPbListingsApi(options: {
       const payload = siteListingToPbPayload(draft);
       const form = new FormData();
       appendPayloadFields(form, payload);
-      await appendDraftPhotos(form, draft.photos);
+      await appendDraftPhotos(form, draft.photos, draft.id !== undefined);
       const saved = draft.id
         ? await client.updateRecord<PbListingRecord>(LISTINGS, draft.id, form)
         : await client.createRecord<PbListingRecord>(LISTINGS, form);
@@ -170,7 +170,11 @@ function appendPayloadFields(form: FormData, payload: PbListingPayload): void {
   }
 }
 
-async function appendDraftPhotos(form: FormData, photos: readonly string[]): Promise<void> {
+async function appendDraftPhotos(
+  form: FormData,
+  photos: readonly string[],
+  clearWhenEmpty: boolean,
+): Promise<void> {
   const seenNames = new Set<string>();
   for (const photo of photos) {
     const trimmed = photo.trim();
@@ -193,6 +197,15 @@ async function appendDraftPhotos(form: FormData, photos: readonly string[]): Pro
     seenNames.add(name);
     form.append("photos", name);
   }
+  if (clearWhenEmpty && isEmptyPhotoList(photos)) {
+    // PocketBase keeps stored files when the field is omitted.
+    // An empty multipart value replaces them.
+    form.append("photos", "");
+  }
+}
+
+function isEmptyPhotoList(photos: readonly string[]): boolean {
+  return photos.every((photo) => photo.trim().length === 0);
 }
 
 function filenameFromDataPath(path: string): string {

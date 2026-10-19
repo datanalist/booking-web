@@ -77,4 +77,31 @@ describe("createPbListingsApi", () => {
     })).rejects.toThrow("INVALID_STATUS");
     expect(fetchFn).not.toHaveBeenCalled();
   });
+
+  test("saveDraft с пустым списком фото при обновлении очищает поле и не сохраняет прежние имена", async () => {
+    const prior = ["room_old.jpg", "cover_old.png"];
+    let updateBody: BodyInit | null | undefined;
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async (_input, init) => {
+        if ((init?.method ?? "GET") === "PATCH") {
+          updateBody = init?.body;
+        }
+        return new Response(JSON.stringify({ ...record, photos: prior }), { status: 200 });
+      },
+    });
+    const api = createPbListingsApi({ client, storage: storage() });
+    await api.saveDraft({
+      ...emptyDraft("user1"),
+      id: "lst1",
+      photos: [],
+    });
+    expect(updateBody).toBeInstanceOf(FormData);
+    const photos = (updateBody as FormData).getAll("photos").map((value) => String(value));
+    expect(photos).toEqual([""]);
+    expect(photos).not.toEqual(expect.arrayContaining(prior));
+    for (const name of prior) {
+      expect(photos).not.toContain(name);
+    }
+  });
 });
