@@ -62,7 +62,7 @@ export interface Listing {
 export type ListingDraft = Omit<Listing, "id"> & { id?: string };
 
 export interface AuthApi {
-  register(email: string, password: string): Promise<Session>;
+  register(email: string, password: string): Promise<{ email: string }>;
   login(email: string, password: string): Promise<Session>;
   logout(): Promise<void>;
   completeOnboarding(input: { name: string; phone: string; photo?: string }): Promise<Session>;
@@ -103,6 +103,7 @@ export type UserRecord = {
   id: string;
   email: string;
   passwordHash: string;
+  verified: boolean;
   name: string;
   phone: string;
   photoUrl?: string;

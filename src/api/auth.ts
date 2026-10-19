@@ -8,6 +8,7 @@ const RESET_KEY_PREFIX = "gs.reset.";
 
 type AuthErrorCode =
   | "EMAIL_TAKEN"
+  | "EMAIL_NOT_VERIFIED"
   | "INVALID_EMAIL"
   | "INVALID_PASSWORD"
   | "INVALID_CREDENTIALS"
@@ -94,6 +95,7 @@ function withoutPhoto(user: UserRecord): UserRecord {
     id: user.id,
     email: user.email,
     passwordHash: user.passwordHash,
+    verified: user.verified,
     name: user.name,
     phone: user.phone,
     onboardingComplete: user.onboardingComplete,
@@ -139,6 +141,7 @@ function profileUser(
       id: current.id,
       email: validateEmail(input.email),
       passwordHash: current.passwordHash,
+      verified: current.verified,
       name: validateName(input.name),
       phone: validatePhone(input.phone),
       onboardingComplete: current.onboardingComplete,
@@ -187,12 +190,13 @@ export function createAuthApi(storage: Storage): AuthApi {
         id: createId(),
         email: normalizedEmail,
         passwordHash: await sha256Hex(password),
+        verified: true,
         name: "",
         phone: "",
         onboardingComplete: false,
       };
       writeUsers([...users, user]);
-      return writeSession(user);
+      return { email: normalizedEmail };
     },
 
     async login(email, password) {
@@ -201,6 +205,9 @@ export function createAuthApi(storage: Storage): AuthApi {
       const user = users.find((candidate) => candidate.email === normalizedEmail);
       if (!user || user.passwordHash !== await sha256Hex(password)) {
         throw authError("INVALID_CREDENTIALS", "Неверный email или пароль");
+      }
+      if (user.verified !== true) {
+        throw authError("EMAIL_NOT_VERIFIED", "Подтвердите почту по кнопке в письме");
       }
       return writeSession(user);
     },

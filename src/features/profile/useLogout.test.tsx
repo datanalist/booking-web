@@ -26,6 +26,7 @@ beforeEach(async () => {
   localStorage.clear();
   const api = createApi(localStorage);
   await api.auth.register("a@mail.ru", "secret12");
+  await api.auth.login("a@mail.ru", "secret12");
 });
 
 afterEach(() => {

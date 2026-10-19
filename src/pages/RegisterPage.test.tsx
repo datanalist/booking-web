@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import { createApi } from "../api";
 import { SESSION_KEY } from "../api/keys";
@@ -124,6 +124,30 @@ test("password mismatch shows field error without failure banner", async () => {
   expect(
     document.querySelector('img[src="/icon-info-circle.svg"]'),
   ).toBeNull();
+});
+
+test("после согласия показывает письмо и не открывает сессию", async () => {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={["/register"]}>
+      <SessionProvider>
+        <Routes>
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/onboarding" element={<div>onboarding-page</div>} />
+        </Routes>
+      </SessionProvider>
+    </MemoryRouter>,
+  );
+
+  await user.type(screen.getByLabelText("Email"), "hello@gmail.com");
+  await user.type(screen.getByLabelText("Пароль"), "pass123456");
+  await user.type(screen.getByLabelText("Повторите пароль"), "pass123456");
+  await user.click(screen.getByRole("checkbox"));
+  await user.click(screen.getByRole("button", { name: "Зарегистрироваться" }));
+
+  expect(await screen.findByText("Письмо отправлено на hello@gmail.com")).toBeInTheDocument();
+  expect(screen.queryByText("onboarding-page")).toBeNull();
+  expect(localStorage.getItem(SESSION_KEY)).toBeNull();
 });
 
 test("EMAIL_TAKEN shows failure banner like Figma 1:16424", async () => {

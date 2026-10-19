@@ -4,20 +4,39 @@ import { emptyDraft } from "../lib/emptyDraft";
 import { MemoryStorage } from "../lib/memoryStorage";
 import { createListingsApi } from "./listings";
 import { LISTINGS_KEY, SESSION_KEY, USERS_KEY } from "./keys";
+import type { UserRecord } from "./types";
 
 function api() {
   return createAuthApi(new MemoryStorage());
 }
 
-test("register then login", async () => {
-  const auth = api();
-  const session = await auth.register("A@Mail.ru", "secret12");
+test("register does not open a session", async () => {
+  localStorage.clear();
+  const auth = createAuthApi(localStorage);
+  const result = await auth.register("A@Mail.ru", "secret12");
+  expect(result).toEqual({ email: "a@mail.ru" });
+  expect(localStorage.getItem(SESSION_KEY)).toBeNull();
+  const session = await auth.login("a@mail.ru", "secret12");
   expect(session.email).toBe("a@mail.ru");
-  expect(session.onboardingComplete).toBe(false);
-  expect(session).not.toHaveProperty("password");
-  expect(session).not.toHaveProperty("passwordHash");
-  const again = await auth.login("a@mail.ru", "secret12");
-  expect(again.userId).toBe(session.userId);
+  localStorage.clear();
+});
+
+test("login rejects an unverified user", async () => {
+  const storage = new MemoryStorage();
+  const auth = createAuthApi(storage);
+  await auth.register("a@mail.ru", "secret12");
+  const users = JSON.parse(storage.getItem(USERS_KEY) ?? "[]") as UserRecord[];
+  const user = users[0];
+  if (user === undefined) {
+    throw new Error("пользователь не создан");
+  }
+  user.verified = false;
+  storage.setItem(USERS_KEY, JSON.stringify(users));
+  await expect(auth.login("a@mail.ru", "secret12")).rejects.toMatchObject({
+    code: "EMAIL_NOT_VERIFIED",
+    message: "Подтвердите почту по кнопке в письме",
+  });
+  expect(storage.getItem(SESSION_KEY)).toBeNull();
 });
 
 test("duplicate email", async () => {
@@ -35,6 +54,7 @@ test("wrong password", async () => {
 test("onboarding requires name and phone", async () => {
   const auth = api();
   await auth.register("a@mail.ru", "secret12");
+  await auth.login("a@mail.ru", "secret12");
   const done = await auth.completeOnboarding({ name: "Анна", phone: "+7 (900) 123-45-67" });
   expect(done.onboardingComplete).toBe(true);
   expect(done.name).toBe("Анна");
@@ -56,7 +76,8 @@ test("reset token works; bad token fails", async () => {
 test("updateProfile rewrites the user and session and keeps userId", async () => {
   const storage = new MemoryStorage();
   const auth = createAuthApi(storage);
-  const session = await auth.register("a@mail.ru", "secret12");
+  await auth.register("a@mail.ru", "secret12");
+  const session = await auth.login("a@mail.ru", "secret12");
   await auth.completeOnboarding({ name: "Анна", phone: "+7 (900) 123-45-67" });
   const next = await auth.updateProfile({
     name: "  Мария  ",
@@ -80,6 +101,7 @@ test("updateProfile rewrites the user and session and keeps userId", async () =>
 test("updateProfile rejects invalid name, phone and email", async () => {
   const auth = api();
   await auth.register("a@mail.ru", "secret12");
+  await auth.login("a@mail.ru", "secret12");
   await expect(
     auth.updateProfile({ name: "А", phone: "+79001234567", email: "a@mail.ru" }),
   ).rejects.toMatchObject({ code: "INVALID_NAME" });
@@ -96,6 +118,7 @@ test("updateProfile rejects an email taken by another user", async () => {
   const auth = createAuthApi(storage);
   await auth.register("a@mail.ru", "secret12");
   await auth.register("b@mail.ru", "secret12");
+  await auth.login("b@mail.ru", "secret12");
   await expect(
     auth.updateProfile({
       name: "Борис",
@@ -110,6 +133,7 @@ test("updateProfile removes the photo when photoUrl is omitted", async () => {
   const storage = new MemoryStorage();
   const auth = createAuthApi(storage);
   await auth.register("a@mail.ru", "secret12");
+  await auth.login("a@mail.ru", "secret12");
   await auth.completeOnboarding({
     name: "Анна",
     phone: "+79001234567",
@@ -130,7 +154,8 @@ test("updateProfile removes the photo when photoUrl is omitted", async () => {
 test("updateProfile keeps listings on userId and reset tokens on the new email", async () => {
   const storage = new MemoryStorage();
   const auth = createAuthApi(storage);
-  const session = await auth.register("a@mail.ru", "secret12");
+  await auth.register("a@mail.ru", "secret12");
+  const session = await auth.login("a@mail.ru", "secret12");
   await auth.completeOnboarding({ name: "Анна", phone: "+79001234567" });
   storage.setItem(
     LISTINGS_KEY,
@@ -154,6 +179,7 @@ test("session has no password after logout", async () => {
   const storage = new MemoryStorage();
   const auth = createAuthApi(storage);
   await auth.register("a@mail.ru", "secret12");
+  await auth.login("a@mail.ru", "secret12");
   await auth.logout();
   expect(storage.getItem(SESSION_KEY)).toBeNull();
 });

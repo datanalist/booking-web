@@ -72,6 +72,88 @@ describe("createPbAuthApi", () => {
       .rejects.toMatchObject({ code: "INVALID_CREDENTIALS" });
   });
 
+  test("register создаёт хозяина, запрашивает письмо и не входит", async () => {
+    const calls: { url: string; body: string }[] = [];
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async (input, init) => {
+        const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+        calls.push({ url, body: typeof init?.body === "string" ? init.body : "" });
+        return new Response(JSON.stringify({ id: "user1" }), { status: 200 });
+      },
+    });
+    const box = storage();
+    const result = await createPbAuthApi({ client, storage: box }).register("Host@Example.com", "pass.word,;");
+    expect(result).toEqual({ email: "host@example.com" });
+    expect(JSON.parse(calls[0]?.body ?? "")).toEqual({
+      email: "host@example.com",
+      password: "pass.word,;",
+      passwordConfirm: "pass.word,;",
+      roles: ["host"],
+      account_status: "active",
+    });
+    expect(calls[1]?.url).toContain("/api/collections/users/request-verification");
+    expect(JSON.parse(calls[1]?.body ?? "")).toEqual({ email: "host@example.com" });
+    expect(box.getItem(PB_TOKEN_KEY)).toBeNull();
+    expect(box.getItem(SESSION_KEY)).toBeNull();
+  });
+
+  test("register при отказе письма не открывает сессию", async () => {
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async (input) => {
+        const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+        if (url.includes("request-verification")) {
+          return new Response(JSON.stringify({ message: "mail down" }), { status: 500 });
+        }
+        return new Response(JSON.stringify({ id: "user1" }), { status: 200 });
+      },
+    });
+    const box = storage();
+    await expect(
+      createPbAuthApi({ client, storage: box }).register("host@example.com", "pass.word,;"),
+    ).rejects.toThrow("Не удалось отправить письмо. Попробуйте ещё раз");
+    expect(box.getItem(PB_TOKEN_KEY)).toBeNull();
+    expect(box.getItem(SESSION_KEY)).toBeNull();
+  });
+
+  test("login при неподтверждённой почте бросает EMAIL_NOT_VERIFIED и не пишет токен", async () => {
+    const box = storage();
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async () => new Response(JSON.stringify({
+        token: "tok",
+        record: { ...user, verified: false },
+      }), { status: 200 }),
+    });
+    await expect(
+      createPbAuthApi({ client, storage: box }).login("host@example.com", "password1"),
+    ).rejects.toMatchObject({
+      code: "EMAIL_NOT_VERIFIED",
+      message: "Подтвердите почту по кнопке в письме",
+    });
+    expect(box.getItem(PB_TOKEN_KEY)).toBeNull();
+    expect(box.getItem(SESSION_KEY)).toBeNull();
+  });
+
+  test("login превращает 400 с текстом про почту в EMAIL_NOT_VERIFIED", async () => {
+    const box = storage();
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async () => new Response(JSON.stringify({
+        message: "Подтвердите почту по кнопке в письме",
+      }), { status: 400 }),
+    });
+    await expect(
+      createPbAuthApi({ client, storage: box }).login("host@example.com", "password1"),
+    ).rejects.toMatchObject({
+      code: "EMAIL_NOT_VERIFIED",
+      message: "Подтвердите почту по кнопке в письме",
+    });
+    expect(box.getItem(PB_TOKEN_KEY)).toBeNull();
+    expect(box.getItem(SESSION_KEY)).toBeNull();
+  });
+
   test("register на ответ 400 с email в теле даёт EMAIL_TAKEN", async () => {
     const client = createPbClient({
       baseUrl: "https://pb.example",

@@ -11,6 +11,7 @@ beforeEach(async () => {
   localStorage.clear();
   const api = createApi(localStorage);
   await api.auth.register("hello@gmail.com", "secret12");
+  await api.auth.login("hello@gmail.com", "secret12");
   await api.auth.completeOnboarding({
     name: "Анна Иваненко",
     phone: "+7 (900) 123-45-67",

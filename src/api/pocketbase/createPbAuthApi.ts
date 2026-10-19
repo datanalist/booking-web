@@ -20,6 +20,13 @@ import {
 } from "./pbAuthHelpers";
 
 const USERS = "users";
+const EMAIL_NOT_VERIFIED_MESSAGE = "Подтвердите почту по кнопке в письме";
+
+function emailNotVerified(): Error & { code: "EMAIL_NOT_VERIFIED" } {
+  return Object.assign(new Error(EMAIL_NOT_VERIFIED_MESSAGE), {
+    code: "EMAIL_NOT_VERIFIED" as const,
+  });
+}
 
 export function createPbAuthApi(options: { client: PbClient; storage: Storage }): AuthApi {
   const { client, storage } = options;
@@ -47,12 +54,20 @@ export function createPbAuthApi(options: { client: PbClient; storage: Storage })
       auth = await client.authWithPassword(email, password);
     } catch (error) {
       if (error instanceof PbRequestError && error.status === 400) {
+        const text = `${error.message} ${JSON.stringify(error.body)}`;
+        if (text.includes("Подтвердите почту")) {
+          throw emailNotVerified();
+        }
         throw authError("INVALID_CREDENTIALS", "Неверный email или пароль");
       }
       throw error;
     }
+    const record = readUserRecord(auth.record);
+    if (record.verified !== true) {
+      throw emailNotVerified();
+    }
     writePbToken(storage, auth.token);
-    return writeSession(storage, pbUserToSession(readUserRecord(auth.record), client.baseUrl));
+    return writeSession(storage, pbUserToSession(record, client.baseUrl));
   };
 
   return {
@@ -67,7 +82,6 @@ export function createPbAuthApi(options: { client: PbClient; storage: Storage })
           password,
           passwordConfirm: password,
           roles: ["host"],
-          emailVisibility: true,
           account_status: "active",
         });
       } catch (error) {
@@ -76,7 +90,12 @@ export function createPbAuthApi(options: { client: PbClient; storage: Storage })
         }
         throw authError("PB_FORBIDDEN", "PocketBase не принял регистрацию");
       }
-      return login(normalizedEmail, password);
+      try {
+        await client.requestVerification(normalizedEmail);
+      } catch {
+        throw new Error("Не удалось отправить письмо. Попробуйте ещё раз");
+      }
+      return { email: normalizedEmail };
     },
 
     async logout() {

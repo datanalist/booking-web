@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useSession } from "../app/session";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -9,7 +9,6 @@ const REGISTER_FAILURE_MESSAGE =
 
 export function RegisterPage() {
   const { auth } = useSession();
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -17,6 +16,7 @@ export function RegisterPage() {
   const [formError, setFormError] = useState("");
   const [pending, setPending] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [sentEmail, setSentEmail] = useState("");
 
   const formEmpty = !email.trim() || !password || !confirm;
   const submitDisabled = pending || formEmpty || !accepted;
@@ -31,8 +31,8 @@ export function RegisterPage() {
     }
     setPending(true);
     try {
-      await auth.register(email, password);
-      navigate("/onboarding");
+      const registered = await auth.register(email, password);
+      setSentEmail(registered.email);
     } catch {
       setFormError(REGISTER_FAILURE_MESSAGE);
     } finally {
@@ -90,6 +90,11 @@ export function RegisterPage() {
               {formError}
             </p>
           </div>
+        ) : null}
+        {sentEmail ? (
+          <p className="m-0 w-full text-[14px] leading-[1.4] text-[#1a1b1d]">
+            {`Письмо отправлено на ${sentEmail}`}
+          </p>
         ) : null}
         <label className="flex w-full cursor-pointer items-start gap-2 text-[14px] leading-[1.4] text-[#525353]">
           <input

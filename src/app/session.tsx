@@ -43,12 +43,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   const auth = useMemo(
     (): AuthApi => ({
-      register: async (email, password) => {
-        const next = await api.auth.register(email, password);
-        api.setCurrentUserId(next.userId);
-        setSession(next);
-        return next;
-      },
+      register: (email, password) => api.auth.register(email, password),
       login: async (email, password) => {
         const next = await api.auth.login(email, password);
         api.setCurrentUserId(next.userId);

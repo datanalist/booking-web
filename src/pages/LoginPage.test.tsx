@@ -116,6 +116,14 @@ test("does not render local disclaimer inside login form", () => {
   ).not.toBeInTheDocument();
 });
 
+test("verified=1 показывает подтверждение почты отдельно от ошибки", () => {
+  renderLogin("/login?verified=1");
+  expect(
+    screen.getByText("Почта подтверждена. Войдите, чтобы продолжить."),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Неверный email или пароль")).toBeNull();
+});
+
 test("email and password fields share auth size", () => {
   renderLogin();
   const email = screen.getByPlaceholderText("Введите email");

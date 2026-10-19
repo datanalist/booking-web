@@ -3,6 +3,7 @@ import {
   Link,
   useLocation,
   useNavigate,
+  useSearchParams,
 } from "react-router-dom";
 import { useSession } from "../app/session";
 import { Button } from "../ui/Button";
@@ -17,6 +18,8 @@ export function LoginPage() {
   const { auth } = useSession();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const emailVerified = searchParams.get("verified") === "1";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
@@ -88,6 +91,11 @@ export function LoginPage() {
               Забыли пароль?
             </button>
           </div>
+          {emailVerified ? (
+            <p className="m-0 w-full text-[14px] leading-[1.4] text-[#1a1b1d]">
+              Почта подтверждена. Войдите, чтобы продолжить.
+            </p>
+          ) : null}
           {formError ? (
             <p className="m-0 w-full text-[14px] leading-[1.4] text-[#e34043]">
               {formError}
