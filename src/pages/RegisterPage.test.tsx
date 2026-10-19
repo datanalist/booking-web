@@ -145,7 +145,11 @@ test("после согласия показывает письмо и не от
   await user.click(screen.getByRole("checkbox"));
   await user.click(screen.getByRole("button", { name: "Зарегистрироваться" }));
 
-  expect(await screen.findByText("Письмо отправлено на hello@gmail.com")).toBeInTheDocument();
+  expect(
+    await screen.findByText(
+      "Письмо отправлено на hello@gmail.com. Подтвердите почту по кнопке в письме. Войти можно после подтверждения.",
+    ),
+  ).toBeInTheDocument();
   expect(screen.queryByText("onboarding-page")).toBeNull();
   expect(localStorage.getItem(SESSION_KEY)).toBeNull();
 });

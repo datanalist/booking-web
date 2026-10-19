@@ -93,7 +93,7 @@ export function RegisterPage() {
         ) : null}
         {sentEmail ? (
           <p className="m-0 w-full text-[14px] leading-[1.4] text-[#1a1b1d]">
-            {`Письмо отправлено на ${sentEmail}`}
+            {`Письмо отправлено на ${sentEmail}. Подтвердите почту по кнопке в письме. Войти можно после подтверждения.`}
           </p>
         ) : null}
         <label className="flex w-full cursor-pointer items-start gap-2 text-[14px] leading-[1.4] text-[#525353]">
