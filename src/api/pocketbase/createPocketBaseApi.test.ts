@@ -7,11 +7,15 @@ describe("createApi data source", () => {
   });
 
   test("без флага фабрика остаётся моком и не требует токен", async () => {
+    vi.stubEnv("VITE_DATA_SOURCE", "");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
     const storage = localStorageMock();
     const api = createApi(storage);
     await expect(api.auth.login("nobody@example.com", "password1")).rejects.toMatchObject({
       code: "INVALID_CREDENTIALS",
     });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test("флаг pocketbase логинит через переданный fetch, а не через gs.users", async () => {
