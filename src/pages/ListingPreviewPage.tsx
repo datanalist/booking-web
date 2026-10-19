@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSession } from "../app/session";
+import { resolveCabinetDataSource } from "../api/pocketbase/dataSource";
 import type { Listing } from "../api/types";
 import {
   BookingCalendarAlert,
@@ -177,6 +178,12 @@ export function ListingPreviewPage() {
 
   function confirmPublish(): void {
     if (!listing) {
+      return;
+    }
+    if (resolveCabinetDataSource() === "pocketbase") {
+      setStatus(listing.id, "moderation");
+      setListing({ ...listing, status: "moderation" });
+      setPublishOpen(false);
       return;
     }
     setStatus(listing.id, "published");
