@@ -206,7 +206,7 @@ export function createAuthApi(storage: Storage): AuthApi {
       if (!user || user.passwordHash !== await sha256Hex(password)) {
         throw authError("INVALID_CREDENTIALS", "Неверный email или пароль");
       }
-      if (user.verified !== true) {
+      if (user.verified === false) {
         throw authError("EMAIL_NOT_VERIFIED", "Подтвердите почту по кнопке в письме");
       }
       return writeSession(user);

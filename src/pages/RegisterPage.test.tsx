@@ -1,11 +1,38 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterEach, beforeEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { createApi } from "../api";
 import { SESSION_KEY } from "../api/keys";
 import { SessionProvider } from "../app/session";
 import { RegisterPage } from "./RegisterPage";
+
+const MAIL_SEND_FAILURE_MESSAGE =
+  "Не удалось отправить письмо. Попробуйте ещё раз";
+
+const authDouble = vi.hoisted(() => ({
+  register: null as
+    | ((email: string, password: string) => Promise<{ email: string }>)
+    | null,
+}));
+
+vi.mock("../app/session", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../app/session")>();
+  return {
+    ...actual,
+    useSession() {
+      const value = actual.useSession();
+      if (authDouble.register === null) return value;
+      return {
+        ...value,
+        auth: {
+          ...value.auth,
+          register: authDouble.register,
+        },
+      };
+    },
+  };
+});
 
 function renderRegister(): ReturnType<typeof render> {
   return render(
@@ -19,6 +46,7 @@ function renderRegister(): ReturnType<typeof render> {
 
 beforeEach(() => {
   localStorage.clear();
+  authDouble.register = null;
 });
 
 afterEach(() => {
@@ -179,4 +207,58 @@ test("EMAIL_TAKEN shows failure banner like Figma 1:16424", async () => {
     document.querySelector('img[src="/icon-info-circle.svg"]'),
   ).not.toBeNull();
   expect(screen.queryByText(/уже зарегистрирован/i)).toBeNull();
+});
+
+test("сбой отправки письма показывает эту фразу", async () => {
+  const user = userEvent.setup();
+  authDouble.register = () => Promise.reject(new Error(MAIL_SEND_FAILURE_MESSAGE));
+  renderRegister();
+
+  await user.type(screen.getByLabelText("Email"), "hello@gmail.com");
+  await user.type(screen.getByLabelText("Пароль"), "pass123456");
+  await user.type(screen.getByLabelText("Повторите пароль"), "pass123456");
+  await user.click(screen.getByRole("checkbox"));
+  await user.click(
+    screen.getByRole("button", { name: "Зарегистрироваться" }),
+  );
+
+  expect(await screen.findByText(MAIL_SEND_FAILURE_MESSAGE)).toBeInTheDocument();
+  expect(
+    screen.queryByText(
+      "Не получилось зарегистрироваться, попробуйте еще раз",
+    ),
+  ).toBeNull();
+});
+
+test("повторный сбой убирает текст об отправленном письме", async () => {
+  const user = userEvent.setup();
+  let attempt = 0;
+  authDouble.register = (email) => {
+    attempt += 1;
+    if (attempt === 1) return Promise.resolve({ email: email.trim().toLowerCase() });
+    return Promise.reject(new Error("почта занята"));
+  };
+  renderRegister();
+
+  await user.type(screen.getByLabelText("Email"), "hello@gmail.com");
+  await user.type(screen.getByLabelText("Пароль"), "pass123456");
+  await user.type(screen.getByLabelText("Повторите пароль"), "pass123456");
+  await user.click(screen.getByRole("checkbox"));
+  const submit = screen.getByRole("button", { name: "Зарегистрироваться" });
+  await user.click(submit);
+
+  expect(
+    await screen.findByText(
+      "Письмо отправлено на hello@gmail.com. Подтвердите почту по кнопке в письме. Войти можно после подтверждения.",
+    ),
+  ).toBeInTheDocument();
+
+  await user.click(submit);
+
+  expect(
+    await screen.findByText(
+      "Не получилось зарегистрироваться, попробуйте еще раз",
+    ),
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/Письмо отправлено/)).toBeNull();
 });

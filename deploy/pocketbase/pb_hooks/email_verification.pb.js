@@ -73,6 +73,16 @@ routerAdd("GET", "/api/vallome/confirm-verification", (e) => {
 onRecordAuthWithPasswordRequest((e) => {
   const record = e.record
   if (record) {
+    var password = ""
+    try {
+      const info = e.requestInfo()
+      const body = (info && info.body) || {}
+      password = body.password == null ? "" : String(body.password)
+    } catch (err) {}
+    if (record.validatePassword(password) === false) {
+      e.next()
+      return
+    }
     var verified = false
     try {
       verified = typeof record.verified === "function" ? !!record.verified() : !!record.get("verified")

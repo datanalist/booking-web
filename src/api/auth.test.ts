@@ -21,6 +21,23 @@ test("register does not open a session", async () => {
   localStorage.clear();
 });
 
+test("stored user without verified can log in with the right password", async () => {
+  const storage = new MemoryStorage();
+  const auth = createAuthApi(storage);
+  await auth.register("a@mail.ru", "secret12");
+  const users = JSON.parse(storage.getItem(USERS_KEY) ?? "[]") as UserRecord[];
+  const user = users[0];
+  if (user === undefined) {
+    throw new Error("пользователь не создан");
+  }
+  const legacy = { ...user } as Partial<UserRecord>;
+  delete legacy.verified;
+  storage.setItem(USERS_KEY, JSON.stringify([legacy]));
+  const session = await auth.login("a@mail.ru", "secret12");
+  expect(session.email).toBe("a@mail.ru");
+  expect(storage.getItem(SESSION_KEY)).toContain("\"email\":\"a@mail.ru\"");
+});
+
 test("login rejects an unverified user", async () => {
   const storage = new MemoryStorage();
   const auth = createAuthApi(storage);

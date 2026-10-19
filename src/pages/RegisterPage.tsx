@@ -6,6 +6,8 @@ import { Input } from "../ui/Input";
 
 const REGISTER_FAILURE_MESSAGE =
   "Не получилось зарегистрироваться, попробуйте еще раз";
+const MAIL_SEND_FAILURE_MESSAGE =
+  "Не удалось отправить письмо. Попробуйте ещё раз";
 
 export function RegisterPage() {
   const { auth } = useSession();
@@ -23,6 +25,7 @@ export function RegisterPage() {
 
   async function onSubmit(event: FormEvent): Promise<void> {
     event.preventDefault();
+    setSentEmail("");
     setConfirmError("");
     setFormError("");
     if (password !== confirm) {
@@ -33,8 +36,13 @@ export function RegisterPage() {
     try {
       const registered = await auth.register(email, password);
       setSentEmail(registered.email);
-    } catch {
-      setFormError(REGISTER_FAILURE_MESSAGE);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      setFormError(
+        message === MAIL_SEND_FAILURE_MESSAGE
+          ? MAIL_SEND_FAILURE_MESSAGE
+          : REGISTER_FAILURE_MESSAGE,
+      );
     } finally {
       setPending(false);
     }

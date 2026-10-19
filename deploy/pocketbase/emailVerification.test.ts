@@ -30,6 +30,11 @@ test("письмо подтверждения ведёт на кнопку, а �
   expect(hook).not.toMatch(/[?&](?:email|identity)=/);
   expect(hook).not.toMatch(/encodeURIComponent\(\s*(?:email|identity)\b/);
 
+  const passwordCheck = hook.indexOf("record.validatePassword(password)");
+  const deny = hook.indexOf('new BadRequestError("Подтвердите почту по кнопке в письме")');
+  expect(passwordCheck).toBeGreaterThanOrEqual(0);
+  expect(deny).toBeGreaterThan(passwordCheck);
+
   const envExample = readFileSync(path.join(pocketBaseDir, ".env.example"), "utf8");
   expect(envExample).toContain("CABINET_URL=http://127.0.0.1:5173");
 });
