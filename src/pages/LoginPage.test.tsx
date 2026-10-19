@@ -4,6 +4,7 @@ import { afterEach, expect, test } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { SessionProvider } from "../app/session";
 import { LoginPage } from "./LoginPage";
+import { EMAIL_VERIFIED_NOTICE_KEY } from "./emailVerifiedNotice";
 
 afterEach(() => {
   cleanup();
@@ -116,12 +117,25 @@ test("does not render local disclaimer inside login form", () => {
   ).not.toBeInTheDocument();
 });
 
-test("verified=1 показывает подтверждение почты отдельно от ошибки", () => {
+test("verified=1 не подменяет уже открытую форму входа", () => {
   renderLogin("/login?verified=1");
+  expect(screen.getByRole("heading", { name: "Войти" })).toBeInTheDocument();
+  expect(screen.queryByText("Пожалуйста, вернитесь на страницу входа.")).toBeNull();
+});
+
+test("уже открытый вход обновляется, когда почта подтверждена в другой вкладке", async () => {
+  renderLogin();
+  window.dispatchEvent(
+    new StorageEvent("storage", { key: EMAIL_VERIFIED_NOTICE_KEY }),
+  );
   expect(
-    screen.getByText("Почта подтверждена. Войдите, чтобы продолжить."),
+    await screen.findByText("Почта подтверждена. Войдите, чтобы продолжить."),
   ).toBeInTheDocument();
-  expect(screen.queryByText("Неверный email или пароль")).toBeNull();
+  expect(screen.getByRole("button", { name: "Начать работу" })).toBeInTheDocument();
+  const note = screen.getByText("Почта подтверждена. Войдите, чтобы продолжить.").parentElement;
+  expect(note?.className).toMatch(/rounded-\[12px\]/);
+  expect(note?.className).toMatch(/bg-white/);
+  expect(note?.className).toMatch(/border-\[var\(--color-accent\)\]/);
 });
 
 test("email and password fields share auth size", () => {

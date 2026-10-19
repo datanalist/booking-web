@@ -5,6 +5,8 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { createApi } from "../api";
 import { SESSION_KEY } from "../api/keys";
 import { SessionProvider } from "../app/session";
+import { EMAIL_VERIFIED_NOTICE_KEY } from "./emailVerifiedNotice";
+import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
 
 const MAIL_SEND_FAILURE_MESSAGE =
@@ -119,6 +121,27 @@ test("submit button overrides radius to 8px", () => {
   expect(submit.className).toMatch(/rounded-\[8px\]|!rounded-\[8px\]/);
 });
 
+test("уже открытая регистрация сама переходит на вход", async () => {
+  render(
+    <MemoryRouter initialEntries={["/register"]}>
+      <SessionProvider>
+        <Routes>
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </SessionProvider>
+    </MemoryRouter>,
+  );
+  window.dispatchEvent(
+    new StorageEvent("storage", { key: EMAIL_VERIFIED_NOTICE_KEY }),
+  );
+  expect(await screen.findByRole("heading", { name: "Войти" })).toBeInTheDocument();
+  expect(
+    await screen.findByText("Почта подтверждена. Войдите, чтобы продолжить."),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Регистрация" })).toBeNull();
+});
+
 test("без галочки регистрация не уходит", async () => {
   const user = userEvent.setup();
   renderRegister();
@@ -161,6 +184,7 @@ test("после согласия показывает письмо и не от
       <SessionProvider>
         <Routes>
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<div>onboarding-page</div>} />
         </Routes>
       </SessionProvider>
@@ -180,6 +204,17 @@ test("после согласия показывает письмо и не от
   ).toBeInTheDocument();
   expect(screen.queryByText("onboarding-page")).toBeNull();
   expect(localStorage.getItem(SESSION_KEY)).toBeNull();
+
+  window.dispatchEvent(
+    new StorageEvent("storage", { key: EMAIL_VERIFIED_NOTICE_KEY }),
+  );
+  expect(await screen.findByRole("heading", { name: "Войти" })).toBeInTheDocument();
+  expect(await screen.findByDisplayValue("hello@gmail.com")).toBeInTheDocument();
+  expect(
+    await screen.findByText("Почта подтверждена. Войдите, чтобы продолжить."),
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/Письмо отправлено/)).toBeNull();
+  expect(screen.queryByText("onboarding-page")).toBeNull();
 });
 
 test("EMAIL_TAKEN shows failure banner like Figma 1:16424", async () => {

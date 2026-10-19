@@ -1,8 +1,9 @@
-import { FormEvent, useState } from "react";
-import { Link } from "react-router-dom";
+import { FormEvent, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useSession } from "../app/session";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { subscribeEmailVerifiedNotice } from "./emailVerifiedNotice";
 
 const REGISTER_FAILURE_MESSAGE =
   "Не получилось зарегистрироваться, попробуйте еще раз";
@@ -11,6 +12,7 @@ const MAIL_SEND_FAILURE_MESSAGE =
 
 export function RegisterPage() {
   const { auth } = useSession();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -19,6 +21,17 @@ export function RegisterPage() {
   const [pending, setPending] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
+
+  useEffect(
+    () =>
+      subscribeEmailVerifiedNotice(() => {
+        navigate("/login", {
+          replace: true,
+          state: { verified: true, email: sentEmail || undefined },
+        });
+      }),
+    [navigate, sentEmail],
+  );
 
   const formEmpty = !email.trim() || !password || !confirm;
   const submitDisabled = pending || formEmpty || !accepted;

@@ -3,7 +3,7 @@
     "id": "_pb_users_auth_",
     "listRule": "id = @request.auth.id",
     "viewRule": "",
-    "createRule": null,
+    "createRule": "@request.body.roles:length = 1 && @request.body.roles:each = \"host\" && @request.body.account_status = \"active\" && (@request.body.emailVisibility:isset = false || @request.body.emailVisibility = false) && @request.body.verified:isset = false && @request.body.verified_host:isset = false && @request.body.balance:isset = false && @request.body.rating:isset = false && @request.body.reviews_count:isset = false && @request.body.years_hosting:isset = false && @request.body.staff_tasks:isset = false",
     "updateRule": "id = @request.auth.id && (@request.body.account_status:isset = false || @request.body.account_status = account_status) && (@request.body.verified_host:isset = false || @request.body.verified_host = verified_host) && (@request.body.balance:isset = false || @request.body.balance = balance) && (@request.body.rating:isset = false || @request.body.rating = rating) && (@request.body.reviews_count:isset = false || @request.body.reviews_count = reviews_count) && (@request.body.years_hosting:isset = false || @request.body.years_hosting = years_hosting) && (@request.body.staff_tasks:isset = false || @request.body.staff_tasks = staff_tasks) && (@request.body.roles:isset = false || @request.body.roles = roles)",
     "deleteRule": "id = @request.auth.id",
     "name": "users",

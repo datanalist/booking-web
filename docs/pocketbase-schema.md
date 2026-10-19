@@ -25,7 +25,7 @@
 - `balance`: number, default 0 — сумма к выводу (**ТЗ**)
 - `fcm_token`: text — пуш (**интерпретация**; поля в UI нет)
 
-Вход гостя по email — письмо с кнопкой (TTL 600 с, SMTP). Клиент вызывает `POST /api/vallome/magic-request`: письмо уходит **без** записи в `users`. Строка в `users` создаётся только когда гость подтверждает ссылку (`/api/vallome/magic-auth`). Публичный `createRule` у `users` закрыт (только админ / хук). Поля `roles` / `name` / `first_name` / `last_name` не required. Включить OTP+SMTP: `python3 scripts/enable_email_otp.py`.
+Вход гостя по email — письмо с кнопкой (TTL 600 с, SMTP). Клиент вызывает `POST /api/vallome/magic-request`: письмо уходит **без** записи в `users`. Строка в `users` создаётся только когда гость подтверждает ссылку (`/api/vallome/magic-auth`). Публичный `createRule` у `users` пускает только регистрацию хозяина: одна роль `host`, `account_status = active`, без `emailVisibility`, `verified`, `verified_host`, `balance`, `rating`, `reviews_count`, `years_hosting` и `staff_tasks`. Гостя по-прежнему создаёт хук magic-link, сотрудника — суперпользователь. Поля `roles` / `name` / `first_name` / `last_name` не required. Включить OTP+SMTP: `python3 scripts/enable_email_otp.py`.
 
 Письмо verification ведёт на `/api/vallome/confirm-verification`, затем редирект на кабинет без токена. Парольный вход неподтверждённого пользователя закрыт.
 
