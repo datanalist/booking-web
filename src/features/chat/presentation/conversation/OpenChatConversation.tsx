@@ -9,6 +9,7 @@ import { chatSeedPhotoUrls } from "./chatSeedPhotoUrls";
 import type { ComposerSend } from "./ComposerSend";
 import { conversationSelfAvatarUrl } from "./conversationHeadingMock";
 import { headingFromSeed } from "./headingFromSeed";
+import { useOutgoingMessages } from "./useOutgoingMessages";
 
 type OpenChatConversationProps = {
   chatId: ChatId;
@@ -16,17 +17,28 @@ type OpenChatConversationProps = {
   hostId?: string;
 };
 
+type LiveChatConversationProps = {
+  chatId: ChatId;
+  source: ChatSource;
+  hostId: string;
+};
+
 /** Правая панель: переписка выбранного чата из сида или живого источника. */
 export function OpenChatConversation({ chatId, source, hostId }: OpenChatConversationProps) {
+  if (source === undefined || hostId === undefined) {
+    return <SeedChatConversation chatId={chatId} />;
+  }
+  return <LiveChatConversation key={chatId} chatId={chatId} source={source} hostId={hostId} />;
+}
+
+/** Живой тред. key по chatId обнуляет модель и локальные исходящие до отрисовки. */
+function LiveChatConversation({ chatId, source, hostId }: LiveChatConversationProps) {
   const [model, setModel] = useState<ChatConversationModel | null>(null);
+  const outgoing = useOutgoingMessages();
   const activeChatId = useRef(chatId);
   activeChatId.current = chatId;
-  const live = source !== undefined && hostId !== undefined;
 
   useEffect(() => {
-    if (!live || source === undefined || hostId === undefined) {
-      return;
-    }
     let cancelled = false;
     setModel(null);
     void source.loadConversation(chatId, hostId).then(
@@ -45,28 +57,28 @@ export function OpenChatConversation({ chatId, source, hostId }: OpenChatConvers
     return () => {
       cancelled = true;
     };
-  }, [chatId, hostId, live, source]);
+  }, [chatId, hostId, source]);
 
-  if (live && source !== undefined && hostId !== undefined) {
-    if (model === null) {
-      return null;
-    }
-    return (
-      <ChatConversation
-        chatId={chatId}
-        heading={model.heading}
-        dateLabel={model.dateLabel}
-        messages={model.messages}
-        selfAvatarUrl={
-          model.heading.kind === "direct" ? chatAssets.avatarHost : conversationSelfAvatarUrl
-        }
-        onSendMessage={(draft) => {
-          sendLiveText(source, hostId, chatId, draft, activeChatId, setModel);
-        }}
-      />
-    );
+  if (model === null) {
+    return null;
   }
+  return (
+    <ChatConversation
+      chatId={chatId}
+      heading={model.heading}
+      dateLabel={model.dateLabel}
+      messages={[...model.messages, ...outgoing.outgoing]}
+      selfAvatarUrl={
+        model.heading.kind === "direct" ? chatAssets.avatarHost : conversationSelfAvatarUrl
+      }
+      onSendMessage={(draft) => {
+        sendLiveText(source, hostId, chatId, draft, activeChatId, setModel, outgoing.send);
+      }}
+    />
+  );
+}
 
+function SeedChatConversation({ chatId }: { chatId: ChatId }) {
   const seed = chatSeedById(chatId);
   if (seed === undefined) {
     return null;
@@ -91,8 +103,10 @@ function sendLiveText(
   draft: ComposerSend,
   activeChatId: { current: ChatId },
   setModel: (model: ChatConversationModel) => void,
+  appendOutgoing: (draft: ComposerSend) => void,
 ): void {
-  if (draft.kind !== "text") {
+  if (draft.kind === "photo") {
+    appendOutgoing(draft);
     return;
   }
   void source
