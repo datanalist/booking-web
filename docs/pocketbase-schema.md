@@ -42,6 +42,8 @@
 - `extras`: select multiple `[Завтраки, Бассейн, Камин, Разрешено курение, Спортзал, Самостоятельное заселение, Сауна, Парковка]` — `SearchFiltersSheet._extras`
 - `max_guests`: number, required
 - `pets_allowed`, `cancellation_allowed`: bool, required
+- `guests_forbidden`: bool — запрет заселения гостей (`Listing.guestsForbidden`); в живой схеме не required
+- `unique_prices`: json, maxSize 200000 — особые цены по датам (`Listing.uniquePrices`, элементы `{ date, base }`)
 - `access_info`, `house_rules`, `extra_info`: text — инструкции / правила / доп. информация
 - `check_in_time`, `check_out_time`: text `HH:mm`, required
 - `price_night` (index), `price_14`, `price_28`: number, required — сутки / от 14 / от 28
@@ -52,6 +54,8 @@
 ### `listing_blocks`
 
 Календарь хозяина: «редактировать занятость» (**ТЗ**; в Flutter нет).
+
+Коллекции нет в импортируемом `pb_schema.json`. Её идемпотентно создаёт миграция `deploy/pocketbase/pb_migrations/1729200000_import_schema.js`: если `listing_blocks` ещё нет, миграция проверяет `listings.id === "pbc_3660939671"` и сохраняет коллекцию с relation на это объявление. Повторный старт коллекцию не дублирует.
 
 - `listing`: relation → `listings`, required
 - `start`, `end`: date, required
@@ -75,6 +79,7 @@
 - `prepaid_at`: date — факт оплаты предоплаты; хозяин видит, оплатил ли гость (**ТЗ**)
 - `status`: select `[pending_host, awaiting_prepayment, confirmed, completed, cancel_requested, change_requested, cancelled]`, required — **без `rejected`**: отказ хозяина = `cancelled` + причина (**ТЗ**: не реагирует или отклоняет → автоотмена)
 - `cancel_reason`: select `[guest, host, host_timeout, prepay_timeout]` — **без `admin`**: админ в ТЗ возвращает деньги из поддержки, бронь не отменяет
+- `cancel_comment`: text, max 500 — комментарий к отмене
 - `host_respond_until`, `prepay_until`: date — дважды «12 часов» (**ТЗ**)
 - `requested_check_in`, `requested_check_out`: date — запрос смены сроков
 
@@ -186,7 +191,7 @@ chats    ──1:*── messages
 chats    ──*──1── tickets
 ```
 
-Занятость объекта = блоки календаря ∪ брони в статусах ожидания/подтверждения/запроса отмены или смены дат.
+Занятость объекта = `listing_blocks` ∪ брони в статусах `pending_host`, `awaiting_prepayment`, `confirmed` и `change_requested`. `cancel_requested` даты не занимает.
 
 ## Сознательно не вынесено
 

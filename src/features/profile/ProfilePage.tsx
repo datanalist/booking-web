@@ -6,7 +6,6 @@ import { BalanceCard } from "./balance-card";
 import { EditProfileModal } from "./edit-profile-modal";
 import { LogoutConfirmModal } from "./logout-modal";
 import { PersonalCard } from "./personal-card";
-import { PROFILE_DEMO } from "./profileDemo";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileLayout } from "./ProfileLayout";
 import {
@@ -73,7 +72,7 @@ export function ProfilePage(): ReactElement {
         }
         balance={
           <BalanceCard
-            amountRub={PROFILE_DEMO.balanceRub}
+            amountRub={model.balanceRub}
             onWithdraw={ignoreWithdraw}
           />
         }

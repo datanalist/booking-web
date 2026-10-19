@@ -3,6 +3,8 @@ import { createListingsApi } from "./listings";
 import { SESSION_KEY } from "./keys";
 import type { AuthApi, ListingsApi, Session } from "./types";
 
+export * from "./pocketbase";
+
 export type ApiBundle = {
   auth: AuthApi;
   listings: ListingsApi;

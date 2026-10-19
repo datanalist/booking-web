@@ -23,6 +23,8 @@ export interface Session {
   name: string;
   phone: string;
   photoUrl?: string;
+  /** Сумма к выводу, поле `users.balance` в PocketBase. */
+  balance?: number;
   onboardingComplete: boolean;
 }
 
@@ -30,8 +32,12 @@ export interface Listing {
   id: string;
   ownerId: string;
   status: ListingStatus;
+  /** Причина отказа модератора, поле `listings.reject_reason`. */
+  rejectReason?: string;
   title: string;
   address: string;
+  /** Город, поле `listings.city`. */
+  city?: string;
   housingType: HousingType;
   description: string;
   photos: string[];
@@ -100,5 +106,7 @@ export type UserRecord = {
   name: string;
   phone: string;
   photoUrl?: string;
+  /** Сумма к выводу, поле `users.balance` в PocketBase. */
+  balance?: number;
   onboardingComplete: boolean;
 };

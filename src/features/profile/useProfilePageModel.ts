@@ -15,6 +15,7 @@ import { useLogout } from "./useLogout";
 export type ProfilePageModel = {
   dialog: ProfileDialog;
   profile: ProfileEditValues;
+  balanceRub: number;
   apiKey: string;
   apiKeyStatus: ApiKeyStatus;
   logoutPending: boolean;
@@ -63,6 +64,7 @@ export function useProfilePageModel(): ProfilePageModel {
   return {
     dialog,
     profile,
+    balanceRub: session?.balance ?? PROFILE_DEMO.balanceRub,
     apiKey,
     apiKeyStatus,
     logoutPending,
