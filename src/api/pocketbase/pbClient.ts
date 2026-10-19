@@ -59,6 +59,8 @@ export type PbClient = {
   updateRecord<TItem = unknown>(collection: string, id: string, body: object): Promise<TItem>;
   deleteRecord(collection: string, id: string): Promise<void>;
   changeEmail(email: string): Promise<PbChangeEmailResult>;
+  requestPasswordReset(email: string): Promise<void>;
+  confirmPasswordReset(token: string, password: string): Promise<void>;
   occupiedDates(listingId: string, excludeBookingId?: string): Promise<PbOccupiedRange[]>;
   occupiedListings(checkIn: string, checkOut: string): Promise<readonly string[]>;
 };
@@ -279,6 +281,16 @@ export function createPbClient(options: CreatePbClientOptions = {}): PbClient {
     },
     changeEmail(email) {
       return send("/api/vallome/change-email", "POST", undefined, { email }).then(readChangeEmail);
+    },
+    async requestPasswordReset(email) {
+      await send("/api/collections/users/request-password-reset", "POST", undefined, { email });
+    },
+    async confirmPasswordReset(token, password) {
+      await send("/api/collections/users/confirm-password-reset", "POST", undefined, {
+        token,
+        password,
+        passwordConfirm: password,
+      });
     },
     occupiedDates(listingId, excludeBookingId) {
       return send("/api/vallome/occupied-dates", "GET", {

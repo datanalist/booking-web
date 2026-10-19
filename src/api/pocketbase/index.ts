@@ -12,6 +12,17 @@ export type {
   PbUserRole,
 } from "./pbTypes";
 
+export { resolveCabinetDataSource } from "./dataSource";
+export type { CabinetDataSource } from "./dataSource";
+
+export {
+  PB_TOKEN_KEY,
+  clearPbToken,
+  createCabinetPbClient,
+  readPbToken,
+  writePbToken,
+} from "./pbSession";
+
 export {
   PUBLIC_POCKETBASE_URL,
   PbRequestError,
