@@ -91,6 +91,18 @@ test("submit button overrides radius to 8px", () => {
   expect(submit.className).toMatch(/rounded-\[8px\]|!rounded-\[8px\]/);
 });
 
+test("без галочки регистрация не уходит", async () => {
+  const user = userEvent.setup();
+  renderRegister();
+  await user.type(screen.getByLabelText("Email"), "hello@gmail.com");
+  await user.type(screen.getByLabelText("Пароль"), "pass123456");
+  await user.type(screen.getByLabelText("Повторите пароль"), "pass123456");
+  const submit = screen.getByRole("button", { name: "Зарегистрироваться" });
+  expect(submit).toBeDisabled();
+  expect(screen.getByRole("link", { name: "Условиями использования" })).toHaveAttribute("href", "/terms");
+  expect(localStorage.getItem(SESSION_KEY)).toBeNull();
+});
+
 test("password mismatch shows field error without failure banner", async () => {
   const user = userEvent.setup();
   renderRegister();
@@ -98,6 +110,7 @@ test("password mismatch shows field error without failure banner", async () => {
   await user.type(screen.getByLabelText("Email"), "hello@gmail.com");
   await user.type(screen.getByLabelText("Пароль"), "pass123456");
   await user.type(screen.getByLabelText("Повторите пароль"), "otherpass1");
+  await user.click(screen.getByRole("checkbox"));
   await user.click(
     screen.getByRole("button", { name: "Зарегистрироваться" }),
   );
@@ -124,6 +137,7 @@ test("EMAIL_TAKEN shows failure banner like Figma 1:16424", async () => {
   await user.type(screen.getByLabelText("Email"), "hello@gmail.com");
   await user.type(screen.getByLabelText("Пароль"), "pass123456");
   await user.type(screen.getByLabelText("Повторите пароль"), "pass123456");
+  await user.click(screen.getByRole("checkbox"));
   await user.click(
     screen.getByRole("button", { name: "Зарегистрироваться" }),
   );

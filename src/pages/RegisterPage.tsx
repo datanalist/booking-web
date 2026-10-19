@@ -16,9 +16,10 @@ export function RegisterPage() {
   const [confirmError, setConfirmError] = useState("");
   const [formError, setFormError] = useState("");
   const [pending, setPending] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   const formEmpty = !email.trim() || !password || !confirm;
-  const submitDisabled = pending || formEmpty;
+  const submitDisabled = pending || formEmpty || !accepted;
 
   async function onSubmit(event: FormEvent): Promise<void> {
     event.preventDefault();
@@ -90,6 +91,24 @@ export function RegisterPage() {
             </p>
           </div>
         ) : null}
+        <label className="flex w-full cursor-pointer items-start gap-2 text-[14px] leading-[1.4] text-[#525353]">
+          <input
+            type="checkbox"
+            checked={accepted}
+            onChange={(event) => setAccepted(event.target.checked)}
+            className="mt-0.5 shrink-0"
+          />
+          <span>
+            Я соглашаюсь с{" "}
+            <Link
+              to="/terms"
+              className="text-[var(--color-accent)] no-underline"
+              onClick={(event) => event.stopPropagation()}
+            >
+              Условиями использования
+            </Link>
+          </span>
+        </label>
       </div>
 
       <div className="flex w-full flex-col items-center gap-[24px]">

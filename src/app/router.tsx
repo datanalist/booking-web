@@ -22,7 +22,9 @@ import { ResetPasswordPage } from "../pages/ResetPasswordPage";
 import { BookingsPage } from "../features/bookings";
 import { ChatsRoute } from "../features/chat";
 import { ProfilePage } from "../features/profile";
+import { PrivacyPage } from "../pages/PrivacyPage";
 import { StubPage } from "../pages/StubPage";
+import { TermsPage } from "../pages/TermsPage";
 
 function Guarded({ children }: { children: ReactNode }) {
   const { session } = useSession();
@@ -86,14 +88,8 @@ export function createAppRouter() {
         { path: "/register", element: <RegisterPage /> },
         { path: "/forgot-password", element: <ForgotPasswordPage /> },
         { path: "/reset-password", element: <ResetPasswordPage /> },
-        {
-          path: "/terms",
-          element: <StubPage title="Условия использования" />,
-        },
-        {
-          path: "/privacy",
-          element: <StubPage title="Политика конфиденциальности" />,
-        },
+        { path: "/terms", element: <TermsPage /> },
+        { path: "/privacy", element: <PrivacyPage /> },
       ],
     },
     {

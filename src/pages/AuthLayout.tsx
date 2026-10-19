@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
 
 type AuthLayoutProps = {
   children: ReactNode;
@@ -21,22 +20,6 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           className="absolute left-8 top-4 h-[60px] w-[181px] object-contain object-left"
         />
         <div className="absolute left-[149px] top-[305px] w-80">{children}</div>
-        <p className="absolute left-[149px] top-[942px] m-0 w-80 text-center text-[12px] leading-[1.5]">
-          <span className="text-[#525353]">Продолжая, Вы соглашаетесь с </span>
-          <Link
-            to="/terms"
-            className="text-[var(--color-accent)] no-underline"
-          >
-            Условиями использования
-          </Link>
-          <span className="text-[#525353]"> и </span>
-          <Link
-            to="/privacy"
-            className="text-[var(--color-accent)] no-underline"
-          >
-            Политикой конфиденциальности
-          </Link>
-        </p>
         {/*
           Справа: p-16 (64px) + кадр 789×938. Скругление на overflow-hidden
           обёртке и на img — угол виден на самом фото.

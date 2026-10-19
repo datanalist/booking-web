@@ -46,21 +46,17 @@ test("side photo is 789x938 with p-16 and rounded-[20px] clip", () => {
   expect(panel?.className).toMatch(/\bright-0\b/);
 });
 
-test("disclaimer links to stub legal pages", () => {
+test("footer has no consent disclaimer or legal links", () => {
   const { container } = renderLayout();
   const view = within(container);
 
-  const terms = view.getByRole("link", { name: "Условиями использования" });
-  const privacy = view.getByRole("link", {
-    name: "Политикой конфиденциальности",
-  });
-  expect(terms).toHaveAttribute("href", "/terms");
-  expect(privacy).toHaveAttribute("href", "/privacy");
-  expect(view.getByText(/Продолжая, Вы соглашаетесь с/i)).toBeInTheDocument();
-  const disclaimer = view.getByText(/Продолжая, Вы соглашаетесь с/i).closest("p");
-  expect(disclaimer?.className).toMatch(/\bw-80\b/);
-  expect(disclaimer?.className).toMatch(/left-\[149px\]/);
-  expect(disclaimer?.className).toMatch(/top-\[942px\]/);
+  expect(view.queryByText(/Продолжая, Вы соглашаетесь/i)).toBeNull();
+  expect(
+    view.queryByRole("link", { name: "Условиями использования" }),
+  ).toBeNull();
+  expect(
+    view.queryByRole("link", { name: "Политикой конфиденциальности" }),
+  ).toBeNull();
 });
 
 test("root locks viewport scroll; canvas is fixed 1440x1020 without clipping radius", () => {
