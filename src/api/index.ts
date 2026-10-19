@@ -1,7 +1,11 @@
 import { createAuthApi } from "./auth";
 import { createListingsApi } from "./listings";
 import { SESSION_KEY } from "./keys";
+import { resolveCabinetDataSource } from "./pocketbase/dataSource";
+import { createPocketBaseApi } from "./pocketbase/createPocketBaseApi";
 import type { AuthApi, ListingsApi, Session } from "./types";
+
+export type { Session };
 
 export * from "./pocketbase";
 
@@ -13,6 +17,10 @@ export type ApiBundle = {
 };
 
 export function createApi(storage: Storage = localStorage): ApiBundle {
+  if (resolveCabinetDataSource() === "pocketbase") {
+    return createPocketBaseApi(storage);
+  }
+
   let currentUserId: string | null = null;
 
   const auth = createAuthApi(storage);
