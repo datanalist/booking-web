@@ -1,5 +1,6 @@
 import { useState, type ReactElement } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { resolveCabinetDataSource } from "../api/pocketbase/dataSource";
 import {
   AllListingsTable,
   DeleteAnnouncementDialog,
@@ -108,7 +109,12 @@ export function ListingsPage() {
     if (publishId === null) {
       return;
     }
-    setStatus(publishId, "published");
+    const id = publishId;
+    if (resolveCabinetDataSource() === "pocketbase") {
+      setStatus(id, "moderation");
+    } else {
+      setStatus(id, "published");
+    }
     setPublishId(null);
   }
 
