@@ -84,17 +84,26 @@ function replaceSavedRow(
   return replaced ? next : prev;
 }
 
+function touchRowRevision(revisions: Map<string, number>, id: string): number {
+  const captured = (revisions.get(id) ?? 0) + 1;
+  revisions.set(id, captured);
+  return captured;
+}
+
+/** Успех пишется в строку, только если по этому id не началась более новая операция. */
 function applyRowAfterSuccess(
-  revision: { current: number },
+  loadRevision: { current: number },
+  rowRevisions: Map<string, number>,
+  id: string,
   request: Promise<unknown>,
   setItems: (updater: (prev: ListingTableRow[]) => ListingTableRow[]) => void,
   apply: (prev: ListingTableRow[]) => ListingTableRow[],
 ): void {
-  revision.current += 1;
-  const captured = revision.current;
+  loadRevision.current += 1;
+  const captured = touchRowRevision(rowRevisions, id);
   void request.then(
     () => {
-      setItems((prev) => (revision.current === captured ? apply(prev) : prev));
+      setItems((prev) => (rowRevisions.get(id) === captured ? apply(prev) : prev));
     },
     () => undefined,
   );
@@ -168,6 +177,7 @@ function PocketBaseAllListingsProvider({
   );
   const [items, setItems] = useState<ListingTableRow[]>([]);
   const revision = useRef(0);
+  const rowRevisions = useRef(new Map<string, number>());
   const idMap = useRef(new Map<string, string>());
   const saveTails = useRef(new Map<string, Promise<void>>());
 
@@ -198,8 +208,13 @@ function PocketBaseAllListingsProvider({
     (): AllListingsStoreValue => ({
       items,
       remove: (id) => {
-        applyRowAfterSuccess(revision, listings.remove(id), setItems, (prev) =>
-          prev.filter((item) => item.id !== id),
+        applyRowAfterSuccess(
+          revision,
+          rowRevisions.current,
+          id,
+          listings.remove(id),
+          setItems,
+          (prev) => prev.filter((item) => item.id !== id),
         );
       },
       setStatus: (id, status) => {
@@ -212,16 +227,26 @@ function PocketBaseAllListingsProvider({
             : null;
         if (request === null) {
           revision.current += 1;
+          touchRowRevision(rowRevisions.current, id);
           setItems((prev) => prev.map((item) => (item.id === id ? { ...item, status: shown } : item)));
           return;
         }
-        applyRowAfterSuccess(revision, request, setItems, (prev) =>
-          prev.map((item) => (item.id === id ? { ...item, status: shown } : item)),
+        applyRowAfterSuccess(
+          revision,
+          rowRevisions.current,
+          id,
+          request,
+          setItems,
+          (prev) => prev.map((item) => (item.id === id ? { ...item, status: shown } : item)),
         );
       },
       upsert: (row) => {
         revision.current += 1;
+        touchRowRevision(rowRevisions.current, row.id);
         const mapped = idMap.current.get(row.id);
+        if (mapped !== undefined && mapped !== row.id) {
+          touchRowRevision(rowRevisions.current, mapped);
+        }
         const localId = mapped ?? row.id;
         const localRow = localId === row.id ? row : { ...row, id: localId };
         setItems((prev) => {
