@@ -32,7 +32,7 @@ routerAdd("GET", "/api/vallome/confirm-verification", (e) => {
     var raw = ""
     try { raw = str($os.getenv("CABINET_URL")).trim() } catch (err) {}
     raw = raw.replace(/\/+$/, "")
-    if (!raw) return "http://127.0.0.1:5173"
+    if (!raw) return "http://localhost:5173"
     return raw
   }
   function readToken() {

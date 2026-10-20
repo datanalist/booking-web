@@ -13,7 +13,7 @@ const REQUIRED_SNIPPETS = [
   "no-referrer",
   "/login?verified=1",
   "CABINET_URL",
-  "http://127.0.0.1:5173",
+  "http://localhost:5173",
   "onRecordAuthWithPasswordRequest",
   "Подтвердите почту по кнопке в письме",
   "Ссылка недействительна или устарела",
@@ -36,5 +36,5 @@ test("письмо подтверждения ведёт на кнопку, а �
   expect(deny).toBeGreaterThan(passwordCheck);
 
   const envExample = readFileSync(path.join(pocketBaseDir, ".env.example"), "utf8");
-  expect(envExample).toContain("CABINET_URL=http://127.0.0.1:5173");
+  expect(envExample).toContain("CABINET_URL=http://localhost:5173");
 });
