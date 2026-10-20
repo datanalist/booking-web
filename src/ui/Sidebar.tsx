@@ -49,7 +49,7 @@ export function Sidebar({
   const avatarSrc = account.photoUrl ?? "/avatar-placeholder.png";
 
   return (
-    <aside className="sticky top-0 flex h-dvh max-h-[1020px] w-[235px] shrink-0 flex-col gap-5 self-start bg-white font-sans">
+    <aside className="flex h-full w-[235px] shrink-0 flex-col gap-5 self-stretch bg-white font-sans">
       <header className="flex h-24 w-full shrink-0 items-center px-8 py-6">
         <div className="flex items-center gap-3">
           <img

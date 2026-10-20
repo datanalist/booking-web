@@ -1,5 +1,6 @@
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import type { ReactElement } from "react";
+import { usePortalElement } from "../../app/stagePortal";
 import { bookingCalendarDemoFor } from "./bookingCalendarDemoFor";
 import type { BookingCalendarDemo } from "./bookingCalendarDemo";
 import { bookingCalendarMarksFor } from "./bookingCalendarMarksFor";
@@ -68,15 +69,17 @@ export function BookingCalendarAlert({
     toggleSelectedBookingDay(view, marks, overrides, toggleDay);
   }
 
+  const portal = usePortalElement();
+
   return (
     <AlertDialog.Root open={open} onOpenChange={handleOpenChange}>
-      <AlertDialog.Portal>
+      <AlertDialog.Portal container={portal}>
         <AlertDialog.Overlay
           data-booking-calendar-overlay=""
           className="fixed inset-0 z-50 bg-[#525353]"
         />
         <AlertDialog.Content
-          className={`fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-48px)] w-max max-w-[calc(100vw-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-start gap-10 overflow-auto rounded-xl bg-white p-6 font-sans ${CARD_SHADOW}`}
+          className={`fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100%-48px)] w-max max-w-[calc(100%-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-start gap-10 overflow-auto rounded-xl bg-white p-6 font-sans ${CARD_SHADOW}`}
         >
           <AlertHeader />
           <AlertDialog.Description className="sr-only">

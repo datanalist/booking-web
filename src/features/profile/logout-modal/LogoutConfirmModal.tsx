@@ -6,6 +6,7 @@ import {
   type RefObject,
 } from "react";
 import { useFocusTrap } from "../../listings/useFocusTrap";
+import { StagePortal } from "../../../app/stagePortal";
 
 export type LogoutConfirmModalProps = {
   open: boolean;
@@ -99,6 +100,7 @@ type LogoutConfirmDialogProps = {
 
 function LogoutConfirmDialog(props: LogoutConfirmDialogProps): ReactElement {
   return (
+    <StagePortal>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#525353]/80 font-sans"
       role="presentation"
@@ -124,6 +126,7 @@ function LogoutConfirmDialog(props: LogoutConfirmDialogProps): ReactElement {
         />
       </div>
     </div>
+    </StagePortal>
   );
 }
 

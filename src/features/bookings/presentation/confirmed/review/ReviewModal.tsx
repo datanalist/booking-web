@@ -8,6 +8,7 @@ import { ReviewCommentField } from "./ReviewCommentField";
 import { ReviewRatingStars } from "./ReviewRatingStars";
 import { parseBookingReview } from "./parseBookingReview";
 import { useDialogFocusTrap } from "../dialog/useDialogFocusTrap";
+import { usePortalElement } from "../../../../../app/stagePortal";
 
 type ReviewModalProps = {
   booking: ConfirmedBooking;
@@ -30,6 +31,7 @@ export function ReviewModal({ booking, onClose, onSubmit }: ReviewModalProps) {
   useDialogFocusTrap(dialogRef, onClose);
 
   const review = parseBookingReview(booking.id, draft);
+  const portal = usePortalElement();
 
   return createPortal(
     <div
@@ -123,6 +125,6 @@ export function ReviewModal({ booking, onClose, onSubmit }: ReviewModalProps) {
         </div>
       </div>
     </div>,
-    document.body,
+    portal,
   );
 }

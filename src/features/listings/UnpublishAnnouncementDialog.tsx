@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactElement } from "react";
+import { StagePortal } from "../../app/stagePortal";
 import { useFocusTrap } from "./useFocusTrap";
 
 type UnpublishAnnouncementDialogProps = {
@@ -44,6 +45,7 @@ export function UnpublishAnnouncementDialog({
   }
 
   return (
+    <StagePortal>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#525353]/80 font-sans"
       role="presentation"
@@ -104,5 +106,6 @@ export function UnpublishAnnouncementDialog({
         </div>
       </div>
     </div>
+    </StagePortal>
   );
 }

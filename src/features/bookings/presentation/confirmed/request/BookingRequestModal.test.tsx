@@ -49,7 +49,7 @@ test("closes by X, Esc and overlay; reports decisions", async () => {
   const user = userEvent.setup();
   const onClose = vi.fn();
   const onDecision = vi.fn();
-  const { container } = render(
+  render(
     <BookingRequestModal
       booking={requestBooking("confirmed-3")}
       onClose={onClose}
@@ -58,7 +58,7 @@ test("closes by X, Esc and overlay; reports decisions", async () => {
   );
   await user.click(screen.getByRole("button", { name: "Закрыть" }));
   await user.keyboard("{Escape}");
-  const overlay = container.firstElementChild;
+  const overlay = document.querySelector(".fixed.inset-0");
   if (overlay === null) {
     throw new Error("overlay missing");
   }

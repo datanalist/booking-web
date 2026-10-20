@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { usePortalElement, useStagePortalRoot } from "../../../../../app/stagePortal";
 
 export type MenuAnchor = {
   /** Distance from the viewport top to the bottom edge of the trigger. */
@@ -24,12 +25,15 @@ export function ConfirmedBookingMenuPopup({
 }: ConfirmedBookingMenuPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
   const [placeAbove, setPlaceAbove] = useState(false);
+  const stage = useStagePortalRoot();
+  const portal = usePortalElement();
 
-  // Flip above the trigger when the popup would overflow the viewport bottom.
+  // Flip above the trigger when the popup would overflow the stage or viewport.
   useLayoutEffect(() => {
     const height = popupRef.current?.offsetHeight ?? 0;
-    setPlaceAbove(anchor.top + height > window.innerHeight);
-  }, [anchor]);
+    const limit = stage?.clientHeight ?? window.innerHeight;
+    setPlaceAbove(anchor.top + height > limit);
+  }, [anchor, stage]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent): void {
@@ -71,6 +75,6 @@ export function ConfirmedBookingMenuPopup({
     >
       {children}
     </div>,
-    document.body,
+    portal,
   );
 }

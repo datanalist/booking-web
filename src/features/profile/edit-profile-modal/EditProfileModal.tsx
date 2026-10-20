@@ -1,5 +1,6 @@
 import { useId, useRef, type ReactElement, type RefObject } from "react";
 import { useFocusTrap } from "../../listings/useFocusTrap";
+import { StagePortal } from "../../../app/stagePortal";
 import { AvatarCropDialog } from "../../../ui/AvatarCropDialog";
 import { ProfileEditFields } from "./ProfileEditFields";
 import { ProfileEditHeader } from "./ProfileEditHeader";
@@ -103,6 +104,7 @@ export function EditProfileModal({
   }
 
   return (
+    <StagePortal>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#525353]/80 font-sans"
       role="presentation"
@@ -115,5 +117,6 @@ export function EditProfileModal({
         onClose={onClose}
       />
     </div>
+    </StagePortal>
   );
 }

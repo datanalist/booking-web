@@ -45,7 +45,7 @@ test("Вернуться, крестик, Escape и затемнение выз�
   const onClose = vi.fn();
   const onConfirm = vi.fn();
 
-  const { container, rerender } = render(
+  const { rerender } = render(
     <PublishAnnouncementDialog
       open
       onClose={onClose}
@@ -84,7 +84,7 @@ test("Вернуться, крестик, Escape и затемнение выз�
       onConfirm={onConfirm}
     />,
   );
-  const overlay = container.querySelector(".fixed.inset-0");
+  const overlay = document.querySelector(".fixed.inset-0");
   expect(overlay).not.toBeNull();
   fireEvent.click(overlay!);
   expect(onClose).toHaveBeenCalledTimes(4);

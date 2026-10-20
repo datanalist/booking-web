@@ -68,10 +68,8 @@ test("footer logo matches mockup size and frame position", () => {
   const aside = container.querySelector("aside");
   expect(aside).not.toBeNull();
   expect(aside).toHaveClass("w-[235px]");
-  expect(aside).toHaveClass("sticky");
-  expect(aside).toHaveClass("top-0");
-  expect(aside).toHaveClass("h-dvh");
-  expect(aside).toHaveClass("max-h-[1020px]");
+  expect(aside).toHaveClass("h-full");
+  expect(aside).toHaveClass("self-stretch");
   expect(aside).toHaveClass("gap-5");
 
   const footer = container.querySelector("footer");

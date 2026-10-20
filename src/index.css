@@ -12,5 +12,5 @@
   --radius-input: 8px;
 }
 
-html, body, #root { min-height: 100%; }
+html, body, #root { height: 100%; overflow: hidden; }
 body { margin: 0; font-family: var(--font-sans); color: var(--color-text); background: #fffdf8; }

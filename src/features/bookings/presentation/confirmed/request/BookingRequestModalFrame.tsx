@@ -5,6 +5,7 @@ import { BookingRequestModalFooter } from "./BookingRequestModalFooter";
 import { BookingRequestModalHeader } from "./BookingRequestModalHeader";
 import type { ConfirmedRequestBooking } from "./ConfirmedRequestBooking";
 import type { RequestDecision } from "./RequestDecision";
+import { StagePortal } from "../../../../../app/stagePortal";
 import { useDialogFocusTrap } from "../dialog/useDialogFocusTrap";
 
 type BookingRequestModalFrameProps = {
@@ -31,6 +32,7 @@ export function BookingRequestModalFrame({
   useDialogFocusTrap(dialogRef, onClose);
 
   return (
+    <StagePortal>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-600/70 font-sans"
       onMouseDown={(event) => {
@@ -61,5 +63,6 @@ export function BookingRequestModalFrame({
         <BookingRequestModalFooter onDecision={onDecision} />
       </div>
     </div>
+    </StagePortal>
   );
 }

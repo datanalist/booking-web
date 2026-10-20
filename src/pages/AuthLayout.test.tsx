@@ -59,12 +59,13 @@ test("footer has no consent disclaimer or legal links", () => {
   ).toBeNull();
 });
 
-test("root locks viewport scroll; canvas is fixed 1440x1020 without clipping radius", () => {
+test("root fills the scaled stage; canvas is fixed 1440x1020 without clipping radius", () => {
   const { container } = renderLayout();
 
   const root = container.firstElementChild;
   expect(root).not.toBeNull();
-  expect(root?.className).toMatch(/\bh-screen\b/);
+  expect(root?.className).toMatch(/\bh-full\b/);
+  expect(root?.className).toMatch(/\bw-full\b/);
   expect(root?.className).toMatch(/\boverflow-hidden\b/);
 
   const canvas = root?.firstElementChild;

@@ -5,7 +5,7 @@ import { createAppRouter } from "./app/router";
 import { useViewport } from "./app/useViewport";
 import { DesktopOnlyPage } from "./pages/DesktopOnlyPage";
 import { EmailVerifiedNotice } from "./pages/EmailVerifiedNotice";
-import { CANVAS_WIDTH } from "./config";
+import { ScaledStage } from "./app/ScaledStage";
 
 export function isEmailConfirmedWindow(): boolean {
   if (typeof window === "undefined") return false;
@@ -36,8 +36,8 @@ function DesktopApp() {
   const router = useMemo(() => createAppRouter(), []);
 
   return (
-    <div className="bg-[#fffdf8]" style={{ minWidth: CANVAS_WIDTH }}>
+    <ScaledStage>
       <RouterProvider router={router} />
-    </div>
+    </ScaledStage>
   );
 }

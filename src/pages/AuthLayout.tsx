@@ -6,7 +6,7 @@ type AuthLayoutProps = {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div className="flex h-screen justify-center overflow-hidden bg-white font-sans">
+    <div className="flex h-full w-full justify-center overflow-hidden bg-white font-sans">
       {/*
         Холст без overflow-hidden: иначе квадратный родитель срезает
         rounded-[20px] у фото, когда оно близко к краю кадра.

@@ -1,5 +1,6 @@
 import { Eye, MoreVertical, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { clientToStage, useStagePortalRoot } from "../../../../../app/stagePortal";
 import type { ConfirmedBooking } from "../ConfirmedBooking";
 import type { ConfirmedBookingDialog } from "../dialog/ConfirmedBookingDialog";
 import type { ConfirmedBookingRowActions } from "./ConfirmedBookingRowActions";
@@ -24,13 +25,22 @@ export function ConfirmedBookingMenu({
   const { openMenuId, onToggleMenu, onCloseMenu, onOpenDialog } = actions;
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
+  const stage = useStagePortalRoot();
   const entry = resolveConfirmedBookingMenuEntry(booking.status);
   const open = openMenuId === booking.id;
 
   function toggle(): void {
     // Re-measured on every click, so a menu reopened later never uses a stale position.
     const rect = triggerRef.current?.getBoundingClientRect();
-    if (rect !== undefined) {
+    if (rect !== undefined && stage) {
+      const topLeft = clientToStage(rect.left, rect.top, stage);
+      const bottomRight = clientToStage(rect.right, rect.bottom, stage);
+      setAnchor({
+        top: bottomRight.y + 4,
+        bottom: stage.offsetHeight - topLeft.y + 4,
+        right: stage.offsetWidth - bottomRight.x,
+      });
+    } else if (rect !== undefined) {
       setAnchor({
         top: rect.bottom + 4,
         bottom: window.innerHeight - rect.top + 4,

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { clientToStage, usePortalElement, useStagePortalRoot } from "../../app/stagePortal";
 import type { ListingRowMenuActionId } from "./listingRowMenuItemsByStatus";
 import { ListingRowMenu } from "./ListingRowMenu";
 import type { ListingTableStatus } from "./listingTableStatus";
@@ -35,6 +36,8 @@ export function ListingRowMenuButton({
   const firstDotRef = useRef<HTMLSpanElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuBox, setMenuBox] = useState<MenuBox | null>(null);
+  const stage = useStagePortalRoot();
+  const portal = usePortalElement();
 
   useLayoutEffect(() => {
     if (!open) {
@@ -50,6 +53,15 @@ export function ListingRowMenuButton({
       }
       const buttonRect = button.getBoundingClientRect();
       const firstDotRect = firstDot.getBoundingClientRect();
+      if (stage) {
+        const dot = clientToStage(firstDotRect.left, firstDotRect.top, stage);
+        const edge = clientToStage(buttonRect.left, buttonRect.top, stage);
+        setMenuBox({
+          top: dot.y,
+          right: stage.offsetWidth - edge.x + MENU_GAP_PX,
+        });
+        return;
+      }
       setMenuBox({
         top: firstDotRect.top,
         right: window.innerWidth - buttonRect.left + MENU_GAP_PX,
@@ -63,7 +75,7 @@ export function ListingRowMenuButton({
       window.removeEventListener("resize", updateMenuBox);
       window.removeEventListener("scroll", updateMenuBox, true);
     };
-  }, [open]);
+  }, [open, stage]);
 
   useEffect(() => {
     if (!open) {
@@ -127,7 +139,7 @@ export function ListingRowMenuButton({
                 onAction(actionId);
               }}
             />,
-            document.body,
+            portal,
           )
         : null}
     </div>

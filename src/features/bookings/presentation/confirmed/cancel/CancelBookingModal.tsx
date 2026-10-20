@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useId, useRef, useState, type MouseEvent, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { useDialogFocusTrap } from "../dialog/useDialogFocusTrap";
+import { usePortalElement } from "../../../../../app/stagePortal";
 import {
   CANCEL_REASON_MAX_LENGTH,
   parseCancelReason,
@@ -28,6 +29,7 @@ export function CancelBookingModal({
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocusTrap(dialogRef, onClose);
   const [reason, setReason] = useState("");
+  const portal = usePortalElement();
 
   return createPortal(
     <CancelBookingDialogSurface
@@ -39,7 +41,7 @@ export function CancelBookingModal({
       onClose={onClose}
       onSubmit={onSubmit}
     />,
-    document.body,
+    portal,
   );
 }
 

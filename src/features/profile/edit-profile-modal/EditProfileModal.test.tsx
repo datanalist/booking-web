@@ -15,8 +15,8 @@ afterEach(() => {
   cleanup();
 });
 
-function overlayOf(container: HTMLElement): HTMLElement {
-  const overlay = container.querySelector(".fixed.inset-0");
+function overlayOf(): HTMLElement {
+  const overlay = document.querySelector(".fixed.inset-0");
   if (!(overlay instanceof HTMLElement)) {
     throw new Error("оверлей не найден");
   }
@@ -83,7 +83,7 @@ test("без фото кнопка «Удалить фото» скрыта", ()
 test("крестик, Escape и клик по оверлею вызывают onClose", async () => {
   const user = userEvent.setup();
   const onClose = vi.fn();
-  const { container, rerender } = render(
+  const { rerender } = render(
     <EditProfileModal
       open
       initial={INITIAL}
@@ -114,7 +114,7 @@ test("крестик, Escape и клик по оверлею вызывают on
       onSave={() => undefined}
     />,
   );
-  fireEvent.click(overlayOf(container));
+  fireEvent.click(overlayOf());
   expect(onClose).toHaveBeenCalledTimes(3);
 });
 

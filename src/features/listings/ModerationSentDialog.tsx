@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactElement } from "react";
+import { StagePortal } from "../../app/stagePortal";
 import { Button } from "../../ui/Button";
 import { useFocusTrap } from "./useFocusTrap";
 
@@ -47,6 +48,7 @@ export function ModerationSentDialog({
   }
 
   return (
+    <StagePortal>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#525353]/80 font-sans"
       role="presentation"
@@ -103,5 +105,6 @@ export function ModerationSentDialog({
         </Button>
       </div>
     </div>
+    </StagePortal>
   );
 }

@@ -56,7 +56,7 @@ test("Вернуться, крестик, Escape и оверлей вызыва�
   const onCancel = vi.fn();
   const onConfirm = vi.fn();
 
-  const { container, rerender } = render(
+  const { rerender } = render(
     <LogoutConfirmModal
       open
       pending={false}
@@ -99,7 +99,7 @@ test("Вернуться, крестик, Escape и оверлей вызыва�
       onConfirm={onConfirm}
     />,
   );
-  const overlay = container.querySelector(".fixed.inset-0");
+  const overlay = document.querySelector(".fixed.inset-0");
   if (!(overlay instanceof HTMLElement)) {
     throw new Error("оверлей не найден");
   }

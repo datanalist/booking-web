@@ -52,7 +52,7 @@ test("reports accept, reject and close", async () => {
   const user = userEvent.setup();
   const onClose = vi.fn();
   const onDecision = vi.fn();
-  const { container } = render(
+  render(
     <CancelRequestModal
       booking={cancelRequestBooking()}
       onClose={onClose}
@@ -66,7 +66,7 @@ test("reports accept, reject and close", async () => {
 
   await user.click(screen.getByRole("button", { name: "Закрыть" }));
   await user.keyboard("{Escape}");
-  const overlay = container.firstElementChild;
+  const overlay = document.querySelector(".fixed.inset-0");
   if (overlay === null) {
     throw new Error("overlay missing");
   }

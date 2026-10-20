@@ -99,7 +99,7 @@ export function OnboardingPage() {
 
   if (done) {
     return (
-      <div className="relative flex min-h-screen min-w-[1440px] items-center justify-center bg-white font-sans">
+      <div className="relative flex h-full w-full items-center justify-center bg-white font-sans">
         <img
           src="/onboarding/logo.svg"
           alt="GlobalStay"
@@ -128,7 +128,7 @@ export function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen min-w-[1440px] items-center justify-center bg-[#525353] font-sans">
+    <div className="flex h-full w-full items-center justify-center bg-[#525353] font-sans">
       <form
         className="flex w-[438px] flex-col items-center gap-10 rounded-[12px] bg-white p-6 shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08),0px_8px_8px_-4px_rgba(16,24,40,0.03)]"
         role="dialog"

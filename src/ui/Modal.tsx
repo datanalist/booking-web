@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { StagePortal } from "../app/stagePortal";
 
 type ModalProps = {
   open: boolean;
@@ -27,6 +28,7 @@ export function Modal({
   }
 
   return (
+    <StagePortal>
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center font-sans ${overlayClassName}`.trim()}
       role="presentation"
@@ -53,5 +55,6 @@ export function Modal({
         <div className="mt-4">{children}</div>
       </div>
     </div>
+    </StagePortal>
   );
 }

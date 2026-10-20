@@ -14,6 +14,7 @@ import {
   clampAvatarPhotoScale,
 } from "../lib/clampAvatarPhotoScale";
 import { AVATAR_CROP_SIZE, cropCenteredAvatar } from "../lib/cropCenteredAvatar";
+import { clientDeltaToLocal, StagePortal } from "../app/stagePortal";
 import { AvatarPhotoScaleControl } from "./AvatarPhotoScaleControl";
 import { Button } from "./Button";
 
@@ -140,8 +141,9 @@ export function AvatarCropDialog({
     if (drag === null || drag.pointerId !== event.pointerId || imageSize === null) {
       return;
     }
-    const dx = (event.clientX - drag.startX) / previewRatio;
-    const dy = (event.clientY - drag.startY) / previewRatio;
+    const preview = event.currentTarget;
+    const dx = clientDeltaToLocal(event.clientX - drag.startX, preview) / previewRatio;
+    const dy = clientDeltaToLocal(event.clientY - drag.startY, preview) / previewRatio;
     setOffset(
       clampAvatarPhotoOffset(imageSize, AVATAR_CROP_SIZE, scale, {
         x: drag.origin.x + dx,
@@ -170,6 +172,7 @@ export function AvatarCropDialog({
   }
 
   return (
+    <StagePortal>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 font-sans"
       role="presentation"
@@ -244,5 +247,6 @@ export function AvatarCropDialog({
         </div>
       </div>
     </div>
+    </StagePortal>
   );
 }

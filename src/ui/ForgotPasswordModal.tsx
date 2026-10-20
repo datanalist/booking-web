@@ -5,6 +5,7 @@ import {
   type ReactElement,
 } from "react";
 import { useSession } from "../app/session";
+import { StagePortal } from "../app/stagePortal";
 import { Button } from "./Button";
 import { Input } from "./Input";
 
@@ -64,6 +65,7 @@ export function ForgotPasswordModal({
     "shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08),0px_8px_8px_-4px_rgba(16,24,40,0.03)]";
 
   return (
+    <StagePortal>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#525353] font-sans"
       role="presentation"
@@ -168,5 +170,6 @@ export function ForgotPasswordModal({
         )}
       </div>
     </div>
+    </StagePortal>
   );
 }
