@@ -79,6 +79,7 @@ export function BookingCalendarAlert({
           className="fixed inset-0 z-50 bg-[#525353]"
         />
         <AlertDialog.Content
+          data-listing-id={listingId}
           className={`fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100%-48px)] w-max max-w-[calc(100%-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-start gap-10 overflow-auto rounded-xl bg-white p-6 font-sans ${CARD_SHADOW}`}
         >
           <AlertHeader />

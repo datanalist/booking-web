@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { SessionProvider } from "../app/session";
-import { AllListingsProvider } from "../features/listings";
+import { AllListingsProvider, MOCK_ALL_LISTINGS } from "../features/listings";
 import { ListingPreviewPage } from "./ListingPreviewPage";
 import { ListingsPage } from "./ListingsPage";
 
@@ -195,17 +195,28 @@ test("only one row menu is open and closes on repeat outside and Escape", async 
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 });
 
-test("calendar closes menu without dialog or navigation", async () => {
+test("calendar menu opens that listing's booking calendar", async () => {
   const user = userEvent.setup();
   renderPage();
+
+  const listing = MOCK_ALL_LISTINGS[1];
+  if (!listing) {
+    throw new Error("Published listing fixture missing");
+  }
 
   await openMenuAt(1);
   await user.click(
     screen.getByRole("menuitem", { name: "Календарь бронирования" }),
   );
+
+  const dialog = await screen.findByRole("alertdialog");
+  expect(dialog).toHaveAccessibleName("Календарь бронирования");
+  expect(dialog).toHaveAttribute("data-listing-id", listing.id);
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(screen.queryByTestId("edit-flow")).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Закрыть" }));
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   expect(
     screen.getByRole("heading", { name: "Мои объявления" }),
   ).toBeInTheDocument();
