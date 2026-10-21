@@ -19,6 +19,10 @@ const HEADER_CELLS = [
   "",
 ] as const;
 
+/** Статус — не уже подписи; остальные колонки на прежних долях. */
+const TABLE_COLUMNS =
+  "grid-cols-[minmax(0,2.2fr)_minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(max-content,1.2fr)_56px]";
+
 export function AllListingsTable({
   items,
   openMenuId,
@@ -31,11 +35,11 @@ export function AllListingsTable({
     <div
       role="table"
       aria-label={ariaLabel}
-      className="w-full overflow-visible rounded-2xl outline outline-amber-400/20"
+      className={`grid w-full overflow-visible rounded-2xl outline outline-amber-400/20 ${TABLE_COLUMNS}`}
     >
       <div
         role="row"
-        className="grid grid-cols-[minmax(0,2.2fr)_minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_56px] items-center bg-amber-400/20"
+        className="col-span-full grid grid-cols-subgrid items-center bg-amber-400/20"
       >
         {HEADER_CELLS.map((label, index) => (
           <div
