@@ -31,6 +31,7 @@ export function ListingPreviewPage() {
   const location = useLocation();
   const [listing, setListing] = useState<Listing | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const deleteOpenedAt = useRef(0);
   const [moderationOpen, setModerationOpen] = useState(false);
   const [unpublishOpen, setUnpublishOpen] = useState(false);
@@ -155,16 +156,24 @@ export function ListingPreviewPage() {
     }
     setPending(true);
     try {
-      try {
-        await listings.remove(listing.id);
-      } catch {
-        // Мок-строка могла не существовать в listings API.
+      if (resolveCabinetDataSource() === "pocketbase") {
+        await removeFromTable(listing.id);
+      } else {
+        try {
+          await listings.remove(listing.id);
+        } catch {
+          // Мок-строка могла не существовать в listings API.
+        }
+        await removeFromTable(listing.id);
       }
-      removeFromTable(listing.id);
+      setDeleteError("");
+      setDeleteOpen(false);
       goToListings();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message.trim() : "";
+      setDeleteError(message.length > 0 ? message : "Не удалось удалить объявление");
     } finally {
       setPending(false);
-      setDeleteOpen(false);
     }
   }
 
@@ -214,6 +223,7 @@ export function ListingPreviewPage() {
         onEdit={() => navigateToEdit(listing.id, 1)}
         onDelete={() => {
           deleteOpenedAt.current = Date.now();
+          setDeleteError("");
           setDeleteOpen(true);
         }}
         onArchive={() => {
@@ -233,6 +243,7 @@ export function ListingPreviewPage() {
 
       <DeleteAnnouncementDialog
         open={deleteOpen}
+        error={deleteError}
         onClose={() => {
           if (Date.now() - deleteOpenedAt.current < 400) {
             return;

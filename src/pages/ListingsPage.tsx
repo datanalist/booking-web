@@ -60,6 +60,7 @@ export function ListingsPage() {
   const [query, setQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
   const [unpublishId, setUnpublishId] = useState<string | null>(null);
   const [publishId, setPublishId] = useState<string | null>(null);
   const [calendarListingId, setCalendarListingId] = useState<string | null>(
@@ -82,6 +83,7 @@ export function ListingsPage() {
       return;
     }
     if (actionId === "delete") {
+      setDeleteError("");
       setDeleteId(listingId);
       return;
     }
@@ -94,13 +96,19 @@ export function ListingsPage() {
     }
   }
 
-  function confirmDelete(): void {
+  async function confirmDelete(): Promise<void> {
     if (deleteId === null) {
       return;
     }
     const id = deleteId;
-    setDeleteId(null);
-    remove(id);
+    try {
+      await remove(id);
+      setDeleteError("");
+      setDeleteId(null);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message.trim() : "";
+      setDeleteError(message.length > 0 ? message : "Не удалось удалить объявление");
+    }
   }
 
   function confirmUnpublish(): void {
@@ -208,8 +216,11 @@ export function ListingsPage() {
 
       <DeleteAnnouncementDialog
         open={deleteId !== null}
+        error={deleteError}
         onClose={() => setDeleteId(null)}
-        onConfirm={confirmDelete}
+        onConfirm={() => {
+          void confirmDelete();
+        }}
       />
       <UnpublishAnnouncementDialog
         open={unpublishId !== null}

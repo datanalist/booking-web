@@ -23,7 +23,7 @@ import { writeAllListingsToStorage } from "./writeAllListingsToStorage";
 
 type AllListingsStoreValue = {
   items: ListingTableRow[];
-  remove: (id: string) => void;
+  remove: (id: string) => Promise<void>;
   setStatus: (id: string, status: ListingTableStatus) => void;
   /** Добавляет строку или обновляет поля существующей (черновик → архив/модерация). */
   upsert: (row: ListingTableRow) => void;
@@ -132,6 +132,7 @@ function MockAllListingsProvider({
       items,
       remove: (id) => {
         setItems((prev) => persist(storage, prev.filter((item) => item.id !== id)));
+        return Promise.resolve();
       },
       setStatus: (id, status) => {
         setItems((prev) =>
@@ -210,17 +211,17 @@ function PocketBaseAllListingsProvider({
       remove: (id) => {
         const serverId = idMap.current.get(id) ?? id;
         revision.current += 1;
-        touchRowRevision(rowRevisions.current, id);
+        const captured = touchRowRevision(rowRevisions.current, id);
         if (serverId !== id) {
           touchRowRevision(rowRevisions.current, serverId);
         }
-        setItems((prev) =>
-          prev.filter((item) => item.id !== id && item.id !== serverId),
-        );
-        void listings.remove(serverId).then(
-          () => undefined,
-          () => undefined,
-        );
+        return listings.remove(serverId).then(() => {
+          setItems((prev) =>
+            rowRevisions.current.get(id) === captured
+              ? prev.filter((item) => item.id !== id && item.id !== serverId)
+              : prev,
+          );
+        });
       },
       setStatus: (id, status) => {
         const shown: ListingTableStatus =

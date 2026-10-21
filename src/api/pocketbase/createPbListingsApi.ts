@@ -100,9 +100,13 @@ export function createPbListingsApi(options: {
     },
 
     async submitForModeration(id) {
-      const record = await client.updateRecord<PbListingRecord>(LISTINGS, id, {
-        status: "pending",
-      });
+      const current = await client.getRecord<PbListingRecord>(LISTINGS, id);
+      const maxGuests = Number(current.max_guests);
+      const patch: { status: "pending"; max_guests?: number } = { status: "pending" };
+      if (current.guests_forbidden === true && !(maxGuests >= 1)) {
+        patch.max_guests = 1;
+      }
+      const record = await client.updateRecord<PbListingRecord>(LISTINGS, id, patch);
       return pbListingToSiteListing(record, client.baseUrl);
     },
 

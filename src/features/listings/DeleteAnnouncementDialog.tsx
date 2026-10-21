@@ -7,6 +7,7 @@ type DeleteAnnouncementDialogProps = {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  error?: string;
 };
 
 const CARD_SHADOW =
@@ -16,6 +17,7 @@ export function DeleteAnnouncementDialog({
   open,
   onClose,
   onConfirm,
+  error = "",
 }: DeleteAnnouncementDialogProps): ReactElement | null {
   const titleId = useId();
   const descriptionId = useId();
@@ -92,6 +94,11 @@ export function DeleteAnnouncementDialog({
             <br />
             из приложения
           </p>
+          {error.trim().length > 0 ? (
+            <p className="m-0 text-[16px] font-normal leading-[1.45] text-red-600" role="alert">
+              {error}
+            </p>
+          ) : null}
         </div>
         <div className="flex w-full gap-3">
           <Button

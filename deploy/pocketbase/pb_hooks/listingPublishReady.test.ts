@@ -37,14 +37,18 @@ const readyDraft = {
   checkInTime: "13:00",
   checkOutTime: "15:00",
   housingType: "Квартира",
-  maxGuests: 0,
+  maxGuests: 1,
   guestsForbidden: true,
   priceNight: 8900,
   photoCount: 9,
 };
 
-test("draft with forbidden guests and zero places is ready for moderation", () => {
+test("forbidden guests with at least one place are ready for moderation", () => {
   expect(listingPublishReady(readyDraft)).toBe(true);
+});
+
+test("forbidden guests with zero places are not ready for moderation", () => {
+  expect(listingPublishReady({ ...readyDraft, maxGuests: 0 })).toBe(false);
 });
 
 test("pending listing without guests still needs at least one place", () => {

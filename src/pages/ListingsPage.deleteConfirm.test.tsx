@@ -125,15 +125,15 @@ test("Да, удалить вызывает удаление объявлени�
   await user.click(screen.getByRole("menuitem", { name: "Удалить" }));
   await user.click(screen.getByRole("button", { name: "Да, удалить" }));
 
+  expect(await screen.findByRole("heading", { name: "Нет объявлений" })).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(deletes.some((url) => url.includes(`/records/${LISTING_ID}`))).toBe(
     true,
   );
   expect(screen.queryByText(TITLE)).not.toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Нет объявлений" })).toBeInTheDocument();
 });
 
-test("Да, удалить убирает объявление, даже если сервер отклонил удаление", async () => {
+test("Да, удалить оставляет объявление и показывает ошибку, если сервер отклонил удаление", async () => {
   const user = userEvent.setup();
   const { deletes } = renderListings(400);
 
@@ -144,9 +144,10 @@ test("Да, удалить убирает объявление, даже есл�
   await user.click(screen.getByRole("menuitem", { name: "Удалить" }));
   await user.click(screen.getByRole("button", { name: "Да, удалить" }));
 
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(await screen.findByRole("alert")).toHaveTextContent("PocketBase delete failed");
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
   expect(deletes.some((url) => url.includes(`/records/${LISTING_ID}`))).toBe(
     true,
   );
-  expect(screen.queryByText(TITLE)).not.toBeInTheDocument();
+  expect(screen.getByText(TITLE)).toBeInTheDocument();
 });

@@ -11,8 +11,8 @@ function filled(value) {
 
 /**
  * Черновик можно оставить неполным.
- * На модерацию и в публикацию пускаем те же данные, что принимает мастер:
- * запрет гостей — это 0 мест, а не «не заполнено».
+ * На модерацию и в публикацию нужно max_guests >= 1,
+ * даже если гости запрещены.
  */
 function listingPublishReady(input) {
   const status = str(input.status)
@@ -20,7 +20,7 @@ function listingPublishReady(input) {
     return true
   }
   const guests = Number(input.maxGuests)
-  const guestsOk = input.guestsForbidden === true ? guests === 0 : guests >= 1
+  const guestsOk = guests >= 1
   const price = Number(input.priceNight)
   const photos = Number(input.photoCount)
   return (
