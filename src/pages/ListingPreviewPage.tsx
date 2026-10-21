@@ -119,6 +119,11 @@ export function ListingPreviewPage() {
       setListing(updated);
       upsert(listingTableRowFromListing(updated));
       setModerationOpen(true);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message.trim() : "";
+      setSubmitError(
+        message.length > 0 ? message : "Не удалось отправить на модерацию",
+      );
     } finally {
       setPending(false);
     }

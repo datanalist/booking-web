@@ -1,7 +1,8 @@
 // Не даёт отправить на модерацию или опубликовать объявление без обязательных полей и шести фото.
 
+const { listingPublishReady } = require(`${__hooks}/listingPublishReady.js`)
+
 function guardListingPublish(e) {
-  const HOUSING = ["Квартира", "Дом", "Комната", "Отель"]
   const record = e.record
   if (!record) {
     e.next()
@@ -10,11 +11,6 @@ function guardListingPublish(e) {
 
   function str(value) {
     return value == null ? "" : String(value).trim()
-  }
-
-  function filled(field) {
-    const value = str(record.get(field))
-    return value !== "" && value !== "null" && value !== "undefined"
   }
 
   function listedPhotos() {
@@ -56,20 +52,22 @@ function guardListingPublish(e) {
     return
   }
 
-  const housing = str(record.get("housing_type"))
-  const guests = Number(record.get("max_guests"))
-  const price = Number(record.get("price_night"))
-  const ready =
-    filled("title") &&
-    filled("city") &&
-    filled("address") &&
-    filled("description") &&
-    filled("check_in_time") &&
-    filled("check_out_time") &&
-    HOUSING.indexOf(housing) !== -1 &&
-    guests >= 1 &&
-    price > 0 &&
-    (listedPhotos() >= 6 || (listedPhotos() + uploadedPhotos()) >= 6)
+  const listed = listedPhotos()
+  const uploaded = uploadedPhotos()
+  const ready = listingPublishReady({
+    status,
+    title: record.get("title"),
+    city: record.get("city"),
+    address: record.get("address"),
+    description: record.get("description"),
+    checkInTime: record.get("check_in_time"),
+    checkOutTime: record.get("check_out_time"),
+    housingType: record.get("housing_type"),
+    maxGuests: record.get("max_guests"),
+    guestsForbidden: record.get("guests_forbidden") === true,
+    priceNight: record.get("price_night"),
+    photoCount: listed >= 6 ? listed : listed + uploaded,
+  })
   if (!ready) {
     throw new BadRequestError(
       "Чтобы отправить объявление, заполните поля и добавьте минимум 6 фотографий",
