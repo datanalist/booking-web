@@ -9,6 +9,7 @@ import type { BookingTabId } from "../bookingTabId";
 import { BookingsGuestSearch } from "../BookingsGuestSearch";
 import { BookingsTabs } from "../BookingsTabs";
 import type { BookingRequest, BookingRequestId } from "../domain/BookingRequest";
+import type { RejectedBooking } from "../domain/RejectedBooking";
 import { parseBookingsEmptyParam } from "../parseBookingsEmptyParam";
 import { parseBookingsTabParam } from "../parseBookingsTabParam";
 import {
@@ -22,6 +23,10 @@ import type { ConfirmedBooking } from "./confirmed/ConfirmedBooking";
 import type { ConfirmedBookingId } from "./confirmed/ConfirmedBookingId";
 import { confirmedBookingsStore } from "./confirmed/confirmedBookingsStore";
 import type { RequestDecision } from "./confirmed/request/RequestDecision";
+
+function emptyBookingsSnapshot(): BookingsSnapshot {
+  return { requests: [], confirmed: [], rejected: [], cancelled: [] };
+}
 
 function readHostId(): string | null {
   const raw = localStorage.getItem(SESSION_KEY);
@@ -43,18 +48,23 @@ export function BookingsPage() {
   const tab = parseBookingsTabParam(params.get("tab"));
   const forceEmpty = parseBookingsEmptyParam(params.get("empty"));
   const [query, setQuery] = useState("");
+  const pocketbase = resolveCabinetDataSource() === "pocketbase";
+  const [loaded, setLoaded] = useState(!pocketbase);
   const [requests, setRequests] = useState<readonly BookingRequest[] | undefined>(
     undefined,
   );
-  const [pocketbaseLive, setPocketbaseLive] = useState(false);
+  const [rejected, setRejected] = useState<readonly RejectedBooking[] | undefined>(
+    undefined,
+  );
   const sourceRef = useRef<BookingsSource | null>(null);
   const mountedRef = useRef(true);
 
   function publish(snapshot: BookingsSnapshot): void {
     setRequests(snapshot.requests);
+    setRejected(snapshot.rejected);
     confirmedBookingsStore.set(snapshot.confirmed);
     cancelledBookingsStore.replace(snapshot.cancelled);
-    setPocketbaseLive(true);
+    setLoaded(true);
   }
 
   async function reload(source: BookingsSource): Promise<void> {
@@ -67,13 +77,14 @@ export function BookingsPage() {
 
   useEffect(() => {
     mountedRef.current = true;
-    if (resolveCabinetDataSource() !== "pocketbase") {
+    if (!pocketbase) {
       return () => {
         mountedRef.current = false;
       };
     }
     const hostId = readHostId();
     if (hostId === null) {
+      publish(emptyBookingsSnapshot());
       return () => {
         mountedRef.current = false;
       };
@@ -85,7 +96,9 @@ export function BookingsPage() {
       .then((snapshot) => {
         if (mountedRef.current) publish(snapshot);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (mountedRef.current) publish(emptyBookingsSnapshot());
+      });
     return () => {
       mountedRef.current = false;
     };
@@ -147,9 +160,11 @@ export function BookingsPage() {
         tab={tab}
         query={query}
         forceEmpty={forceEmpty}
-        {...(pocketbaseLive
+        pending={pocketbase && !loaded}
+        {...(pocketbase && loaded
           ? {
-              requests,
+              requests: requests ?? [],
+              rejected: rejected ?? [],
               onAccept: handleAccept,
               onReject: handleReject,
               onHostCancel: handleHostCancel,
