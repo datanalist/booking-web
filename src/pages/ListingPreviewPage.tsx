@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSession } from "../app/session";
 import { resolveCabinetDataSource } from "../api/pocketbase/dataSource";
@@ -31,6 +31,7 @@ export function ListingPreviewPage() {
   const location = useLocation();
   const [listing, setListing] = useState<Listing | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const deleteOpenedAt = useRef(0);
   const [moderationOpen, setModerationOpen] = useState(false);
   const [unpublishOpen, setUnpublishOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
@@ -211,7 +212,10 @@ export function ListingPreviewPage() {
         pending={pending}
         onBack={onBack}
         onEdit={() => navigateToEdit(listing.id, 1)}
-        onDelete={() => setDeleteOpen(true)}
+        onDelete={() => {
+          deleteOpenedAt.current = Date.now();
+          setDeleteOpen(true);
+        }}
         onArchive={() => {
           void onArchive();
         }}
@@ -229,7 +233,12 @@ export function ListingPreviewPage() {
 
       <DeleteAnnouncementDialog
         open={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
+        onClose={() => {
+          if (Date.now() - deleteOpenedAt.current < 400) {
+            return;
+          }
+          setDeleteOpen(false);
+        }}
         onConfirm={() => {
           void onDelete();
         }}
