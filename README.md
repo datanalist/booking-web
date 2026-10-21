@@ -112,6 +112,7 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 - Track B (JSVM-хуки): [`docs/superpowers/reviews/2026-10-18-track-b-review.md`](docs/superpowers/reviews/2026-10-18-track-b-review.md)
 - Track C (инфраструктура мини-ПК): [`docs/superpowers/reviews/2026-10-18-track-c-review.md`](docs/superpowers/reviews/2026-10-18-track-c-review.md)
 - Финальное интеграционное ревью и Docker smoke-тест: [`docs/superpowers/reviews/2026-10-18-integration-review.md`](docs/superpowers/reviews/2026-10-18-integration-review.md)
+- Ревью плана кабинета на PocketBase (вердикт «с исправлениями», замечания 1–12 внесены в локальный план): [`docs/superpowers/reviews/2026-10-19-cabinet-pocketbase-plan-review.md`](docs/superpowers/reviews/2026-10-19-cabinet-pocketbase-plan-review.md)
 
 ## Чаты
 
