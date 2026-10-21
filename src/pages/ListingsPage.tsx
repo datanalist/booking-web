@@ -93,8 +93,9 @@ export function ListingsPage() {
     if (deleteId === null) {
       return;
     }
-    remove(deleteId);
+    const id = deleteId;
     setDeleteId(null);
+    remove(id);
   }
 
   function confirmUnpublish(): void {
