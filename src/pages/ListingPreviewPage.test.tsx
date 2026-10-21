@@ -198,6 +198,49 @@ test("edit navigates to wizard without wiping draft title", async () => {
   expect(stored[0]?.title).toBe("Редактируемый черновик");
 });
 
+test("forbidden-guests draft submits to moderation", async () => {
+  const user = userEvent.setup();
+  seedSession();
+  seedListing(
+    completeListing({
+      title: "Черновик без гостей",
+      guestsForbidden: true,
+      maxGuests: 0,
+    }),
+  );
+  renderPreview();
+
+  await screen.findByRole("heading", { name: "Черновик без гостей" });
+  await user.click(
+    screen.getByRole("button", { name: "Отправить на модерацию" }),
+  );
+
+  expect(screen.queryByTestId("edit-page")).not.toBeInTheDocument();
+  expect(
+    await screen.findByRole("heading", {
+      name: "Объявление отправлено на модерацию",
+    }),
+  ).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Ок" }));
+
+  expect(
+    await screen.findByRole("heading", { name: "Мои объявления" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "На модерации" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  const modTable = screen.getByRole("table", { name: "На модерации" });
+  expect(within(modTable).getByText("Черновик без гостей")).toBeInTheDocument();
+  const stored = JSON.parse(
+    localStorage.getItem(LISTINGS_KEY) ?? "[]",
+  ) as Listing[];
+  expect(stored.find((item) => item.title === "Черновик без гостей")?.status).toBe(
+    "moderation",
+  );
+});
+
 test("submit for moderation shows alert then lands on moderation tab", async () => {
   const user = userEvent.setup();
   seedSession();
