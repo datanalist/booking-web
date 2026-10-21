@@ -32,7 +32,7 @@ export function AllListingsTableRow({
           onOpen(item.id);
         }
       }}
-      className="grid min-h-[76px] cursor-pointer grid-cols-[minmax(0,2.2fr)_minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_56px] items-center border-b border-amber-400/20 bg-white last:border-b-0"
+      className="col-span-full grid min-h-[76px] cursor-pointer grid-cols-subgrid items-center border-b border-amber-400/20 bg-white last:border-b-0"
     >
       <div
         role="cell"
@@ -53,7 +53,7 @@ export function AllListingsTableRow({
       >
         {HOUSING_LABELS[item.housingType]}
       </div>
-      <div role="cell" className="px-6 py-2.5">
+      <div role="cell" className="w-max px-6 py-2.5">
         <ListingStatusBadge status={item.status} />
       </div>
       <div
