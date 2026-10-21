@@ -173,6 +173,29 @@ export function ListingWizardPage() {
     }
   }
 
+  /**
+   * Шаг описания. Черновик сохраняется и переходит дальше.
+   * Опубликованное объявление saveDraft не записывает (INVALID_STATUS),
+   * поэтому «Далее» только сменяет шаг — иначе клик ничего не делает.
+   */
+  async function saveDescriptionAndGo(): Promise<void> {
+    if (!draft || !session) {
+      return;
+    }
+    if (draft.status !== "published") {
+      await saveAndGo(2);
+      return;
+    }
+    const currentErrors = validateCurrent(draft);
+    if (Object.keys(currentErrors).length > 0) {
+      setErrors(currentErrors);
+      return;
+    }
+    setErrors({});
+    setTouched(false);
+    setStep(2);
+  }
+
   /** Стрелка «Назад» в шапке: в «Мои объявления» на вкладку-источник, а не на шаг назад. */
   async function exitToListings(): Promise<void> {
     if (draft && draft.id && touched) {
@@ -364,7 +387,7 @@ export function ListingWizardPage() {
               patch({ housingType: value });
             }}
             onDescriptionChange={(value) => patch({ description: value })}
-            onNext={() => void saveAndGo(2)}
+            onNext={() => void saveDescriptionAndGo()}
           />
         ) : null}
 
