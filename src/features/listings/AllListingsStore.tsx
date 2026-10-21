@@ -208,13 +208,18 @@ function PocketBaseAllListingsProvider({
     (): AllListingsStoreValue => ({
       items,
       remove: (id) => {
-        applyRowAfterSuccess(
-          revision,
-          rowRevisions.current,
-          id,
-          listings.remove(id),
-          setItems,
-          (prev) => prev.filter((item) => item.id !== id),
+        const serverId = idMap.current.get(id) ?? id;
+        revision.current += 1;
+        touchRowRevision(rowRevisions.current, id);
+        if (serverId !== id) {
+          touchRowRevision(rowRevisions.current, serverId);
+        }
+        setItems((prev) =>
+          prev.filter((item) => item.id !== id && item.id !== serverId),
+        );
+        void listings.remove(serverId).then(
+          () => undefined,
+          () => undefined,
         );
       },
       setStatus: (id, status) => {
