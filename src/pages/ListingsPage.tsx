@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { resolveCabinetDataSource } from "../api/pocketbase/dataSource";
 import {
   AllListingsTable,
+  BookingCalendarAlert,
   DeleteAnnouncementDialog,
   filterListingsByQuery,
   PublishAnnouncementDialog,
@@ -61,6 +62,9 @@ export function ListingsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [unpublishId, setUnpublishId] = useState<string | null>(null);
   const [publishId, setPublishId] = useState<string | null>(null);
+  const [calendarListingId, setCalendarListingId] = useState<string | null>(
+    null,
+  );
 
   const visibleItems = filterListingsByQuery(itemsForTab(items, tab), query);
 
@@ -74,6 +78,7 @@ export function ListingsPage() {
       return;
     }
     if (actionId === "calendar") {
+      setCalendarListingId(listingId);
       return;
     }
     if (actionId === "delete") {
@@ -214,6 +219,15 @@ export function ListingsPage() {
         open={publishId !== null}
         onClose={() => setPublishId(null)}
         onConfirm={confirmPublish}
+      />
+      <BookingCalendarAlert
+        open={calendarListingId !== null}
+        listingId={calendarListingId ?? undefined}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCalendarListingId(null);
+          }
+        }}
       />
     </div>
   );
