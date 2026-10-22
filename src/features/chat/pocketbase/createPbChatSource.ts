@@ -6,6 +6,8 @@ import {
   pbChatToThread,
   pbMessageToChatMessage,
 } from "./pbChatMapper";
+import { noticeFromRealtime } from "./chatLiveNotice";
+import { openChatRealtime } from "./openChatRealtime";
 import type { PbChatRecord, PbMessageRecord } from "./pbChatTypes";
 import type { ChatSource } from "./chatSource";
 
@@ -22,7 +24,7 @@ export function createPbChatSource(client: PbClient): ChatSource {
       const chats = await client.listRecords<PbChatRecord>("chats", {
         filter: `host="${hostId}"`,
         expand: CHAT_EXPAND,
-        sort: "-updated",
+        sort: "-last_message_at",
         perPage: 50,
       });
       if (chats.items.length === 0) {
@@ -35,7 +37,7 @@ export function createPbChatSource(client: PbClient): ChatSource {
         sort: "-created",
       });
       const grouped = groupMessages(messages.items);
-      return chats.items.map((chat) =>
+      return orderByLastMessage(chats.items).map((chat) =>
         pbChatToThread(chat, grouped.get(chat.id) ?? [], hostId),
       );
     },
@@ -50,7 +52,7 @@ export function createPbChatSource(client: PbClient): ChatSource {
       return {
         heading: pbChatToHeading(chat, client.baseUrl),
         messages: messages.items.flatMap((message) =>
-          pbMessageToChatMessage(message, hostId, client.baseUrl),
+          pbMessageToChatMessage(message, hostId, client.baseUrl, chat.host_last_read ?? ""),
         ),
         dateLabel: dayMonthLabel(chat.created),
       };
@@ -74,6 +76,29 @@ export function createPbChatSource(client: PbClient): ChatSource {
         buildPbMarkChatReadPayload(new Date().toISOString()),
       );
     },
+
+    watchInbox(hostId, onNotice) {
+      let seq = 0;
+      return openChatRealtime({
+        url: `${client.baseUrl}/api/realtime`,
+        topics: ["messages", "chats"],
+        subscribe: async (clientId) => {
+          await client.post("/api/realtime", {
+            clientId,
+            subscriptions: ["messages", "chats"],
+          });
+        },
+        onData: (topic, data) => {
+          const notice = noticeFromRealtime(topic, data, hostId, client.baseUrl, () => {
+            seq += 1;
+            return seq;
+          });
+          if (notice !== null) {
+            onNotice(notice);
+          }
+        },
+      });
+    },
   };
 }
 
@@ -92,6 +117,21 @@ async function loadChat(client: PbClient, chatId: string): Promise<PbChatRecord>
     throw new Error("Чат не найден");
   }
   return chat;
+}
+
+/** Порядок списка — время последнего сообщения. Правка записи при прочтении его не двигает. */
+function orderByLastMessage(chats: readonly PbChatRecord[]): PbChatRecord[] {
+  return [...chats].sort((left, right) => lastMessageInstant(right) - lastMessageInstant(left));
+}
+
+function lastMessageInstant(chat: PbChatRecord): number {
+  const raw = chat.last_message_at?.trim() ?? "";
+  if (raw.length === 0) {
+    return 0;
+  }
+  const normalized = raw.includes("T") ? raw : raw.replace(" ", "T");
+  const time = Date.parse(normalized);
+  return Number.isNaN(time) ? 0 : time;
 }
 
 function groupMessages(

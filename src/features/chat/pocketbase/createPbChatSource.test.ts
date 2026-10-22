@@ -36,9 +36,40 @@ describe("createPbChatSource", () => {
     const threads = await createPbChatSource(client).listThreads("user1");
     const url = urls.find((item) => item.includes("/api/collections/chats/records")) ?? "";
     expect(url).toContain("/api/collections/chats/records");
+    expect(url).toContain("last_message_at");
     expect(url).toContain("user1");
     expect(threads[0]?.id).toBe("chat1");
     expect(urls.some((item) => item.includes("/api/collections/messages/records"))).toBe(true);
+  });
+
+  test("открытие чата не поднимает его выше более нового сообщения", async () => {
+    const opened = {
+      ...chat,
+      id: "opened",
+      last_message: "Да, во дворе бесплатно",
+      last_message_at: "2026-10-22 13:21:00.000Z",
+      updated: "2026-10-22 21:28:00.000Z",
+      expand: { guest: { id: "gst-elena", name: "Елена" } },
+    };
+    const fresh = {
+      ...chat,
+      id: "fresh",
+      last_message: "Подъехали",
+      last_message_at: "2026-10-23 00:26:00.000Z",
+      updated: "2026-10-23 00:26:00.000Z",
+      expand: { guest: { id: "gst-anna", name: "Анна" } },
+    };
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async (input) => {
+        const items = String(input).includes("/api/collections/messages/records") ? [] : [opened, fresh];
+        return new Response(JSON.stringify({
+          page: 1, perPage: 50, totalItems: items.length, totalPages: 1, items,
+        }), { status: 200 });
+      },
+    });
+    const threads = await createPbChatSource(client).listThreads("user1");
+    expect(threads.map((thread) => thread.id)).toEqual(["fresh", "opened"]);
   });
 
   test("пустой список чатов не запрашивает messages", async () => {
@@ -87,6 +118,7 @@ describe("createPbChatSource", () => {
     expect(model.messages.map((message) => message.kind === "text" ? message.body : "")).toContain(
       "Добрый день",
     );
+    expect(model.messages[0]?.receipt).toBe("unread");
     expect(model.dateLabel).toMatch(/10\s+сентября/u);
   });
 

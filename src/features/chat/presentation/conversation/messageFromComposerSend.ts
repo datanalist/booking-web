@@ -12,8 +12,15 @@ export function messageFromComposerSend(draft: ComposerSend, now: Date): ChatMes
   const timeLabel = formatMessageTime(now);
   switch (draft.kind) {
     case "text":
-      return { kind: "text", id, author: "self", timeLabel, body: draft.body };
+      return { kind: "text", id, author: "self", timeLabel, body: draft.body, receipt: "read" };
     case "photo":
-      return { kind: "photo", id, author: "self", timeLabel, photo: draft.photo };
+      return {
+        kind: "photo",
+        id,
+        author: "self",
+        timeLabel,
+        photo: draft.photo,
+        receipt: "read",
+      };
   }
 }

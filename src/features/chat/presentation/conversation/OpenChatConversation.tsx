@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { chatMessagesFromSeed } from "../../data/chatMessageMocks";
 import { chatSeedById } from "../../data/chatSeeds";
 import type { ChatId } from "../../domain/ChatId";
-import type { ChatSource, ChatConversationModel } from "../../pocketbase";
+import type { ChatMessage } from "../../domain/ChatMessage";
+import type { ChatSource, ChatConversationModel, ChatLiveNotice } from "../../pocketbase";
 import { chatAssets } from "../assets/chatAssets";
 import { ChatConversation } from "./ChatConversation";
 import { chatSeedPhotoUrls } from "./chatSeedPhotoUrls";
@@ -15,27 +16,43 @@ type OpenChatConversationProps = {
   chatId: ChatId;
   source?: ChatSource;
   hostId?: string;
+  liveNotice?: ChatLiveNotice | null;
 };
 
 type LiveChatConversationProps = {
   chatId: ChatId;
   source: ChatSource;
   hostId: string;
+  liveNotice: ChatLiveNotice | null;
 };
 
 /** Правая панель: переписка выбранного чата из сида или живого источника. */
-export function OpenChatConversation({ chatId, source, hostId }: OpenChatConversationProps) {
+export function OpenChatConversation({
+  chatId,
+  source,
+  hostId,
+  liveNotice = null,
+}: OpenChatConversationProps) {
   if (source === undefined || hostId === undefined) {
     return <SeedChatConversation chatId={chatId} />;
   }
-  return <LiveChatConversation key={chatId} chatId={chatId} source={source} hostId={hostId} />;
+  return (
+    <LiveChatConversation
+      key={chatId}
+      chatId={chatId}
+      source={source}
+      hostId={hostId}
+      liveNotice={liveNotice}
+    />
+  );
 }
 
 /** Живой тред. key по chatId обнуляет модель и локальные исходящие до отрисовки. */
-function LiveChatConversation({ chatId, source, hostId }: LiveChatConversationProps) {
+function LiveChatConversation({ chatId, source, hostId, liveNotice }: LiveChatConversationProps) {
   const [model, setModel] = useState<ChatConversationModel | null>(null);
   const outgoing = useOutgoingMessages();
   const activeChatId = useRef(chatId);
+  const pendingLive = useRef<readonly ChatMessage[]>([]);
   activeChatId.current = chatId;
 
   useEffect(() => {
@@ -44,8 +61,9 @@ function LiveChatConversation({ chatId, source, hostId }: LiveChatConversationPr
     void source.loadConversation(chatId, hostId).then(
       (loaded) => {
         if (!cancelled) {
-          setModel(loaded);
+          setModel(appendMessages(loaded, pendingLive.current));
         }
+        void source.markRead(chatId).catch(() => undefined);
       },
       () => {
         if (!cancelled) {
@@ -53,11 +71,22 @@ function LiveChatConversation({ chatId, source, hostId }: LiveChatConversationPr
         }
       },
     );
-    void source.markRead(chatId).catch(() => undefined);
     return () => {
       cancelled = true;
     };
   }, [chatId, hostId, source]);
+
+  useEffect(() => {
+    if (liveNotice === null || liveNotice.kind !== "message" || liveNotice.action !== "create") {
+      return;
+    }
+    if (liveNotice.chatId !== chatId) {
+      return;
+    }
+    pendingLive.current = mergeMessages(pendingLive.current, liveNotice.messages);
+    setModel((current) => (current === null ? current : appendMessages(current, liveNotice.messages)));
+    void source.markRead(chatId).catch(() => undefined);
+  }, [chatId, liveNotice, source]);
 
   if (model === null) {
     return null;
@@ -94,6 +123,29 @@ function SeedChatConversation({ chatId }: { chatId: ChatId }) {
       }
     />
   );
+}
+
+function appendMessages(
+  model: ChatConversationModel,
+  incoming: readonly ChatMessage[],
+): ChatConversationModel {
+  const messages = mergeMessages(model.messages, incoming);
+  if (messages === model.messages) {
+    return model;
+  }
+  return { ...model, messages };
+}
+
+function mergeMessages(
+  current: readonly ChatMessage[],
+  incoming: readonly ChatMessage[],
+): readonly ChatMessage[] {
+  const known = new Set(current.map((message) => message.id));
+  const fresh = incoming.filter((message) => !known.has(message.id));
+  if (fresh.length === 0) {
+    return current;
+  }
+  return [...current, ...fresh];
 }
 
 function sendLiveText(

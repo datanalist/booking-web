@@ -1,10 +1,11 @@
 import { chatId, type ChatId } from "../domain/ChatId";
 import { chatMessageId, type ChatMessageId } from "../domain/ChatMessageId";
+import type { MessageReceipt } from "../domain/ChatMessage";
 import type { MessageAuthor } from "../domain/MessageAuthor";
 import { messageTimeLabel, type MessageTimeLabel } from "../domain/MessageTimeLabel";
 import type { ChatAvatarKey } from "../domain/ChatThread";
 
-export type ChatSeedReceipt = "read" | "unread";
+export type ChatSeedReceipt = MessageReceipt;
 
 export type ChatSeedPhotoSlot = "message" | "cover";
 

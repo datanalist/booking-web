@@ -3,10 +3,14 @@ import type { ChatPhoto } from "./ChatPhoto";
 import type { MessageAuthor } from "./MessageAuthor";
 import type { MessageTimeLabel } from "./MessageTimeLabel";
 
+/** Прочтение входящего: свои сообщения всегда прочитаны. */
+export type MessageReceipt = "read" | "unread";
+
 type ChatMessageBase = {
   readonly id: ChatMessageId;
   readonly author: MessageAuthor;
   readonly timeLabel: MessageTimeLabel;
+  readonly receipt: MessageReceipt;
 };
 
 export type TextChatMessage = ChatMessageBase & {

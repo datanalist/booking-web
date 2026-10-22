@@ -61,6 +61,20 @@ test("фото-сообщения берут слот ассета, а не от
   expect(annaPhoto.photo.alt).toBe("Двор дома");
 });
 
+test("непрочитанные реплики сида остаются непрочитанными в ленте", () => {
+  const ekaterina = CHAT_SEEDS.find((seed) => seed.avatarKey === "ekaterina");
+  if (ekaterina === undefined) {
+    throw new Error("В сиде нет чата Екатерины");
+  }
+  const messages = chatMessagesFromSeed(ekaterina, PHOTO_URLS);
+  const unread = messages.filter((message) => message.receipt === "unread");
+  expect(unread.map((message) => (message.kind === "text" ? message.body : ""))).toEqual([
+    "Оплату перевела, чек придёт следом",
+    "Добрый день, бронирование оплачено",
+  ]);
+  expect(messages.filter((message) => message.receipt === "read").length).toBe(messages.length - 2);
+});
+
 function expectedUnread(turns: ReturnType<typeof chatSeedTurns>) {
   const count = turns.filter((turn) => turn.receipt === "unread").length;
   if (count === 0) {

@@ -307,9 +307,43 @@ describe("pbMessageToChatMessage", () => {
     );
 
     expect(own).toEqual([
-      { kind: "text", id: MESSAGE_ID, author: "self", timeLabel: clock(created), body: "Привет" },
+      {
+        kind: "text",
+        id: MESSAGE_ID,
+        author: "self",
+        timeLabel: clock(created),
+        body: "Привет",
+        receipt: "read",
+      },
     ]);
     expect(peer[0]?.author).toBe("peer");
+    expect(peer[0]?.receipt).toBe("unread");
+  });
+
+  test("чужое новее host_last_read непрочитано, на границе и своё — прочитано", () => {
+    const readAt = "2026-10-19T11:00:00.000Z";
+    const unread = pbMessageToChatMessage(
+      message({ id: MESSAGE_ID, author: GUEST_ID, created: "2026-10-19T12:00:00.000Z", text: "Новое" }),
+      HOST_ID,
+      undefined,
+      readAt,
+    );
+    const boundary = pbMessageToChatMessage(
+      message({ id: MESSAGE_ID, author: GUEST_ID, created: readAt, text: "На границе" }),
+      HOST_ID,
+      undefined,
+      readAt,
+    );
+    const own = pbMessageToChatMessage(
+      message({ id: MESSAGE_ID, author: HOST_ID, created: "2026-10-19T12:00:00.000Z", text: "Своё" }),
+      HOST_ID,
+      undefined,
+      "",
+    );
+
+    expect(unread[0]?.receipt).toBe("unread");
+    expect(boundary[0]?.receipt).toBe("read");
+    expect(own[0]?.receipt).toBe("read");
   });
 
   test("текст и фото дают несколько сообщений с адресами файлов", () => {
@@ -334,6 +368,7 @@ describe("pbMessageToChatMessage", () => {
       id: mapped[1]?.id,
       author: "peer",
       timeLabel: clock(created),
+      receipt: "unread",
       photo: {
         url: chatPhotoUrl(`${BASE}/api/files/messages/rec15charvalue1/room.png`),
         alt: "room.png",
@@ -372,6 +407,7 @@ describe("pbMessageToChatMessage", () => {
         id: MESSAGE_ID,
         author: "peer",
         timeLabel: clock(created),
+        receipt: "unread",
         photo: {
           url: chatPhotoUrl(`/api/files/messages/${MESSAGE_ID}/only.png`),
           alt: "only.png",

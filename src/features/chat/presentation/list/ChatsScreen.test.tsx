@@ -80,6 +80,7 @@ test("слот переписки заменяет плейсхолдер у в�
     "aria-current",
     "true",
   );
+  expect(within(screen.getByRole("button", { name: /Екатерина Кондратьева/ })).queryByRole("status")).not.toBeInTheDocument();
 });
 
 test("поиск скрывает несовпавшие чаты", async () => {

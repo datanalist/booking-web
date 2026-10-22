@@ -15,5 +15,5 @@ export {
   pbChatToThread,
   pbMessageToChatMessage,
 } from "./pbChatMapper";
-export type { ChatConversationModel, ChatSource } from "./chatSource";
+export type { ChatConversationModel, ChatLiveNotice, ChatSource } from "./chatSource";
 export { createPbChatSource } from "./createPbChatSource";

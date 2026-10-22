@@ -1,5 +1,5 @@
 import { chatId, type ChatId } from "../domain/ChatId";
-import type { ChatMessage } from "../domain/ChatMessage";
+import type { ChatMessage, MessageReceipt } from "../domain/ChatMessage";
 import { chatPhotoUrl } from "../domain/ChatPhoto";
 import {
   unreadCount,
@@ -98,9 +98,11 @@ export function pbMessageToChatMessage(
   msg: PbMessageRecord,
   currentUserId: string,
   baseUrl?: string,
+  hostLastRead = "",
 ): ChatMessage[] {
   const author: MessageAuthor = msg.author === currentUserId ? "self" : "peer";
   const timeLabel = timeLabelFromIso(msg.created);
+  const receipt = receiptFor(msg, currentUserId, hostLastRead);
   const text = visibleText(msg.text);
   const images = (msg.images ?? []).filter((name) => name.trim().length > 0);
   const messages: ChatMessage[] = [];
@@ -111,6 +113,7 @@ export function pbMessageToChatMessage(
       author,
       timeLabel,
       body: text,
+      receipt,
     });
   }
   images.forEach((filename, index) => {
@@ -124,6 +127,7 @@ export function pbMessageToChatMessage(
       id: messageIdFor(msg.id, onlyPhoto ? "primary" : `photo:${index}`),
       author,
       timeLabel,
+      receipt,
       photo: { url, alt: filename },
     });
   });
@@ -247,6 +251,14 @@ function pbInstant(value: string): number | null {
   const normalized = value.includes("T") ? value : value.replace(" ", "T");
   const time = Date.parse(normalized);
   return Number.isNaN(time) ? null : time;
+}
+
+function receiptFor(
+  msg: PbMessageRecord,
+  currentUserId: string,
+  hostLastRead: string,
+): MessageReceipt {
+  return isUnreadMessage(msg, hostLastRead, currentUserId) ? "unread" : "read";
 }
 
 function isUnreadMessage(

@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { SESSION_KEY } from "../../../api/keys";
 import { createCabinetPbClient, resolveCabinetDataSource } from "../../../api/pocketbase";
 import { CHAT_THREAD_MOCKS } from "../data/chatThreadMocks";
 import type { ChatId } from "../domain/ChatId";
 import type { ChatThread } from "../domain/ChatThread";
-import { createPbChatSource, type ChatSource } from "../pocketbase";
+import { createPbChatSource, type ChatLiveNotice, type ChatSource } from "../pocketbase";
 import { OpenChatConversation } from "./conversation/OpenChatConversation";
 import { DefaultChatScreen } from "./default/DefaultChatScreen";
+import { applyLiveMessage, clearChatUnread } from "./list/applyThreadInbox";
 import { ChatsScreen } from "./list/ChatsScreen";
 
 type ChatPageProps = {
@@ -22,9 +23,37 @@ export function ChatPage({ threads, initialChatId = null }: ChatPageProps) {
   );
   const hostId = live ? readSessionUserId() : null;
   const [loadedThreads, setLoadedThreads] = useState<readonly ChatThread[] | null>(null);
+  const [liveNotice, setLiveNotice] = useState<ChatLiveNotice | null>(null);
   const [selectedChatId, setSelectedChatId] = useState<ChatId | null>(() =>
     openedChatId(threads ?? CHAT_THREAD_MOCKS, initialChatId),
   );
+  const selectedRef = useRef(selectedChatId);
+  selectedRef.current = selectedChatId;
+  const threadsRef = useRef(loadedThreads);
+  threadsRef.current = loadedThreads;
+  const refreshGen = useRef(0);
+
+  function refreshThreads(): void {
+    if (source === null || hostId === null) {
+      return;
+    }
+    const ticket = refreshGen.current + 1;
+    refreshGen.current = ticket;
+    void source.listThreads(hostId).then(
+      (loaded) => {
+        if (ticket !== refreshGen.current) {
+          return;
+        }
+        setLoadedThreads(clearChatUnread(loaded, selectedRef.current));
+      },
+      () => {
+        if (ticket !== refreshGen.current) {
+          return;
+        }
+        setLoadedThreads([]);
+      },
+    );
+  }
 
   useEffect(() => {
     if (source === null) {
@@ -34,22 +63,34 @@ export function ChatPage({ threads, initialChatId = null }: ChatPageProps) {
       setLoadedThreads([]);
       return;
     }
-    let cancelled = false;
-    void source.listThreads(hostId).then(
-      (loaded) => {
-        if (!cancelled) {
-          setLoadedThreads(loaded);
+    refreshThreads();
+  }, [hostId, source]);
+
+  useEffect(() => {
+    if (source === null || hostId === null || source.watchInbox === undefined) {
+      return;
+    }
+    return source.watchInbox(hostId, (notice) => {
+      if (notice.kind === "message" && notice.action === "create") {
+        setLiveNotice(notice);
+        const known = threadsRef.current?.some((thread) => thread.id === notice.chatId) ?? false;
+        setLoadedThreads((current) =>
+          current === null
+            ? current
+            : applyLiveMessage(current, {
+                chatId: notice.chatId,
+                preview: notice.preview,
+                sentAt: notice.sentAt,
+                incoming: notice.incoming,
+                chatIsOpen: selectedRef.current === notice.chatId,
+              }),
+        );
+        if (known) {
+          return;
         }
-      },
-      () => {
-        if (!cancelled) {
-          setLoadedThreads([]);
-        }
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
+      }
+      refreshThreads();
+    });
   }, [hostId, source]);
 
   useEffect(() => {
@@ -64,8 +105,17 @@ export function ChatPage({ threads, initialChatId = null }: ChatPageProps) {
     });
   }, [initialChatId, loadedThreads]);
 
-  const visibleThreads = threads ?? (live ? (loadedThreads ?? []) : CHAT_THREAD_MOCKS);
+  const visibleThreads = clearChatUnread(
+    threads ?? (live ? (loadedThreads ?? []) : CHAT_THREAD_MOCKS),
+    selectedChatId,
+  );
   const showThreads = threads !== undefined || !live || loadedThreads !== null;
+
+  function selectChat(chatId: ChatId): void {
+    selectedRef.current = chatId;
+    setSelectedChatId(chatId);
+    setLoadedThreads((current) => (current === null ? current : clearChatUnread(current, chatId)));
+  }
 
   return (
     <div className="flex h-full w-full flex-col gap-8 bg-[rgba(251,192,40,0.06)] p-8 font-sans">
@@ -80,9 +130,9 @@ export function ChatPage({ threads, initialChatId = null }: ChatPageProps) {
           <ChatsScreen
             threads={visibleThreads}
             selectedChatId={selectedChatId}
-            onSelectChat={setSelectedChatId}
+            onSelectChat={selectChat}
             renderConversation={(chatId) =>
-              renderOpenChat(chatId, source ?? undefined, hostId ?? undefined)
+              renderOpenChat(chatId, source ?? undefined, hostId ?? undefined, liveNotice)
             }
           />
         </div>
@@ -95,8 +145,16 @@ function renderOpenChat(
   chatId: ChatId,
   source: ChatSource | undefined,
   hostId: string | undefined,
+  liveNotice: ChatLiveNotice | null,
 ): ReactNode {
-  return <OpenChatConversation chatId={chatId} source={source} hostId={hostId} />;
+  return (
+    <OpenChatConversation
+      chatId={chatId}
+      source={source}
+      hostId={hostId}
+      liveNotice={liveNotice}
+    />
+  );
 }
 
 function openedChatId(

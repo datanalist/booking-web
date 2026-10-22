@@ -10,7 +10,7 @@ type ChatListItemProps = {
 };
 
 export function ChatListItem({ thread, selected, onSelect }: ChatListItemProps) {
-  const unread = visibleUnread(thread);
+  const unread = selected ? null : visibleUnread(thread);
   const rowClass = selected
     ? "bg-[rgba(251,192,40,0.17)]"
     : "bg-white hover:bg-[rgba(251,192,40,0.04)]";

@@ -9,7 +9,7 @@ export type ChatSeedPhotoUrls = {
   readonly cover: ChatPhotoUrl;
 };
 
-/** Сообщения чата: пометка прочтения в ленту не попадает, она нужна только списку. */
+/** Сообщения чата. Пометка прочтения остаётся: лента подсвечивает непрочитанные входящие. */
 export function chatMessagesFromSeed(
   seed: ChatSeed,
   urls: ChatSeedPhotoUrls,
@@ -35,6 +35,7 @@ function turnToMessage(turn: ChatSeedTurn, urls: ChatSeedPhotoUrls): ChatMessage
         author: turn.author,
         timeLabel: turn.time,
         body: turn.body,
+        receipt: turn.receipt,
       };
     case "photo":
       return {
@@ -42,6 +43,7 @@ function turnToMessage(turn: ChatSeedTurn, urls: ChatSeedPhotoUrls): ChatMessage
         id: turn.id,
         author: turn.author,
         timeLabel: turn.time,
+        receipt: turn.receipt,
         photo: {
           url: turn.slot === "message" ? urls.message : urls.cover,
           alt: turn.alt,

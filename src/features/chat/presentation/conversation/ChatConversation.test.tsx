@@ -55,6 +55,18 @@ test("показывает сообщения обеих сторон и шап�
   expect(screen.getByText("10 сентября")).toBeInTheDocument();
 });
 
+test("непрочитанные входящие подсвечены, прочитанные остаются белыми", () => {
+  renderConversation();
+  const read = screen.getByText(/раннее заселение/);
+  const unread = screen.getByText("Оплату перевела, чек придёт следом");
+  expect(read.closest("[data-receipt]")?.getAttribute("data-receipt")).toBe("read");
+  expect(read.closest("[data-receipt]")?.className).toContain("bg-white");
+  expect(unread.closest("[data-receipt]")?.getAttribute("data-receipt")).toBe("unread");
+  expect(unread.closest("[data-receipt]")?.className).toContain("bg-[rgba(251,192,40,0.35)]");
+  expect(unread.closest("[data-receipt]")?.className).toContain("border-[#fbc028]");
+  expect(screen.getAllByText("Непрочитано", { selector: ".sr-only" })).toHaveLength(2);
+});
+
 test("фото-сообщение лежит в скруглённой рамке со временем", () => {
   renderConversation();
   const photo = screen.getByRole("img", { name: "Фото помещения у лифта" });
