@@ -17,6 +17,8 @@ export type ChatThread = {
   readonly counterpartName: string;
   readonly counterpartRole: ChatCounterpartRole;
   readonly avatarKey: ChatAvatarKey;
+  /** Файл аватара из аккаунта. Пустая строка — файла нет. Нет поля — портрет макета. */
+  readonly avatarUrl?: string;
   readonly preview: string;
   readonly sentAt: ChatClockLabel;
   readonly unread: ChatUnread;

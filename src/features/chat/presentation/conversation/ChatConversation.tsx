@@ -6,6 +6,7 @@ import { ChatConversationHeader } from "./ChatConversationHeader";
 import { ChatMessageList } from "./ChatMessageList";
 import type { ComposerSend } from "./ComposerSend";
 import { useOutgoingMessages } from "./useOutgoingMessages";
+import { visiblePeerAvatarUrl } from "./visiblePeerAvatarUrl";
 
 export type ChatConversationProps = {
   chatId: ChatId;
@@ -26,6 +27,7 @@ export function ChatConversation({
 }: ChatConversationProps) {
   const outgoing = useOutgoingMessages();
   const thread = onSendMessage === undefined ? [...messages, ...outgoing.outgoing] : messages;
+  const shownHeading = { ...heading, peerAvatarUrl: visiblePeerAvatarUrl(heading) };
 
   return (
     <section
@@ -33,12 +35,12 @@ export function ChatConversation({
       aria-label={`Переписка с ${heading.peerName}`}
       className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden rounded-2xl border border-[rgba(251,192,40,0.17)] bg-white"
     >
-      <ChatConversationHeader heading={heading} />
+      <ChatConversationHeader heading={shownHeading} />
       <ChatMessageList
         dateLabel={dateLabel}
         messages={thread}
         selfAvatarUrl={selfAvatarUrl}
-        peerAvatarUrl={heading.peerAvatarUrl}
+        peerAvatarUrl={shownHeading.peerAvatarUrl}
       />
       <ChatComposer onSend={onSendMessage ?? outgoing.send} />
     </section>

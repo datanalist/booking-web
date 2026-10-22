@@ -13,9 +13,10 @@ import { ChatsScreen } from "./list/ChatsScreen";
 type ChatPageProps = {
   readonly threads?: readonly ChatThread[];
   readonly initialChatId?: ChatId | null;
+  readonly accountPhotoUrl?: string;
 };
 
-export function ChatPage({ threads, initialChatId = null }: ChatPageProps) {
+export function ChatPage({ threads, initialChatId = null, accountPhotoUrl }: ChatPageProps) {
   const live = threads === undefined && resolveCabinetDataSource() === "pocketbase";
   const source = useMemo(
     () => (live ? createPbChatSource(createCabinetPbClient()) : null),
@@ -132,7 +133,13 @@ export function ChatPage({ threads, initialChatId = null }: ChatPageProps) {
             selectedChatId={selectedChatId}
             onSelectChat={selectChat}
             renderConversation={(chatId) =>
-              renderOpenChat(chatId, source ?? undefined, hostId ?? undefined, liveNotice)
+              renderOpenChat(
+                chatId,
+                source ?? undefined,
+                hostId ?? undefined,
+                liveNotice,
+                accountPhotoUrl,
+              )
             }
           />
         </div>
@@ -146,6 +153,7 @@ function renderOpenChat(
   source: ChatSource | undefined,
   hostId: string | undefined,
   liveNotice: ChatLiveNotice | null,
+  accountPhotoUrl: string | undefined,
 ): ReactNode {
   return (
     <OpenChatConversation
@@ -153,6 +161,7 @@ function renderOpenChat(
       source={source}
       hostId={hostId}
       liveNotice={liveNotice}
+      accountPhotoUrl={accountPhotoUrl}
     />
   );
 }

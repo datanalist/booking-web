@@ -49,6 +49,7 @@ export function pbChatToThread(
   chat: PbChatRecord,
   messages?: readonly PbMessageRecord[],
   currentHostId?: string,
+  baseUrl?: string,
 ): ChatThread {
   const role = counterpartRole(chat);
   return {
@@ -56,6 +57,7 @@ export function pbChatToThread(
     counterpartRole: role,
     counterpartName: counterpartName(chat),
     avatarKey: avatarKeyFor(role),
+    avatarUrl: avatarFileUrl(chat, baseUrl),
     preview: threadPreview(chat, messages),
     sentAt: clockFromIso(chat.last_message_at ?? chat.updated),
     unread: unreadFromMessages(chat, messages ?? [], currentHostId),
@@ -179,14 +181,19 @@ function counterpartName(chat: PbChatRecord): string {
   if (chat.kind === "support") {
     return SUPPORT_NAME;
   }
-  if (counterpartRole(chat) !== "moderator") {
-    return personName(chat.expand?.guest, GUEST_FALLBACK);
+  const fallback = counterpartRole(chat) === "moderator" ? MODERATOR_FALLBACK : GUEST_FALLBACK;
+  return personName(counterpartPerson(chat), fallback);
+}
+
+/** Тот же человек, что и в имени: у модератора — сотрудник, у гостя — гость. */
+function counterpartPerson(chat: PbChatRecord): PbUserExpand | undefined {
+  if (chat.kind === "support") {
+    return chat.expand?.staff ?? chat.expand?.guest;
   }
-  const staffName = personName(chat.expand?.staff, "");
-  if (staffName.length > 0) {
-    return staffName;
+  if (counterpartRole(chat) === "moderator" && personName(chat.expand?.staff, "").length > 0) {
+    return chat.expand?.staff;
   }
-  return personName(chat.expand?.guest, MODERATOR_FALLBACK);
+  return chat.expand?.guest;
 }
 
 /** Ключи аватаров макета: у поддержки свой, у гостя и модератора — гостевой портрет. */
@@ -290,10 +297,7 @@ function countUnreadMessages(
 }
 
 function avatarFileUrl(chat: PbChatRecord, baseUrl: string | undefined): string {
-  const person =
-    chat.kind === "support"
-      ? (chat.expand?.staff ?? chat.expand?.guest)
-      : chat.expand?.guest;
+  const person = counterpartPerson(chat);
   const filename = person?.avatar?.trim() ?? "";
   if (person === undefined || filename.length === 0) {
     return "";

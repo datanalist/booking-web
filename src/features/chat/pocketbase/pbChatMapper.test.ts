@@ -91,6 +91,35 @@ describe("pbChatToThread", () => {
     expect(named.avatarKey).toBe("ekaterina");
   });
 
+  test("фото в списке — файл аккаунта собеседника, а не общий портрет макета", () => {
+    const thread = pbChatToThread(
+      chat({
+        id: "c-photo",
+        kind: "listing",
+        guest: GUEST_ID,
+        expand: { guest: { id: GUEST_ID, name: "Анна Ковалёва", avatar: "anna.jpg" } },
+      }),
+      undefined,
+      undefined,
+      BASE,
+    );
+    const noPhoto = pbChatToThread(
+      chat({
+        id: "c-nophoto",
+        kind: "listing",
+        guest: GUEST_ID,
+        expand: { guest: { id: GUEST_ID, name: "Без фото" } },
+      }),
+      undefined,
+      undefined,
+      BASE,
+    );
+
+    expect(thread.counterpartName).toBe("Анна Ковалёва");
+    expect(thread.avatarUrl).toBe(`${BASE}/api/files/users/${GUEST_ID}/anna.jpg`);
+    expect(noPhoto.avatarUrl).toBe("");
+  });
+
   test("сотрудник в listing-чате делает собеседника модератором", () => {
     const thread = pbChatToThread(
       chat({
@@ -231,6 +260,25 @@ describe("pbChatToHeading", () => {
       peerName: "Поддержка",
       peerAvatarUrl: `${BASE}/api/files/users/staff-1/staff.png`,
     });
+  });
+
+  test("модератор в шапке показывает фото того же сотрудника, что и имя", () => {
+    const heading = pbChatToHeading(
+      chat({
+        id: "c-mod",
+        kind: "listing",
+        guest: GUEST_ID,
+        staff: "staff-1",
+        expand: {
+          staff: { id: "staff-1", name: "Ольга", avatar: "staff.png" },
+          guest: { id: GUEST_ID, name: "Анна", avatar: "guest.png" },
+        },
+      }),
+      BASE,
+    );
+
+    expect(heading.peerName).toBe("Ольга");
+    expect(heading.peerAvatarUrl).toBe(`${BASE}/api/files/users/staff-1/staff.png`);
   });
 
   test("listing-шапка собирает даты, гостей и первое фото", () => {

@@ -1,7 +1,7 @@
 import type { ChatId } from "../../domain/ChatId";
 import type { ChatThread, UnreadCount } from "../../domain/ChatThread";
+import { chatThreadAvatarSrc } from "./chatThreadAvatarSrc";
 import { ChatUnreadBadge } from "./ChatUnreadBadge";
-import { resolveChatAvatarUrl } from "./resolveChatAvatarUrl";
 
 type ChatListItemProps = {
   thread: ChatThread;
@@ -25,7 +25,7 @@ export function ChatListItem({ thread, selected, onSelect }: ChatListItemProps) 
       >
         <img
           alt=""
-          src={resolveChatAvatarUrl(thread.avatarKey)}
+          src={chatThreadAvatarSrc(thread)}
           className="size-12 shrink-0 rounded-full object-cover"
         />
         <span className="flex min-w-0 flex-1 flex-col gap-2">

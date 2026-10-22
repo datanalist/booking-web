@@ -17,6 +17,7 @@ type OpenChatConversationProps = {
   source?: ChatSource;
   hostId?: string;
   liveNotice?: ChatLiveNotice | null;
+  accountPhotoUrl?: string;
 };
 
 type LiveChatConversationProps = {
@@ -24,6 +25,7 @@ type LiveChatConversationProps = {
   source: ChatSource;
   hostId: string;
   liveNotice: ChatLiveNotice | null;
+  accountPhotoUrl?: string;
 };
 
 /** Правая панель: переписка выбранного чата из сида или живого источника. */
@@ -32,6 +34,7 @@ export function OpenChatConversation({
   source,
   hostId,
   liveNotice = null,
+  accountPhotoUrl,
 }: OpenChatConversationProps) {
   if (source === undefined || hostId === undefined) {
     return <SeedChatConversation chatId={chatId} />;
@@ -43,12 +46,19 @@ export function OpenChatConversation({
       source={source}
       hostId={hostId}
       liveNotice={liveNotice}
+      accountPhotoUrl={accountPhotoUrl}
     />
   );
 }
 
 /** Живой тред. key по chatId обнуляет модель и локальные исходящие до отрисовки. */
-function LiveChatConversation({ chatId, source, hostId, liveNotice }: LiveChatConversationProps) {
+function LiveChatConversation({
+  chatId,
+  source,
+  hostId,
+  liveNotice,
+  accountPhotoUrl,
+}: LiveChatConversationProps) {
   const [model, setModel] = useState<ChatConversationModel | null>(null);
   const outgoing = useOutgoingMessages();
   const activeChatId = useRef(chatId);
@@ -97,9 +107,7 @@ function LiveChatConversation({ chatId, source, hostId, liveNotice }: LiveChatCo
       heading={model.heading}
       dateLabel={model.dateLabel}
       messages={[...model.messages, ...outgoing.outgoing]}
-      selfAvatarUrl={
-        model.heading.kind === "direct" ? chatAssets.avatarHost : conversationSelfAvatarUrl
-      }
+      selfAvatarUrl={accountAvatarUrl(accountPhotoUrl)}
       onSendMessage={(draft) => {
         sendLiveText(source, hostId, chatId, draft, activeChatId, setModel, outgoing.send);
       }}
@@ -123,6 +131,11 @@ function SeedChatConversation({ chatId }: { chatId: ChatId }) {
       }
     />
   );
+}
+
+function accountAvatarUrl(photoUrl: string | undefined): string {
+  const trimmed = photoUrl?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : "/avatar-placeholder.png";
 }
 
 function appendMessages(

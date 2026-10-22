@@ -38,7 +38,7 @@ export function createPbChatSource(client: PbClient): ChatSource {
       });
       const grouped = groupMessages(messages.items);
       return orderByLastMessage(chats.items).map((chat) =>
-        pbChatToThread(chat, grouped.get(chat.id) ?? [], hostId),
+        pbChatToThread(chat, grouped.get(chat.id) ?? [], hostId, client.baseUrl),
       );
     },
 

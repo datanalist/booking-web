@@ -9,6 +9,15 @@ import { chatClockLabel } from "../../domain/ChatThread";
 import type { ChatConversationModel, ChatLiveNotice, ChatSource } from "../../pocketbase";
 import { OpenChatConversation } from "./OpenChatConversation";
 
+function selfText(id: string, body: string): ChatMessage {
+  const messageId = chatMessageId(id);
+  const timeLabel = messageTimeLabel("10:07");
+  if (messageId === null || timeLabel === null) {
+    throw new Error("мок сообщения");
+  }
+  return { kind: "text", id: messageId, author: "self", timeLabel, body, receipt: "read" };
+}
+
 function peerText(id: string, body: string, receipt: MessageReceipt = "read"): ChatMessage {
   const messageId = chatMessageId(id);
   const timeLabel = messageTimeLabel("10:07");
@@ -58,6 +67,34 @@ beforeEach(() => {
     return `blob:preview-${n}`;
   };
   URL.revokeObjectURL = vi.fn();
+});
+
+test("свой аватар в живом чате берётся из фото аккаунта", async () => {
+  const loaded = conversation("Анна", "Первое сообщение", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  loaded.messages = [selfText("dddddddd-dddd-4ddd-8ddd-dddddddddddd", "Мой ответ"), ...loaded.messages];
+  const source = sourceFor(async () => loaded);
+  render(
+    <OpenChatConversation
+      chatId={chatId("chat-a")}
+      source={source}
+      hostId="user1"
+      accountPhotoUrl="https://pb.example/api/files/users/user1/me.jpg"
+    />,
+  );
+  const mine = (await screen.findByText("Мой ответ")).closest("[data-author='self']");
+  expect(mine?.querySelector("img")).toHaveAttribute(
+    "src",
+    "https://pb.example/api/files/users/user1/me.jpg",
+  );
+});
+
+test("без фото аккаунта свой аватар — общая заглушка, не портрет из макета", async () => {
+  const loaded = conversation("Анна", "Первое сообщение", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  loaded.messages = [selfText("dddddddd-dddd-4ddd-8ddd-dddddddddddd", "Мой ответ"), ...loaded.messages];
+  const source = sourceFor(async () => loaded);
+  render(<OpenChatConversation chatId={chatId("chat-a")} source={source} hostId="user1" />);
+  const mine = (await screen.findByText("Мой ответ")).closest("[data-author='self']");
+  expect(mine?.querySelector("img")).toHaveAttribute("src", "/avatar-placeholder.png");
 });
 
 test("непрочитанное входящее подсвечивается, отметка прочтения — после загрузки", async () => {
