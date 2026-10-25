@@ -8,7 +8,7 @@ import {
 } from "./BookingCalendarMonthCard";
 
 type BookingCalendarAlertBodyProps = {
-  demo: BookingCalendarDemo;
+  panel: BookingCalendarDemo;
   monthCard: BookingCalendarMonthCardProps;
   onMessageGuest: (guestId: string) => void;
   onDeleteBooking: (guestId: string) => void;
@@ -16,7 +16,7 @@ type BookingCalendarAlertBodyProps = {
 
 /** Тело алерта: календарь слева, объявление и гости справа. */
 export function BookingCalendarAlertBody({
-  demo,
+  panel,
   monthCard,
   onMessageGuest,
   onDeleteBooking,
@@ -29,12 +29,12 @@ export function BookingCalendarAlertBody({
       </div>
       <div className="flex flex-col gap-8">
         <ListingSummary
-          title={demo.listingTitle}
-          address={demo.listingAddress}
-          coverUrl={demo.listingCoverUrl}
+          title={panel.listingTitle}
+          address={panel.listingAddress}
+          coverUrl={panel.listingCoverUrl}
         />
         <div className="flex flex-col gap-4">
-          {demo.guests.map((guest) => (
+          {panel.guests.map((guest) => (
             <BookingCalendarGuestCard
               key={guest.id}
               name={guest.name}

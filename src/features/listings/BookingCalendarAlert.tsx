@@ -1,13 +1,12 @@
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import type { ReactElement } from "react";
 import { usePortalElement } from "../../app/stagePortal";
-import { bookingCalendarDemoFor } from "./bookingCalendarDemoFor";
-import type { BookingCalendarDemo } from "./bookingCalendarDemo";
-import { bookingCalendarMarksFor } from "./bookingCalendarMarksFor";
 import { BookingCalendarAlertBody } from "./BookingCalendarAlertBody";
+import type { BookingCalendarPort } from "./createListingCalendarPort";
+import { selectBookingCalendar } from "./selectBookingCalendar";
 import { toggleSelectedBookingDay } from "./toggleSelectedBookingDay";
 import { useBookingCalendarView } from "./useBookingCalendarView";
-import { useBookingDayOverrides } from "./useBookingDayOverrides";
+import { useListingCalendar } from "./useListingCalendar";
 
 const CARD_SHADOW =
   "shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08),0px_8px_8px_-4px_rgba(16,24,40,0.03)]";
@@ -23,7 +22,7 @@ export type BookingCalendarAlertProps = {
   today?: Date;
   listingId?: string;
   storage?: Storage;
-  demo?: BookingCalendarDemo;
+  calendarPort?: BookingCalendarPort;
 };
 
 /**
@@ -39,14 +38,18 @@ export function BookingCalendarAlert({
   onPrevMonth,
   onNextMonth,
   today = new Date(),
-  listingId = "demo",
+  listingId = "",
   storage = localStorage,
-  demo,
+  calendarPort,
 }: BookingCalendarAlertProps): ReactElement {
-  const resolvedDemo = demo ?? bookingCalendarDemoFor(today);
-  const marks = bookingCalendarMarksFor(today);
   const { view, selectDay, shiftMonth } = useBookingCalendarView(open, today);
-  const { overrides, toggleDay } = useBookingDayOverrides(listingId, storage);
+  const { load, overrides, ready, toggleDay } = useListingCalendar(
+    open,
+    listingId,
+    storage,
+    calendarPort,
+  );
+  const selected = selectBookingCalendar(load, view.month);
 
   function handleOpenChange(next: boolean): void {
     onOpenChange(next);
@@ -66,7 +69,10 @@ export function BookingCalendarAlert({
   }
 
   function handleToggleAvailability(): void {
-    toggleSelectedBookingDay(view, marks, overrides, toggleDay);
+    if (!ready) {
+      return;
+    }
+    toggleSelectedBookingDay(view, selected.marks, overrides, toggleDay);
   }
 
   const portal = usePortalElement();
@@ -80,6 +86,7 @@ export function BookingCalendarAlert({
         />
         <AlertDialog.Content
           data-listing-id={listingId}
+          data-calendar-state={ready ? "ready" : "loading"}
           className={`fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100%-48px)] w-max max-w-[calc(100%-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-start gap-10 overflow-auto rounded-xl bg-white p-6 font-sans ${CARD_SHADOW}`}
         >
           <AlertHeader />
@@ -87,15 +94,16 @@ export function BookingCalendarAlert({
             Календарь занятости объявления и список бронирований
           </AlertDialog.Description>
           <BookingCalendarAlertBody
-            demo={resolvedDemo}
+            panel={selected.panel}
             monthCard={{
               view,
-              marks,
+              marks: selected.marks,
               overrides,
               onSelectDay: selectDay,
               onPrevMonth: handlePrevMonth,
               onNextMonth: handleNextMonth,
               onToggleAvailability: handleToggleAvailability,
+              availabilityLocked: !ready,
             }}
             onMessageGuest={(guestId) => onMessageGuest?.(guestId)}
             onDeleteBooking={(guestId) => onDeleteBooking?.(guestId)}

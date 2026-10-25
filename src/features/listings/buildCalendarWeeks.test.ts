@@ -1,11 +1,20 @@
 import { expect, test } from "vitest";
-import { bookingCalendarMarksFor } from "./bookingCalendarMarksFor";
+import type { BookingCalendarMonthMarks } from "./bookingCalendarDemo";
 import { buildCalendarWeeks } from "./buildCalendarWeeks";
 import { daysInYearMonth } from "./daysInYearMonth";
 import { mondayIndexOfMonthStart } from "./mondayIndexOfMonthStart";
 import type { CalendarGridCell } from "./CalendarGridCell";
 
-const DECEMBER_2024_MARKS = bookingCalendarMarksFor(new Date(2024, 11, 15));
+const DECEMBER_2024_MARKS: BookingCalendarMonthMarks = {
+  year: 2024,
+  month: 12,
+  unavailableDays: [16, 17, 18, 27, 28, 29, 30, 31],
+  ranges: [
+    { fromDay: 5, toDay: 10, tone: "purple" },
+    { fromDay: 13, toDay: 14, tone: "green" },
+    { fromDay: 21, toDay: 23, tone: "blue" },
+  ],
+};
 
 test("декабрь 2024 начинается в воскресенье и содержит 31 день", () => {
   expect(daysInYearMonth({ year: 2024, month: 12 })).toBe(31);
@@ -62,7 +71,7 @@ test("сетка всегда из 6 недель и 42 ячеек", () => {
   expect(mondayIndexOfMonthStart({ year: 2024, month: 12 })).toBe(6);
 });
 
-test("месяц без демо-броней целиком доступен", () => {
+test("отметки чужого месяца не красят дни", () => {
   expect(daysInYearMonth({ year: 2025, month: 1 })).toBe(31);
   expect(mondayIndexOfMonthStart({ year: 2025, month: 1 })).toBe(2);
   const weeks = buildCalendarWeeks({ year: 2025, month: 1 }, DECEMBER_2024_MARKS);

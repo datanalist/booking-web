@@ -1,11 +1,16 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
-import { bookingCalendarMarksFor } from "./bookingCalendarMarksFor";
+import type { BookingCalendarMonthMarks } from "./bookingCalendarDemo";
 import { BookingCalendarMonthGrid } from "./BookingCalendarMonthGrid";
 import { buildCalendarWeeks } from "./buildCalendarWeeks";
 import type { YearMonth } from "./YearMonth";
 
-const MARKS = bookingCalendarMarksFor(new Date(2024, 11, 15));
+const MARKS: BookingCalendarMonthMarks = {
+  year: 2024,
+  month: 12,
+  unavailableDays: [],
+  ranges: [],
+};
 
 afterEach(() => {
   cleanup();

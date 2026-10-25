@@ -1,11 +1,16 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { bookingOverridesToBlockRanges } from "../../api/pocketbase";
+import type { PbListingBlockRecord } from "../../api/pocketbase";
 import { BookingCalendarAlert } from "./BookingCalendarAlert";
+import type { BookingCalendarPort } from "./createListingCalendarPort";
+import type { BookingCalendarLoad } from "./loadBookingCalendar";
 
 const LISTING_ID = "listing-availability";
 
 beforeEach(() => {
+  localStorage.clear();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2024, 11, 15, 12, 0, 0));
 });
@@ -16,15 +21,18 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-test("переключатель меняет подпись и отметку и помнит день при смене даты", async () => {
+test("переключатель пишет блокировку и помнит день при смене даты", async () => {
   const user = userEvent.setup();
+  const { port, blocks } = memoryBlocks();
   render(
     <BookingCalendarAlert
       open
       listingId={LISTING_ID}
+      calendarPort={port}
       onOpenChange={() => undefined}
     />,
   );
+  await ready();
 
   await user.click(screen.getByRole("button", { name: "20 декабря" }));
   const enabled = screen.getByRole("switch", {
@@ -41,6 +49,11 @@ test("переключатель меняет подпись и отметку �
   expect(screen.getByRole("button", { name: "20 декабря" })).toHaveClass(
     "line-through",
   );
+  await waitFor(() => {
+    expect(blocks()).toEqual([
+      { id: "block-0", listing: LISTING_ID, start: "2024-12-20", end: "2024-12-21" },
+    ]);
+  });
 
   await user.click(screen.getByRole("button", { name: "15 декабря" }));
   expect(
@@ -72,23 +85,28 @@ test("переключатель меняет подпись и отметку �
 
 test("блокировка переживает закрытие алерта и новое открытие", async () => {
   const user = userEvent.setup();
+  const { port, blocks } = memoryBlocks();
   const { rerender, unmount } = render(
     <BookingCalendarAlert
       open
       listingId={LISTING_ID}
+      calendarPort={port}
       onOpenChange={() => undefined}
     />,
   );
+  await ready();
 
   await user.click(screen.getByRole("button", { name: "20 декабря" }));
   await user.click(
     screen.getByRole("switch", { name: "доступно для бронирования" }),
   );
+  await waitFor(() => expect(blocks()).toHaveLength(1));
 
   rerender(
     <BookingCalendarAlert
       open={false}
       listingId={LISTING_ID}
+      calendarPort={port}
       onOpenChange={() => undefined}
     />,
   );
@@ -96,9 +114,11 @@ test("блокировка переживает закрытие алерта и
     <BookingCalendarAlert
       open
       listingId={LISTING_ID}
+      calendarPort={port}
       onOpenChange={() => undefined}
     />,
   );
+  await ready();
   await user.click(screen.getByRole("button", { name: "20 декабря" }));
   expect(screen.getByRole("button", { name: "20 декабря" })).toHaveClass(
     "line-through",
@@ -109,9 +129,11 @@ test("блокировка переживает закрытие алерта и
     <BookingCalendarAlert
       open
       listingId={LISTING_ID}
+      calendarPort={port}
       onOpenChange={() => undefined}
     />,
   );
+  await ready();
   await user.click(screen.getByRole("button", { name: "20 декабря" }));
   expect(screen.getByRole("button", { name: "20 декабря" })).toHaveClass(
     "line-through",
@@ -121,15 +143,25 @@ test("блокировка переживает закрытие алерта и
   ).toHaveAttribute("aria-checked", "false");
 });
 
-test("демо-недоступный день можно снова сделать доступным", async () => {
+test("день из listing_blocks можно снова сделать доступным", async () => {
   const user = userEvent.setup();
+  const { port, blocks } = memoryBlocks([
+    {
+      id: "block-16",
+      listing: LISTING_ID,
+      start: "2024-12-16",
+      end: "2024-12-17",
+    },
+  ]);
   render(
     <BookingCalendarAlert
       open
       listingId={LISTING_ID}
+      calendarPort={port}
       onOpenChange={() => undefined}
     />,
   );
+  await ready();
 
   await user.click(screen.getByRole("button", { name: "16 декабря" }));
   expect(screen.getByRole("button", { name: "16 декабря" })).toHaveClass(
@@ -144,4 +176,44 @@ test("демо-недоступный день можно снова сдела�
   expect(
     screen.getByRole("switch", { name: "доступно для бронирования" }),
   ).toHaveAttribute("aria-checked", "true");
+  await waitFor(() => expect(blocks()).toEqual([]));
 });
+
+function ready(): Promise<void> {
+  return waitFor(() => {
+    expect(screen.getByRole("alertdialog")).toHaveAttribute("data-calendar-state", "ready");
+  });
+}
+
+function memoryBlocks(initial: readonly PbListingBlockRecord[] = []): {
+  port: BookingCalendarPort;
+  blocks: () => PbListingBlockRecord[];
+} {
+  const state: BookingCalendarLoad = {
+    listing: null,
+    bookings: [],
+    blocks: [...initial],
+    baseUrl: "https://pb.example",
+  };
+  return {
+    blocks: () => state.blocks,
+    port: {
+      async load() {
+        return {
+          listing: state.listing,
+          bookings: state.bookings,
+          blocks: state.blocks.map((block) => ({ ...block })),
+          baseUrl: state.baseUrl,
+        };
+      },
+      async saveBlocks(listingId, overrides) {
+        state.blocks = bookingOverridesToBlockRanges(overrides).map((range, index) => ({
+          id: `block-${index}`,
+          listing: listingId,
+          start: range.start,
+          end: range.end,
+        }));
+      },
+    },
+  };
+}
