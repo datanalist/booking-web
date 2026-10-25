@@ -26,24 +26,26 @@ test("renders SVG logo image, not text brand", () => {
   expect(within(container).queryByText("GlobalStay")).toBeNull();
 });
 
-test("side photo is 789x938 with p-16 and rounded-[20px] clip", () => {
+test("side photo fills the right column with p-16 and rounded-[20px] clip", () => {
   const { container } = renderLayout();
 
   const side = container.querySelector('img[src="/auth-side.jpg"]');
   expect(side).not.toBeNull();
   expect(side?.className).toMatch(/rounded-\[20px\]/);
+  expect(side?.className).toMatch(/\bh-full\b/);
+  expect(side?.className).toMatch(/\bw-full\b/);
 
   const frame = side?.parentElement;
   expect(frame).not.toBeNull();
   expect(frame?.className).toMatch(/rounded-\[20px\]/);
   expect(frame?.className).toMatch(/\boverflow-hidden\b/);
-  expect(frame?.className).toMatch(/w-\[789px\]/);
-  expect(frame?.className).toMatch(/h-\[938px\]/);
+  expect(frame?.className).toMatch(/\bh-full\b/);
+  expect(frame?.className).toMatch(/\bw-full\b/);
 
   const panel = frame?.parentElement;
   expect(panel).not.toBeNull();
   expect(panel?.className).toMatch(/\bp-16\b/);
-  expect(panel?.className).toMatch(/\bright-0\b/);
+  expect(panel?.className).toMatch(/flex-\[917_1_0%\]/);
 });
 
 test("footer has no consent disclaimer or legal links", () => {
@@ -59,7 +61,7 @@ test("footer has no consent disclaimer or legal links", () => {
   ).toBeNull();
 });
 
-test("root fills the scaled stage; canvas is fixed 1440x1020 without clipping radius", () => {
+test("root fills the window instead of a fixed 1440x1020 canvas", () => {
   const { container } = renderLayout();
 
   const root = container.firstElementChild;
@@ -67,20 +69,16 @@ test("root fills the scaled stage; canvas is fixed 1440x1020 without clipping ra
   expect(root?.className).toMatch(/\bh-full\b/);
   expect(root?.className).toMatch(/\bw-full\b/);
   expect(root?.className).toMatch(/\boverflow-hidden\b/);
-
-  const canvas = root?.firstElementChild;
-  expect(canvas).not.toBeNull();
-  expect(canvas?.className).toMatch(/w-\[1440px\]/);
-  expect(canvas?.className).toMatch(/h-\[1020px\]/);
-  expect(canvas?.className).not.toMatch(/\boverflow-hidden\b/);
-  expect(canvas?.className).not.toMatch(/\bw-full\b/);
-  expect(canvas?.className).not.toMatch(/\bmin-w-\[1440px\]\b/);
+  expect(root?.className).not.toMatch(/1440/);
+  expect(root?.className).not.toMatch(/1020/);
+  expect(container.innerHTML).not.toMatch(/w-\[1440px\]/);
+  expect(container.innerHTML).not.toMatch(/h-\[1020px\]/);
 });
 
-test("form slot matches Figma left/top/width", () => {
+test("form slot keeps the mock width and left inset while the column grows", () => {
   const { container } = renderLayout(<div data-testid="form-slot">форма</div>);
   const slot = container.querySelector('[data-testid="form-slot"]')?.parentElement;
   expect(slot?.className).toMatch(/\bw-80\b/);
-  expect(slot?.className).toMatch(/left-\[149px\]/);
-  expect(slot?.className).toMatch(/top-\[305px\]/);
+  expect(slot?.className).toMatch(/clamp\(2rem,10\.35vw,149px\)/);
+  expect(slot?.className).not.toMatch(/top-\[305px\]/);
 });

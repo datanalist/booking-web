@@ -7,7 +7,7 @@ export type ProfileLayoutProps = {
   balance: ReactNode;
 };
 
-/** Раскладка главной профиля: поле 1205×1020 и белая карточка с тремя колонками. */
+/** Раскладка главной профиля: поле на всю оставшуюся ширину и высоту окна, белая карточка с тремя колонками. */
 export function ProfileLayout({
   header,
   personal,

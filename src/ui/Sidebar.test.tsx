@@ -25,10 +25,28 @@ afterEach(() => {
 });
 
 test("shows account block, nav icons, and logo image", () => {
-  renderSidebar("/listings");
+  const { container } = renderSidebar("/listings");
 
-  expect(screen.getByText("Ирина Иванова")).toBeInTheDocument();
-  expect(screen.getByText("hello@gmail.com")).toBeInTheDocument();
+  const header = container.querySelector("header");
+  expect(header).toHaveClass(
+    "h-24",
+    "self-stretch",
+    "px-8",
+    "py-6",
+    "flex-col",
+    "justify-center",
+    "items-start",
+  );
+  const name = screen.getByText("Ирина Иванова");
+  expect(name).toHaveClass("text-sm", "font-bold", "leading-5", "text-absolute-black");
+  const email = screen.getByText("hello@gmail.com");
+  expect(email).toHaveClass(
+    "truncate",
+    "text-xs",
+    "font-normal",
+    "leading-4",
+    "text-neutral-600",
+  );
   expect(screen.getByRole("link", { name: /мои объявления/i })).toHaveAttribute(
     "href",
     "/listings",

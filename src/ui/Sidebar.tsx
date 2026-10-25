@@ -50,22 +50,24 @@ export function Sidebar({
 
   return (
     <aside className="flex h-full w-[235px] shrink-0 flex-col gap-5 self-stretch bg-white font-sans">
-      <header className="flex h-24 w-full shrink-0 items-center px-8 py-6">
-        <div className="flex items-center gap-3">
-          <img
-            src={avatarSrc}
-            alt=""
-            width={40}
-            height={40}
-            className="size-10 shrink-0 rounded-full object-cover"
-          />
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-[14px] font-bold leading-[1.4] text-[var(--color-ink)]">
+      <header className="inline-flex h-24 w-full shrink-0 flex-col items-start justify-center self-stretch overflow-hidden px-8 py-6">
+        <div className="inline-flex w-full min-w-0 items-center justify-start gap-3">
+          <div className="relative size-10 shrink-0">
+            <img
+              src={avatarSrc}
+              alt=""
+              width={40}
+              height={40}
+              className="absolute top-0 left-0 size-10 rounded-[40px] object-cover"
+            />
+          </div>
+          <div className="inline-flex min-w-0 flex-col items-start justify-start gap-0.5">
+            <div className="max-w-full truncate text-sm font-bold leading-5 text-absolute-black">
               {account.name}
-            </span>
-            <span className="truncate text-[12px] font-normal leading-[1.5] text-[#525353]">
+            </div>
+            <div className="max-w-full truncate text-xs font-normal leading-4 text-neutral-600">
               {account.email}
-            </span>
+            </div>
           </div>
         </div>
       </header>
@@ -106,7 +108,7 @@ export function Sidebar({
         })}
       </nav>
 
-      {/* Слот футера 77px. Логотип 181×60: на кадре 1020px это left 27 / top 928, то есть 32px от низа. */}
+      {/* Слот футера 77px. Логотип 181×60 держится у низа колонки: left 27, 32px от нижнего края. */}
       <footer className="relative h-[77px] w-full shrink-0">
         <img
           src="/logo-globalstay.svg"

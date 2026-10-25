@@ -5,17 +5,17 @@ const StagePortalContext = createContext<HTMLElement | null>(null);
 
 export const StagePortalProvider = StagePortalContext.Provider;
 
-/** Сцена с transform, если приложение обёрнуто в ScaledStage. */
+/** Корень сцены, если приложение обёрнуто в ScaledStage. */
 export function useStagePortalRoot(): HTMLElement | null {
   return useContext(StagePortalContext);
 }
 
-/** Куда класть портал, чтобы он масштабировался вместе с холстом. */
+/** Куда класть портал, чтобы оверлей жил внутри сцены. */
 export function usePortalElement(): HTMLElement {
   return useContext(StagePortalContext) ?? document.body;
 }
 
-/** Портал в сцену: оверлей получает тот же scale, что и холст. */
+/** Портал в сцену: оверлей закрывает окно вместе со страницей. */
 export function StagePortal({ children }: { children: ReactNode }) {
   return createPortal(children, usePortalElement());
 }

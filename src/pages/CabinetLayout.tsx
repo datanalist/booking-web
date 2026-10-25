@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { useSession } from "../app/session";
 import { Sidebar } from "../ui/Sidebar";
-import { CANVAS_HEIGHT, CANVAS_WIDTH } from "../config";
 
 type CabinetLayoutProps = {
   children: ReactNode;
@@ -30,10 +29,7 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
     isProfile;
 
   return (
-    <div
-      className="flex bg-white font-sans"
-      style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
-    >
+    <div className="flex h-full min-h-0 w-full min-w-0 bg-white font-sans">
       <Sidebar
         activePath={location.pathname}
         account={{

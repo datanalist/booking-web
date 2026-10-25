@@ -4,7 +4,7 @@ import { afterEach, expect, test } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { SessionProvider } from "../app/session";
 import { LoginPage } from "./LoginPage";
-import { EMAIL_VERIFIED_NOTICE_KEY } from "./emailVerifiedNotice";
+import { EMAIL_VERIFIED_NOTICE_KEY } from "./emailVerifiedNoticeChannel";
 
 afterEach(() => {
   cleanup();
