@@ -1,16 +1,19 @@
 import type { PbClient } from "../../../api/pocketbase";
 import type { BookingsSnapshot, BookingsSource } from "./bookingsSource";
+import type { BookingReview } from "../presentation/confirmed/review/BookingReview";
 import {
   buildAcceptBookingRequestPayload,
   buildHostCancelBookingPayload,
+  buildHostGuestReviewPayload,
   buildRejectBookingRequestPayload,
   buildResolveBookingRequestPayload,
   pbBookingToCancelled,
   pbBookingToConfirmed,
   pbBookingToRejected,
   pbBookingToRequest,
+  pbReviewToBookingReview,
 } from "./pbBookingMapper";
-import type { PbBookingRecord } from "./pbBookingTypes";
+import type { PbBookingRecord, PbReviewRecord } from "./pbBookingTypes";
 
 export function createPbBookingsSource(client: PbClient): BookingsSource {
   return {
@@ -36,7 +39,13 @@ export function createPbBookingsSource(client: PbClient): BookingsSource {
         const cancelledRow = pbBookingToCancelled(record, client.baseUrl);
         if (cancelledRow !== null) cancelled.push(cancelledRow);
       }
-      return { requests, confirmed, rejected, cancelled };
+      return {
+        requests,
+        confirmed,
+        rejected,
+        cancelled,
+        guestReviews: await listHostGuestReviews(client, hostId),
+      };
     },
     async accept(id) {
       await client.updateRecord("bookings", id, buildAcceptBookingRequestPayload());
@@ -54,5 +63,40 @@ export function createPbBookingsSource(client: PbClient): BookingsSource {
         buildResolveBookingRequestPayload(booking, decision),
       );
     },
+    async createGuestReview(review, links) {
+      await client.createRecord(
+        "reviews",
+        buildHostGuestReviewPayload({
+          review,
+          authorId: links.authorId,
+          guestId: links.guestId,
+          listingId: links.listingId,
+        }),
+      );
+    },
   };
+}
+
+async function listHostGuestReviews(
+  client: PbClient,
+  hostId: string,
+): Promise<BookingReview[]> {
+  const filter = `author="${hostId}" && kind="guest"`;
+  const reviews: BookingReview[] = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const listed = await client.listRecords<PbReviewRecord>("reviews", {
+      filter,
+      page,
+      perPage: 200,
+    });
+    totalPages = listed.totalPages;
+    for (const item of listed.items) {
+      const review = pbReviewToBookingReview(item);
+      if (review !== null) reviews.push(review);
+    }
+    page += 1;
+  } while (page <= totalPages);
+  return reviews;
 }

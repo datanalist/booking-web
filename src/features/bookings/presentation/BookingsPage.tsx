@@ -23,6 +23,8 @@ import type { ConfirmedBooking } from "./confirmed/ConfirmedBooking";
 import type { ConfirmedBookingId } from "./confirmed/ConfirmedBookingId";
 import { confirmedBookingsStore } from "./confirmed/confirmedBookingsStore";
 import type { RequestDecision } from "./confirmed/request/RequestDecision";
+import type { BookingReview } from "./confirmed/review/BookingReview";
+import { bookingReviewsStore } from "./confirmed/review/bookingReviewsStore";
 
 function emptyBookingsSnapshot(): BookingsSnapshot {
   return { requests: [], confirmed: [], rejected: [], cancelled: [] };
@@ -64,6 +66,7 @@ export function BookingsPage() {
     setRejected(snapshot.rejected);
     confirmedBookingsStore.set(snapshot.confirmed);
     cancelledBookingsStore.replace(snapshot.cancelled);
+    bookingReviewsStore.replace(snapshot.guestReviews ?? []);
     setLoaded(true);
   }
 
@@ -134,6 +137,24 @@ export function BookingsPage() {
     return afterAction((source) => source.resolveRequest(booking, decision));
   }
 
+  function handleSubmitReview(review: BookingReview): Promise<void> {
+    const source = sourceRef.current;
+    const hostId = readHostId();
+    if (source === null || hostId === null) {
+      return Promise.reject(new Error("Bookings source is unavailable"));
+    }
+    const booking = confirmedBookingsStore.get().find((item) => item.id === review.bookingId);
+    return source.createGuestReview(review, {
+      authorId: hostId,
+      ...(booking?.guestId !== undefined && booking.guestId !== ""
+        ? { guestId: booking.guestId }
+        : {}),
+      ...(booking?.listingId !== undefined && booking.listingId !== ""
+        ? { listingId: booking.listingId }
+        : {}),
+    });
+  }
+
   function setTab(next: BookingTabId): void {
     const nextParams = new URLSearchParams(params);
     if (next === "requests") {
@@ -169,6 +190,7 @@ export function BookingsPage() {
               onReject: handleReject,
               onHostCancel: handleHostCancel,
               onResolveRequest: handleResolveRequest,
+              onSubmitReview: handleSubmitReview,
             }
           : {})}
       />

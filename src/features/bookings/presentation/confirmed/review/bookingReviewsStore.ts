@@ -4,8 +4,9 @@ import type { BookingReview } from "./BookingReview";
 type Listener = () => void;
 
 /**
- * Мок-слой хранения отзывов: бэкенда нет, поэтому отзывы живут в памяти
- * модуля до перезагрузки страницы (как и мок-данные бронирований).
+ * Отзывы, которые читает меню строки.
+ * Мок пишет сюда сразу. При PocketBase сюда попадает только запись,
+ * уже лежащая в коллекции `reviews` (загрузка или успешное создание).
  */
 let reviews: ReadonlyMap<ConfirmedBooking["id"], BookingReview> = new Map();
 const listeners = new Set<Listener>();
@@ -21,6 +22,11 @@ export const bookingReviewsStore = {
 
   save(review: BookingReview): void {
     reviews = new Map(reviews).set(review.bookingId, review);
+    notify();
+  },
+
+  replace(next: readonly BookingReview[]): void {
+    reviews = new Map(next.map((review) => [review.bookingId, review]));
     notify();
   },
 

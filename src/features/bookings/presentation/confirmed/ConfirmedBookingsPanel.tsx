@@ -29,6 +29,8 @@ type ConfirmedBookingsPanelProps = {
     booking: ConfirmedBooking,
     decision: RequestDecision,
   ) => void | Promise<void>;
+  /** PocketBase: записать отзыв. Меню меняется только после успешного промиса. */
+  onSubmitReview?: (review: BookingReview) => void | Promise<void>;
 };
 
 function isPromise(value: void | Promise<void>): value is Promise<void> {
@@ -40,6 +42,7 @@ export function ConfirmedBookingsPanel({
   forceEmpty,
   onHostCancel,
   onResolveRequest,
+  onSubmitReview,
 }: ConfirmedBookingsPanelProps) {
   const [sort, setSort] = useState<ConfirmedStatusSortOption>("all");
   const bookings = useConfirmedBookings();
@@ -99,9 +102,22 @@ export function ConfirmedBookingsPanel({
     closeDialog();
   }
 
-  function submitReview(review: BookingReview): void {
-    bookingReviewsStore.save(review);
-    closeDialog();
+  function submitReview(review: BookingReview): void | Promise<void> {
+    if (onSubmitReview === undefined) {
+      bookingReviewsStore.save(review);
+      closeDialog();
+      return;
+    }
+    const action = onSubmitReview(review);
+    if (!isPromise(action)) {
+      bookingReviewsStore.save(review);
+      closeDialog();
+      return;
+    }
+    return action.then(() => {
+      bookingReviewsStore.save(review);
+      closeDialog();
+    });
   }
 
   const visibleItems = useMemo((): ConfirmedBooking[] => {

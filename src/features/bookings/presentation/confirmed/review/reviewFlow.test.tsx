@@ -1,8 +1,9 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test } from "vitest";
 import { confirmedBookingId } from "../ConfirmedBookingId";
 import { ConfirmedBookingsPanel } from "../ConfirmedBookingsPanel";
+import { pbReviewToBookingReview } from "../../../pocketbase/pbBookingMapper";
 import { bookingReviewsStore } from "./bookingReviewsStore";
 
 const GUEST = "Петров Иван";
@@ -80,6 +81,78 @@ describe("review from the «три точки» menu", () => {
     await user.click(overlay);
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(bookingReviewsStore.get(BOOKING_ID)).toBeUndefined();
+  });
+
+  test("«Отзыв оставлен» только если отзыв уже записан", async () => {
+    const user = userEvent.setup();
+    render(<ConfirmedBookingsPanel query="" forceEmpty={false} />);
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menuitem", { name: "Оставить отзыв" })).toBeVisible();
+    await user.keyboard("{Escape}");
+
+    const saved = pbReviewToBookingReview({
+      booking: BOOKING_ID,
+      author: "host-1",
+      kind: "guest",
+      rating: 5,
+      comment: "Уже в базе",
+    });
+    expect(saved).not.toBeNull();
+    bookingReviewsStore.replace(saved === null ? [] : [saved]);
+
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menuitem", { name: "Отзыв оставлен" })).toBeVisible();
+    expect(screen.queryByRole("menuitem", { name: "Оставить отзыв" })).toBeNull();
+  });
+
+  test("неудачное сохранение не помечает отзыв оставленным", async () => {
+    const user = userEvent.setup();
+    render(
+      <ConfirmedBookingsPanel
+        query=""
+        forceEmpty={false}
+        onSubmitReview={() => Promise.reject(new Error("network"))}
+      />,
+    );
+    await user.click(menuTrigger());
+    await user.click(screen.getByRole("menuitem", { name: "Оставить отзыв" }));
+    await user.click(screen.getByRole("radio", { name: "4 из 5" }));
+    await user.click(screen.getByRole("button", { name: "Отправить" }));
+
+    expect(await screen.findByText("Не удалось сохранить отзыв. Попробуйте ещё раз.")).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Оставить отзыв" })).toBeVisible();
+    expect(bookingReviewsStore.get(BOOKING_ID)).toBeUndefined();
+
+    await user.click(screen.getByRole("button", { name: "Вернуться" }));
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menuitem", { name: "Оставить отзыв" })).toBeVisible();
+    expect(screen.queryByRole("menuitem", { name: "Отзыв оставлен" })).toBeNull();
+  });
+
+  test("после успешной записи меню читает сохранённый отзыв", async () => {
+    const user = userEvent.setup();
+    render(
+      <ConfirmedBookingsPanel
+        query=""
+        forceEmpty={false}
+        onSubmitReview={() => Promise.resolve()}
+      />,
+    );
+    await user.click(menuTrigger());
+    await user.click(screen.getByRole("menuitem", { name: "Оставить отзыв" }));
+    await user.click(screen.getByRole("radio", { name: "5 из 5" }));
+    await user.click(screen.getByRole("button", { name: "Отправить" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    expect(bookingReviewsStore.get(BOOKING_ID)).toEqual({
+      bookingId: BOOKING_ID,
+      rating: 5,
+      comment: "",
+    });
+    await user.click(menuTrigger());
+    expect(screen.getByRole("menuitem", { name: "Отзыв оставлен" })).toBeVisible();
   });
 
   test("фокус возвращается на кнопку меню после закрытия модалки", async () => {

@@ -1,4 +1,5 @@
 import type { ConfirmedBooking } from "./ConfirmedBooking";
+import { CONFIRMED_BOOKINGS_GRID_CLASS } from "./confirmedBookingsGrid";
 import { ConfirmedBookingRow } from "./ConfirmedBookingRow";
 import type { ConfirmedBookingRowActions } from "./menu/ConfirmedBookingRowActions";
 
@@ -29,14 +30,14 @@ export function ConfirmedBookingsTable({
     >
       <div
         role="row"
-        className="grid h-12 grid-cols-[14rem_4rem_18rem_9rem_7rem_minmax(0,1fr)_3.5rem] items-center bg-amber-400/20"
+        className={`grid h-12 ${CONFIRMED_BOOKINGS_GRID_CLASS} items-center bg-amber-400/20`}
       >
         {HEADER_CELLS.map((label, index) => (
           <div
             key={label === "" ? "actions" : label}
             role="columnheader"
-            className={`flex h-12 items-center px-5 text-sm font-bold leading-5 text-[var(--color-ink)] ${
-              index === HEADER_CELLS.length - 1 ? "justify-center px-4" : ""
+            className={`flex h-12 items-center text-sm font-bold leading-5 text-[var(--color-ink)] ${
+              index === HEADER_CELLS.length - 1 ? "justify-center" : "min-w-0 px-5"
             }`}
           >
             {label}

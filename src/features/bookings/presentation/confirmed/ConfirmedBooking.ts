@@ -13,4 +13,8 @@ export type ConfirmedBooking = {
   stay: BookingStay;
   priceLabel: string;
   status: ConfirmedBookingStatus;
+  /** Id гостя в PocketBase. В мок-строках нет. */
+  guestId?: string;
+  /** Id жилья в PocketBase. В мок-строках нет. */
+  listingId?: string;
 };

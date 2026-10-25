@@ -8,6 +8,7 @@ import type { BookingsSnapshot } from "../pocketbase";
 import { BookingsPage } from "./BookingsPage";
 import { cancelledBookingsStore } from "./cancelled/cancelledBookingsStore";
 import { confirmedBookingsStore } from "./confirmed/confirmedBookingsStore";
+import { bookingReviewsStore } from "./confirmed/review/bookingReviewsStore";
 
 const gate = vi.hoisted(() => {
   let resolveLoad: (snapshot: unknown) => void = () => {};
@@ -32,6 +33,7 @@ vi.mock("../pocketbase", async (importOriginal) => {
       reject: async () => undefined,
       hostCancel: async () => undefined,
       resolveRequest: async () => undefined,
+      createGuestReview: async () => undefined,
     }),
   };
 });
@@ -50,6 +52,7 @@ afterEach(() => {
   localStorage.removeItem(SESSION_KEY);
   confirmedBookingsStore.reset();
   cancelledBookingsStore.reset();
+  bookingReviewsStore.reset();
 });
 
 function renderBookings(): void {

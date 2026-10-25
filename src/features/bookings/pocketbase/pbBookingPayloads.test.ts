@@ -11,6 +11,7 @@ import {
   pbBookingToConfirmed,
   pbBookingToRejected,
   pbBookingToRequest,
+  pbReviewToBookingReview,
 } from "./pbBookingMapper";
 import type { PbBookingRecord, PbBookingStatus, PbCancelReason } from "./pbBookingTypes";
 
@@ -233,6 +234,47 @@ describe("buildHostGuestReviewPayload", () => {
       rating: 5,
       comment: "Аккуратный гость",
     });
+  });
+});
+
+describe("pbReviewToBookingReview", () => {
+  test("отзыв kind guest становится записью меню", () => {
+    expect(
+      pbReviewToBookingReview({
+        booking: "b1",
+        author: "h1",
+        subject: "g1",
+        listing: "l1",
+        kind: "guest",
+        rating: 4,
+        comment: "Тихий гость",
+      }),
+    ).toEqual({
+      bookingId: confirmedBookingId("b1"),
+      rating: 4,
+      comment: "Тихий гость",
+    });
+  });
+
+  test("отзыв о жилье и пустая бронь меню не меняют", () => {
+    expect(
+      pbReviewToBookingReview({
+        booking: "b1",
+        author: "g1",
+        kind: "listing",
+        rating: 5,
+        comment: "",
+      }),
+    ).toBeNull();
+    expect(
+      pbReviewToBookingReview({
+        booking: "  ",
+        author: "h1",
+        kind: "guest",
+        rating: 5,
+        comment: "",
+      }),
+    ).toBeNull();
   });
 });
 

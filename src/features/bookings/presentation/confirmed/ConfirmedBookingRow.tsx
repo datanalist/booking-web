@@ -1,4 +1,5 @@
 import type { ConfirmedBooking } from "./ConfirmedBooking";
+import { CONFIRMED_BOOKINGS_GRID_CLASS } from "./confirmedBookingsGrid";
 import { ConfirmedBookingMenu } from "./menu/ConfirmedBookingMenu";
 import type { ConfirmedBookingRowActions } from "./menu/ConfirmedBookingRowActions";
 import { ConfirmedBookingChatIcon } from "./ConfirmedBookingChatIcon";
@@ -17,9 +18,9 @@ export function ConfirmedBookingRow({
   return (
     <div
       role="row"
-      className="grid h-28 grid-cols-[14rem_4rem_18rem_9rem_7rem_minmax(0,1fr)_3.5rem] items-center border-b border-amber-400/20 bg-white last:border-b-0"
+      className={`grid h-28 ${CONFIRMED_BOOKINGS_GRID_CLASS} items-center border-b border-amber-400/20 bg-white last:border-b-0`}
     >
-      <div role="cell" className="flex h-full items-center gap-3 px-5">
+      <div role="cell" className="flex h-full min-w-0 items-center gap-3 px-5">
         <img
           src={booking.guestAvatarUrl}
           alt=""
@@ -41,7 +42,7 @@ export function ConfirmedBookingRow({
         <ConfirmedBookingChatIcon guestName={booking.guestName} />
       </div>
 
-      <div role="cell" className="flex h-full items-center gap-3 px-5">
+      <div role="cell" className="flex h-full min-w-0 items-center gap-3 px-5">
         <img
           src={booking.housingPhotoUrl}
           alt=""
@@ -73,14 +74,11 @@ export function ConfirmedBookingRow({
         {booking.priceLabel}
       </div>
 
-      <div role="cell" className="flex h-full items-center px-5 py-2.5">
+      <div role="cell" className="flex h-full min-w-max items-center px-5 py-2.5">
         <ConfirmedStatusCell status={booking.status} />
       </div>
 
-      <div
-        role="cell"
-        className="flex h-full items-center justify-center px-5 py-2.5"
-      >
+      <div role="cell" className="flex h-full items-center justify-center">
         <ConfirmedBookingMenu booking={booking} actions={actions} />
       </div>
     </div>

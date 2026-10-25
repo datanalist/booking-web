@@ -6,6 +6,10 @@ import type { CancelledBooking } from "../presentation/cancelled/CancelledBookin
 import type { ConfirmedBooking } from "../presentation/confirmed/ConfirmedBooking";
 import { confirmedBookingId } from "../presentation/confirmed/ConfirmedBookingId";
 import type { BookingReview } from "../presentation/confirmed/review/BookingReview";
+import {
+  REVIEW_RATINGS,
+  type ReviewRating,
+} from "../presentation/confirmed/review/reviewRating";
 import type { RequestDecision } from "../presentation/confirmed/request/RequestDecision";
 import type { PbBookingCard } from "./pbBookingDisplay";
 import { pbBookingCard } from "./pbBookingDisplay";
@@ -16,6 +20,7 @@ import type {
   PbHostCancelPayload,
   PbResolveBookingRequestPayload,
   PbReviewCreatePayload,
+  PbReviewRecord,
 } from "./pbBookingTypes";
 
 const CANCEL_COMMENT_MAX_LENGTH = 500;
@@ -65,6 +70,8 @@ export function pbBookingToConfirmed(
   if (status === null) return null;
   const card = pbBookingCard(record, baseUrl);
   if (card === null) return null;
+  const guestId = record.guest.trim();
+  const listingId = record.listing.trim();
   return {
     id: confirmedBookingId(record.id),
     guestName: card.guestName,
@@ -76,6 +83,8 @@ export function pbBookingToConfirmed(
     stay: card.stay,
     priceLabel: card.priceLabel,
     status,
+    ...(guestId !== "" ? { guestId } : {}),
+    ...(listingId !== "" ? { listingId } : {}),
   };
 }
 
@@ -155,6 +164,22 @@ export function buildResolveBookingRequestPayload(
             requested_check_out: "",
           };
   }
+}
+
+function isReviewRating(value: unknown): value is ReviewRating {
+  return REVIEW_RATINGS.some((rating) => rating === value);
+}
+
+/** Запись `reviews` с kind=guest → отзыв, который читает меню строки. */
+export function pbReviewToBookingReview(record: PbReviewRecord): BookingReview | null {
+  if (record.kind !== "guest") return null;
+  if (typeof record.booking !== "string" || record.booking.trim() === "") return null;
+  if (!isReviewRating(record.rating)) return null;
+  return {
+    bookingId: confirmedBookingId(record.booking.trim()),
+    rating: record.rating,
+    comment: typeof record.comment === "string" ? record.comment : "",
+  };
 }
 
 export function buildHostGuestReviewPayload(input: {

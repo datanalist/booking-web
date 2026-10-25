@@ -164,9 +164,10 @@ describe("pbBookingToConfirmed", () => {
   });
 
   test("completed остаётся завершённой арендой даже в даты проживания", () => {
-    expect(pbBookingToConfirmed(record({ status: "completed" }), DURING)?.status).toEqual({
-      kind: "stayCompleted",
-    });
+    const row = pbBookingToConfirmed(record({ status: "completed" }), DURING);
+    expect(row?.status).toEqual({ kind: "stayCompleted" });
+    expect(row?.guestId).toBe("g1");
+    expect(row?.listingId).toBe("l1");
   });
 
   test("cancel_requested хранит запрос отмены и прошлый статус confirmed", () => {

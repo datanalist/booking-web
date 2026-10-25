@@ -6,6 +6,7 @@ import type { ConfirmedBooking } from "./confirmed/ConfirmedBooking";
 import type { ConfirmedBookingId } from "./confirmed/ConfirmedBookingId";
 import { ConfirmedBookingsPanel } from "./confirmed/ConfirmedBookingsPanel";
 import type { RequestDecision } from "./confirmed/request/RequestDecision";
+import type { BookingReview } from "./confirmed/review/BookingReview";
 import { RejectedBookingsPanel } from "./rejected/RejectedBookingsPanel";
 import { RequestsPanel } from "./requests/RequestsPanel";
 
@@ -23,6 +24,7 @@ type BookingsTabBodyProps = {
     booking: ConfirmedBooking,
     decision: RequestDecision,
   ) => void | Promise<void>;
+  onSubmitReview?: (review: BookingReview) => void | Promise<void>;
 };
 
 export function BookingsTabBody({
@@ -36,6 +38,7 @@ export function BookingsTabBody({
   onReject,
   onHostCancel,
   onResolveRequest,
+  onSubmitReview,
 }: BookingsTabBodyProps) {
   if (pending) {
     return <div className="min-h-0 flex-1" aria-busy="true" />;
@@ -59,6 +62,7 @@ export function BookingsTabBody({
           forceEmpty={forceEmpty}
           onHostCancel={onHostCancel}
           onResolveRequest={onResolveRequest}
+          onSubmitReview={onSubmitReview}
         />
       );
     case "rejected":

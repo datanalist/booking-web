@@ -37,7 +37,7 @@ export function ConfirmedStatusCell({ status }: ConfirmedStatusCellProps) {
   return (
     <div className="flex flex-col items-start justify-center gap-1">
       <span
-        className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs leading-4 text-[var(--color-ink)] ${badgeClass(status)}`}
+        className={`inline-flex w-max shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs leading-4 text-[var(--color-ink)] ${badgeClass(status)}`}
       >
         {CONFIRMED_BOOKING_STATUS_LABELS[status.kind]}
       </span>

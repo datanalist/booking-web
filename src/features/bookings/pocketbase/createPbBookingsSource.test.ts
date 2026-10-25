@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { createPbClient } from "../../../api/pocketbase";
+import { confirmedBookingId } from "../presentation/confirmed/ConfirmedBookingId";
 import { createPbBookingsSource } from "./createPbBookingsSource";
 
 const pending = {
@@ -43,6 +44,39 @@ describe("createPbBookingsSource", () => {
     const snapshot = await createPbBookingsSource(client).load("user1");
     expect(snapshot.requests).toHaveLength(1);
     expect(snapshot.confirmed).toHaveLength(0);
+    expect(snapshot.guestReviews).toEqual([]);
+  });
+
+  test("load читает отзывы хозяина kind guest", async () => {
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async (input) => {
+        const url = String(input);
+        const items = url.includes("/api/collections/reviews/")
+          ? [{
+              booking: "bk-done",
+              author: "user1",
+              subject: "gst1",
+              kind: "guest",
+              rating: 4,
+              comment: "Тихий гость",
+            }]
+          : [];
+        return new Response(JSON.stringify({
+          page: 1,
+          perPage: 50,
+          totalItems: items.length,
+          totalPages: 1,
+          items,
+        }), { status: 200 });
+      },
+    });
+    const snapshot = await createPbBookingsSource(client).load("user1");
+    expect(snapshot.guestReviews).toEqual([{
+      bookingId: confirmedBookingId("bk-done"),
+      rating: 4,
+      comment: "Тихий гость",
+    }]);
   });
 
   test("accept шлёт awaiting_prepayment", async () => {
@@ -56,5 +90,36 @@ describe("createPbBookingsSource", () => {
     });
     await createPbBookingsSource(client).accept("bk1");
     expect(body).toContain("awaiting_prepayment");
+  });
+
+  test("createGuestReview пишет отзыв kind guest в reviews", async () => {
+    let url = "";
+    let body = "";
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async (input, init) => {
+        url = String(input);
+        body = String(init?.body ?? "");
+        return new Response(JSON.stringify({ id: "rev1" }), { status: 200 });
+      },
+    });
+    await createPbBookingsSource(client).createGuestReview(
+      {
+        bookingId: confirmedBookingId("bk-done"),
+        rating: 5,
+        comment: "Ок",
+      },
+      { authorId: "user1", guestId: "gst1", listingId: "lst1" },
+    );
+    expect(url).toContain("/api/collections/reviews/records");
+    expect(JSON.parse(body)).toEqual({
+      kind: "guest",
+      booking: "bk-done",
+      author: "user1",
+      subject: "gst1",
+      listing: "lst1",
+      rating: 5,
+      comment: "Ок",
+    });
   });
 });

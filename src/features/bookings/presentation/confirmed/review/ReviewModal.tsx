@@ -13,8 +13,12 @@ import { usePortalElement } from "../../../../../app/stagePortal";
 type ReviewModalProps = {
   booking: ConfirmedBooking;
   onClose: () => void;
-  onSubmit: (review: BookingReview) => void;
+  onSubmit: (review: BookingReview) => void | Promise<void>;
 };
+
+function isPromise(value: void | Promise<void>): value is Promise<void> {
+  return typeof value === "object" && value !== null && typeof value.then === "function";
+}
 
 const EMPTY_DRAFT: ReviewDraft = { rating: null, comment: "" };
 
@@ -26,12 +30,29 @@ const BUTTON_BASE =
 
 export function ReviewModal({ booking, onClose, onSubmit }: ReviewModalProps) {
   const [draft, setDraft] = useState<ReviewDraft>(EMPTY_DRAFT);
+  const [pending, setPending] = useState(false);
+  const [failed, setFailed] = useState(false);
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocusTrap(dialogRef, onClose);
 
   const review = parseBookingReview(booking.id, draft);
   const portal = usePortalElement();
+
+  function submit(): void {
+    if (review === null || pending) return;
+    const result = onSubmit(review);
+    if (!isPromise(result)) return;
+    setPending(true);
+    setFailed(false);
+    void result.then(
+      () => undefined,
+      () => {
+        setPending(false);
+        setFailed(true);
+      },
+    );
+  }
 
   return createPortal(
     <div
@@ -96,6 +117,11 @@ export function ReviewModal({ booking, onClose, onSubmit }: ReviewModalProps) {
             value={draft.comment}
             onChange={(comment) => setDraft({ ...draft, comment })}
           />
+          {failed ? (
+            <p className="m-0 text-sm leading-5 text-red-500">
+              Не удалось сохранить отзыв. Попробуйте ещё раз.
+            </p>
+          ) : null}
         </div>
 
         <div className="flex gap-3">
@@ -108,17 +134,13 @@ export function ReviewModal({ booking, onClose, onSubmit }: ReviewModalProps) {
           </button>
           <button
             type="button"
-            disabled={review === null}
+            disabled={review === null || pending}
             className={`${BUTTON_BASE} disabled:cursor-not-allowed ${
-              review === null
+              review === null || pending
                 ? "bg-transparent text-orange-400 opacity-40 outline outline-1 outline-offset-[-1px] outline-orange-400"
                 : "border-0 bg-orange-400 text-absolute-white"
             }`}
-            onClick={() => {
-              if (review !== null) {
-                onSubmit(review);
-              }
-            }}
+            onClick={submit}
           >
             Отправить
           </button>

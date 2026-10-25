@@ -15,7 +15,7 @@ type ConfirmedBookingDialogHostProps = {
   onClose: () => void;
   onDecideRequest: (bookingId: ConfirmedBookingId, decision: RequestDecision) => void;
   onSubmitCancel: (bookingId: ConfirmedBookingId, reason: AcceptedCancelReason) => void;
-  onSubmitReview: (review: BookingReview) => void;
+  onSubmitReview: (review: BookingReview) => void | Promise<void>;
 };
 
 /** Renders the modal for `dialog`; each modal lives in its own folder (request/, cancel/, review/). */

@@ -23,7 +23,8 @@ export {
   pbBookingToConfirmed,
   pbBookingToRejected,
   pbBookingToRequest,
+  pbReviewToBookingReview,
 } from "./pbBookingMapper";
 
-export type { BookingsSnapshot, BookingsSource } from "./bookingsSource";
+export type { BookingsSnapshot, BookingsSource, HostGuestReviewLinks } from "./bookingsSource";
 export { createPbBookingsSource } from "./createPbBookingsSource";
