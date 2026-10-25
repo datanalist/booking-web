@@ -13,6 +13,7 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
   const { session } = useSession();
   const isListingsHome = location.pathname === "/listings";
   const isBookingsHome = location.pathname === "/bookings";
+  const isNotificationsHome = location.pathname === "/notifications";
   const isChatsHome = location.pathname === "/chats";
   const isProfile = location.pathname === "/profile";
   const isListingWizard =
@@ -26,6 +27,7 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
     isListingWizard ||
     isListingPreview ||
     isBookingsHome ||
+    isNotificationsHome ||
     isChatsHome ||
     isProfile;
 
