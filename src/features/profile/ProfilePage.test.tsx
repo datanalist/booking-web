@@ -1,9 +1,10 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { MemoryRouter, Route, Routes, useSearchParams } from "react-router-dom";
 import { createApi } from "../../api";
 import { SESSION_KEY } from "../../api/keys";
+import { SUPPORT_STAFF_USER_ID } from "../chat";
 import { SessionProvider } from "../../app/session";
 import { ProfilePage } from "./ProfilePage";
 
@@ -155,6 +156,100 @@ test("support button opens the chats route", async () => {
   );
   expect(await screen.findByText("chats-page:chat-support")).toBeInTheDocument();
 });
+
+test("при pocketbase кнопка открывает найденный чат и не создаёт второй", async () => {
+  vi.stubEnv("VITE_DATA_SOURCE", "pocketbase");
+  const userId = sessionUserId();
+  const calls: { method: string; url: string; body: string }[] = [];
+  vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push({
+      method: init?.method ?? "GET",
+      url: String(input),
+      body: typeof init?.body === "string" ? init.body : "",
+    });
+    return listResponse([{
+      id: "gc134dxdyo7je7w",
+      kind: "support",
+      host: userId,
+      guest: SUPPORT_STAFF_USER_ID,
+    }]);
+  });
+  try {
+    const user = userEvent.setup();
+    renderProfile();
+    await user.click(screen.getByRole("button", { name: "Написать в поддержку" }));
+    expect(await screen.findByText("chats-page:gc134dxdyo7je7w")).toBeInTheDocument();
+    expect(calls.some((call) => call.method === "POST")).toBe(false);
+    expect(decodeURIComponent(calls[0]?.url ?? "")).toContain(`host="${userId}"`);
+    expect(decodeURIComponent(calls[0]?.url ?? "")).toContain('kind="support"');
+  } finally {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  }
+});
+
+test("при pocketbase без чата кнопка создаёт поддержку и открывает её", async () => {
+  vi.stubEnv("VITE_DATA_SOURCE", "pocketbase");
+  const userId = sessionUserId();
+  const calls: { method: string; body: string }[] = [];
+  vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+    const method = init?.method ?? "GET";
+    calls.push({
+      method,
+      body: typeof init?.body === "string" ? init.body : "",
+    });
+    if (method === "POST") {
+      return new Response(JSON.stringify({
+        id: "newsupport00001",
+        kind: "support",
+        guest: userId,
+        host: userId,
+        staff: SUPPORT_STAFF_USER_ID,
+      }), { status: 200 });
+    }
+    return listResponse([]);
+  });
+  try {
+    const user = userEvent.setup();
+    renderProfile();
+    await user.click(screen.getByRole("button", { name: "Написать в поддержку" }));
+    expect(await screen.findByText("chats-page:newsupport00001")).toBeInTheDocument();
+    const created = calls.find((call) => call.method === "POST");
+    expect(JSON.parse(created?.body ?? "{}")).toEqual({
+      kind: "support",
+      guest: userId,
+      host: userId,
+      staff: SUPPORT_STAFF_USER_ID,
+    });
+  } finally {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  }
+});
+
+function sessionUserId(): string {
+  const raw = localStorage.getItem(SESSION_KEY);
+  const parsed: unknown = raw === null ? null : JSON.parse(raw);
+  if (
+    typeof parsed !== "object"
+    || parsed === null
+    || !("userId" in parsed)
+    || typeof parsed.userId !== "string"
+  ) {
+    throw new Error("нет сессии");
+  }
+  return parsed.userId;
+}
+
+function listResponse(items: readonly unknown[]): Response {
+  return new Response(JSON.stringify({
+    page: 1,
+    perPage: 1,
+    totalItems: items.length,
+    totalPages: items.length === 0 ? 0 : 1,
+    items,
+  }), { status: 200 });
+}
 
 function ChatsProbe() {
   const [params] = useSearchParams();

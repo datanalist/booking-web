@@ -17,3 +17,4 @@ export {
 } from "./pbChatMapper";
 export type { ChatConversationModel, ChatLiveNotice, ChatSource } from "./chatSource";
 export { createPbChatSource } from "./createPbChatSource";
+export { SUPPORT_STAFF_USER_ID, resolveSupportChatId } from "./resolveSupportChat";
