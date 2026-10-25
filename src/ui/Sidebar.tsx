@@ -29,10 +29,18 @@ const DEFAULT_ITEMS: SidebarItem[] = [
     to: "/notifications",
     label: "Уведомления",
     iconSrc: "/sidebar-icon-notifications.svg",
-    badge: 2,
   },
   { to: "/profile", label: "Профиль", iconSrc: "/sidebar-icon-profile.svg" },
 ];
+
+export function cabinetSidebarItems(unreadNotifications: number | null): SidebarItem[] {
+  return DEFAULT_ITEMS.map((item) => {
+    if (item.to !== "/notifications" || unreadNotifications === null || unreadNotifications <= 0) {
+      return item;
+    }
+    return { ...item, badge: unreadNotifications };
+  });
+}
 
 type SidebarProps = {
   /** Текущий путь для подсветки. Передаётся снаружи, чтобы тесты не зависели от роутера. */

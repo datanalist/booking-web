@@ -1,14 +1,10 @@
-import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { SESSION_KEY } from "../../../api/keys";
-import { createCabinetPbClient, resolveCabinetDataSource } from "../../../api/pocketbase";
-import type { PbNotificationRecord } from "../../chat/pocketbase";
 import { parseNotificationTab, type NotificationTabId } from "../domain/notificationTab";
 import { buildNotificationInbox } from "../pocketbase/notificationInbox";
-import { createPbNotificationSource } from "../pocketbase/createPbNotificationSource";
 import { NotificationList } from "./NotificationList";
 import { NotificationTabs } from "./NotificationTabs";
 import { EMPTY_INBOX_SUBTITLE, EMPTY_UNREAD_SUBTITLE, NotificationsEmpty } from "./NotificationsEmpty";
+import { markNotificationRead, useNotificationRecords } from "./useNotificationRecords";
 
 export function NotificationsPage() {
   const [params, setParams] = useSearchParams();
@@ -51,7 +47,12 @@ export function NotificationsPage() {
               subtitle={requested === "unread" ? EMPTY_UNREAD_SUBTITLE : null}
             />
           ) : (
-            <NotificationList items={items} />
+            <NotificationList
+              items={items}
+              onMarkRead={(id) => {
+                void markNotificationRead(id);
+              }}
+            />
           )}
         </div>
       )}
@@ -59,58 +60,3 @@ export function NotificationsPage() {
   );
 }
 
-function useNotificationRecords(): readonly PbNotificationRecord[] | null {
-  const pocketbase = resolveCabinetDataSource() === "pocketbase";
-  const [records, setRecords] = useState<readonly PbNotificationRecord[] | null>(() => {
-    if (!pocketbase) {
-      return [];
-    }
-    return readSessionUserId() === null ? [] : null;
-  });
-
-  useEffect(() => {
-    if (!pocketbase) {
-      return;
-    }
-    const userId = readSessionUserId();
-    if (userId === null) {
-      setRecords([]);
-      return;
-    }
-    let cancelled = false;
-    createPbNotificationSource(createCabinetPbClient())
-      .list(userId)
-      .then((items) => {
-        if (!cancelled) {
-          setRecords(items);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setRecords([]);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [pocketbase]);
-
-  return records;
-}
-
-function readSessionUserId(): string | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (raw === null) {
-      return null;
-    }
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null) {
-      return null;
-    }
-    const userId = Reflect.get(parsed, "userId");
-    return typeof userId === "string" && userId.length > 0 ? userId : null;
-  } catch {
-    return null;
-  }
-}

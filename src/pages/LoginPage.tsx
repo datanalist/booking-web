@@ -5,7 +5,7 @@ import { Button } from "../ui/Button";
 import { ForgotPasswordModal } from "../ui/ForgotPasswordModal";
 import { Input } from "../ui/Input";
 import { EmailVerifiedInlineNotice } from "./EmailVerifiedNotice";
-import { subscribeEmailVerifiedNotice } from "./emailVerifiedNotice";
+import { subscribeEmailVerifiedNotice } from "./emailVerifiedNoticeChannel";
 
 type LoginLocationState = {
   forgot?: boolean;

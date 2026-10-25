@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { publishEmailVerifiedNotice } from "./emailVerifiedNotice";
+import { publishEmailVerifiedNotice } from "./emailVerifiedNoticeChannel";
 
 export const EMAIL_CONFIRMED_TITLE = "Ваша почта подтверждена";
 export const EMAIL_CONFIRMED_RETURN_TEXT =

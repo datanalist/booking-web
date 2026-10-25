@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { createApi } from "../api";
 import { SESSION_KEY } from "../api/keys";
 import { SessionProvider } from "../app/session";
-import { EMAIL_VERIFIED_NOTICE_KEY } from "./emailVerifiedNotice";
+import { EMAIL_VERIFIED_NOTICE_KEY } from "./emailVerifiedNoticeChannel";
 import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
 

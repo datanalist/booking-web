@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { useSession } from "../app/session";
-import { Sidebar } from "../ui/Sidebar";
+import { useUnreadNotificationCount } from "../features/notifications/presentation/useNotificationRecords";
+import { cabinetSidebarItems, Sidebar } from "../ui/Sidebar";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "../config";
 
 type CabinetLayoutProps = {
@@ -11,6 +12,7 @@ type CabinetLayoutProps = {
 export function CabinetLayout({ children }: CabinetLayoutProps) {
   const location = useLocation();
   const { session } = useSession();
+  const unreadNotifications = useUnreadNotificationCount();
   const isListingsHome = location.pathname === "/listings";
   const isBookingsHome = location.pathname === "/bookings";
   const isNotificationsHome = location.pathname === "/notifications";
@@ -38,6 +40,7 @@ export function CabinetLayout({ children }: CabinetLayoutProps) {
     >
       <Sidebar
         activePath={location.pathname}
+        items={cabinetSidebarItems(unreadNotifications)}
         account={{
           name: session?.name ?? "",
           email: session?.email ?? "",

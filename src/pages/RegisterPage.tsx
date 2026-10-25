@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSession } from "../app/session";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { subscribeEmailVerifiedNotice } from "./emailVerifiedNotice";
+import { subscribeEmailVerifiedNotice } from "./emailVerifiedNoticeChannel";
 
 const REGISTER_FAILURE_MESSAGE =
   "Не получилось зарегистрироваться, попробуйте еще раз";

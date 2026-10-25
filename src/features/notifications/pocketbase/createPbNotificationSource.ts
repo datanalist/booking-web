@@ -6,6 +6,7 @@ const PER_PAGE = 200;
 
 export type NotificationSource = {
   list(userId: string): Promise<readonly PbNotificationRecord[]>;
+  markRead(id: string): Promise<PbNotificationRecord>;
 };
 
 export function createPbNotificationSource(client: PbClient): NotificationSource {
@@ -29,6 +30,9 @@ export function createPbNotificationSource(client: PbClient): NotificationSource
         items.push(...next.items);
       }
       return items;
+    },
+    markRead(id: string): Promise<PbNotificationRecord> {
+      return client.updateRecord<PbNotificationRecord>(COLLECTION, id, { read: true });
     },
   };
 }

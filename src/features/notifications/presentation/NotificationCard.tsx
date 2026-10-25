@@ -3,12 +3,16 @@ import type { NotificationItem } from "../domain/notificationItem";
 
 type NotificationCardProps = {
   item: NotificationItem;
+  onMarkRead?: (id: string) => void;
 };
 
-export function NotificationCard({ item }: NotificationCardProps) {
+export function NotificationCard({ item, onMarkRead }: NotificationCardProps) {
   const pin = notificationShowsPin(item);
   return (
-    <article className="flex w-full flex-col gap-2 overflow-hidden rounded-2xl border border-[rgba(251,192,40,0.17)] bg-[rgba(251,192,40,0.06)] p-3">
+    <article
+      className="flex w-full cursor-pointer flex-col gap-2 overflow-hidden rounded-2xl border border-[rgba(251,192,40,0.17)] bg-[rgba(251,192,40,0.06)] p-3"
+      onClick={() => onMarkRead?.(item.id)}
+    >
       <div className="flex w-full items-start justify-between gap-[10px]">
         <div className={`flex min-w-0 items-center ${pin ? "gap-[9px]" : ""}`}>
           {pin ? (
