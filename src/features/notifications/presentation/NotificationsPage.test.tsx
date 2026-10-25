@@ -30,3 +30,9 @@ test("пустой ящик показывает иллюстрацию маке
   expect(art).toHaveAttribute("width", "228.846");
   expect(art).toHaveAttribute("height", "200");
 });
+
+test("без VITE_DATA_SOURCE=pocketbase нет фиктивного «Новое сообщение»", () => {
+  renderPage();
+  expect(screen.queryByRole("heading", { name: "Новое сообщение" })).not.toBeInTheDocument();
+  expect(screen.queryByText("Новое сообщение")).not.toBeInTheDocument();
+});
