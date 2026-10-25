@@ -29,6 +29,7 @@ export type ChatSource = {
   listThreads(hostId: string): Promise<readonly ChatThread[]>;
   loadConversation(chatId: string, hostId: string): Promise<ChatConversationModel>;
   sendText(chatId: string, hostId: string, text: string): Promise<void>;
-  markRead(chatId: string): Promise<void>;
+  /** Пишет `host_last_read` и снимает непрочитанные уведомления этого хозяина по чату. */
+  markRead(chatId: string, hostId: string): Promise<void>;
   watchInbox?(hostId: string, onNotice: (notice: ChatLiveNotice) => void): () => void;
 };

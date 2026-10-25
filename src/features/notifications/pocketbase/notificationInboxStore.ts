@@ -66,6 +66,26 @@ export function ensureNotificationInbox(): void {
     });
 }
 
+/** Кеш уже загруженного ящика: прочтение чата снимает связанные непрочитанные без нового канала. */
+export function applyChatNotificationsRead(chatId: string, userId: string): void {
+  if (records === null || loadedUserId !== userId) {
+    return;
+  }
+  let changed = false;
+  const next = records.map((item) => {
+    if (item.chat !== chatId || item.read === true) {
+      return item;
+    }
+    changed = true;
+    return { ...item, read: true };
+  });
+  if (!changed) {
+    return;
+  }
+  records = next;
+  emit();
+}
+
 export async function markNotificationRead(id: string): Promise<void> {
   const current = records;
   if (current === null || loadedUserId === null || pendingReads.has(id)) {

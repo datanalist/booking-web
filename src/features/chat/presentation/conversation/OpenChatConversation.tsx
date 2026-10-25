@@ -73,7 +73,7 @@ function LiveChatConversation({
         if (!cancelled) {
           setModel(appendMessages(loaded, pendingLive.current));
         }
-        void source.markRead(chatId).catch(() => undefined);
+        void source.markRead(chatId, hostId).catch(() => undefined);
       },
       () => {
         if (!cancelled) {
@@ -95,8 +95,8 @@ function LiveChatConversation({
     }
     pendingLive.current = mergeMessages(pendingLive.current, liveNotice.messages);
     setModel((current) => (current === null ? current : appendMessages(current, liveNotice.messages)));
-    void source.markRead(chatId).catch(() => undefined);
-  }, [chatId, liveNotice, source]);
+    void source.markRead(chatId, hostId).catch(() => undefined);
+  }, [chatId, hostId, liveNotice, source]);
 
   if (model === null) {
     return null;

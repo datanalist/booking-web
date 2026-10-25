@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { createPbClient } from "../../../api/pocketbase";
 import { createPbChatSource } from "./createPbChatSource";
 
@@ -132,12 +132,17 @@ describe("createPbChatSource", () => {
           method: init?.method ?? "GET",
           body: typeof init?.body === "string" ? init.body : "",
         });
+        if ((init?.method ?? "GET") === "GET") {
+          return new Response(JSON.stringify({
+            page: 1, perPage: 200, totalItems: 0, totalPages: 0, items: [],
+          }), { status: 200 });
+        }
         return new Response(JSON.stringify({ id: "msg-new" }), { status: 200 });
       },
     });
     const source = createPbChatSource(client);
     await source.sendText("chat1", "user1", "До встречи");
-    await source.markRead("chat1");
+    await source.markRead("chat1", "user1");
     const created = calls.find((call) => call.method === "POST");
     const updated = calls.find((call) => call.method === "PATCH");
     expect(created?.url).toContain("/api/collections/messages/records");
@@ -146,4 +151,103 @@ describe("createPbChatSource", () => {
     expect(updated?.url).toContain("/api/collections/chats/records/chat1");
     expect(updated?.body).toContain("host_last_read");
   });
+
+  test("markRead чата снимает непрочитанные уведомления этого чата и не трогает чужие", async () => {
+    const calls: { url: string; method: string; body: string }[] = [];
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async (input, init) => {
+        const url = String(input);
+        const method = init?.method ?? "GET";
+        calls.push({
+          url,
+          method,
+          body: typeof init?.body === "string" ? init.body : "",
+        });
+        if (method === "GET") {
+          const filter = decodeURIComponent(url.replace(/\+/g, " "));
+          const scoped = filter.includes('user="user1"')
+            && filter.includes('chat="chat1"')
+            && filter.includes("read != true");
+          const items = scoped
+            ? [notice("n-a", "chat1", false), notice("n-b", "chat1", false)]
+            : [
+                notice("n-a", "chat1", false),
+                notice("n-other-chat", "chat-other", false),
+                notice("n-read", "chat1", true),
+              ];
+          return new Response(JSON.stringify({
+            page: 1, perPage: 200, totalItems: items.length, totalPages: 1, items,
+          }), { status: 200 });
+        }
+        return new Response(JSON.stringify({ id: "ok", read: true }), { status: 200 });
+      },
+    });
+    await createPbChatSource(client).markRead("chat1", "user1");
+    const patches = calls.filter((call) => call.method === "PATCH");
+    expect(patches.map((call) => call.url)).toEqual([
+      expect.stringContaining("/api/collections/chats/records/chat1"),
+      expect.stringContaining("/api/collections/notifications/records/n-a"),
+      expect.stringContaining("/api/collections/notifications/records/n-b"),
+    ]);
+    expect(patches[0]?.body).toContain("host_last_read");
+    expect(patches[1]?.body).toBe(JSON.stringify({ read: true }));
+    expect(patches[2]?.body).toBe(JSON.stringify({ read: true }));
+    expect(patches.some((call) => call.url.includes("n-other-chat") || call.url.includes("n-read"))).toBe(false);
+  });
+
+  test("сбой уведомления не откатывает host_last_read и виден в логе", async () => {
+    const calls: { url: string; method: string; body: string }[] = [];
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async (input, init) => {
+        const url = String(input);
+        const method = init?.method ?? "GET";
+        calls.push({
+          url,
+          method,
+          body: typeof init?.body === "string" ? init.body : "",
+        });
+        if (method === "GET") {
+          return new Response(JSON.stringify({
+            page: 1,
+            perPage: 200,
+            totalItems: 2,
+            totalPages: 1,
+            items: [notice("n-a", "chat1", false), notice("n-b", "chat1", false)],
+          }), { status: 200 });
+        }
+        if (url.includes("/api/collections/notifications/records/n-a")) {
+          return new Response(JSON.stringify({ message: "fail" }), { status: 500 });
+        }
+        return new Response(JSON.stringify({ id: "ok", read: true }), { status: 200 });
+      },
+    });
+    try {
+      await expect(createPbChatSource(client).markRead("chat1", "user1")).rejects.toThrow(
+        "Не удалось снять уведомления прочитанного чата",
+      );
+    } finally {
+      expect(logged).toHaveBeenCalled();
+      expect(String(logged.mock.calls[0]?.[0])).toContain("уведомлен");
+      logged.mockRestore();
+    }
+    const chatPatches = calls.filter((call) => call.method === "PATCH" && call.url.includes("/chats/"));
+    expect(chatPatches).toHaveLength(1);
+    expect(chatPatches[0]?.body).toContain("host_last_read");
+    expect(calls.some((call) => call.url.includes("/notifications/records/n-a"))).toBe(true);
+    expect(calls.some((call) => call.url.includes("/notifications/records/n-b"))).toBe(true);
+  });
 });
+
+function notice(id: string, chatId: string, read: boolean) {
+  return {
+    id,
+    user: "user1",
+    chat: chatId,
+    title: id,
+    read,
+    created: "2026-10-24 12:00:00.000Z",
+  };
+}

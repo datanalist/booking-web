@@ -1,4 +1,6 @@
 import type { PbClient } from "../../../api/pocketbase";
+import { createPbNotificationSource } from "../../notifications/pocketbase/createPbNotificationSource";
+import { applyChatNotificationsRead } from "../../notifications/pocketbase/notificationInboxStore";
 import {
   buildPbMarkChatReadPayload,
   buildPbSendMessagePayload,
@@ -69,12 +71,14 @@ export function createPbChatSource(client: PbClient): ChatSource {
       );
     },
 
-    async markRead(chatId) {
+    async markRead(chatId, hostId) {
       await client.updateRecord(
         "chats",
         chatId,
         buildPbMarkChatReadPayload(new Date().toISOString()),
       );
+      await createPbNotificationSource(client).markChatRead(hostId, chatId);
+      applyChatNotificationsRead(chatId, hostId);
     },
 
     watchInbox(hostId, onNotice) {

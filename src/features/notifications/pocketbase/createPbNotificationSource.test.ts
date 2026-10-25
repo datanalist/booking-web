@@ -53,7 +53,7 @@ test("list забирает следующие страницы, если totalP
   expect(items.map((item) => item.id)).toEqual(["n1", "n2"]);
 });
 
-test("markRead ставит read true и не отправляет user, title или body", async () => {
+test("markRead ставит read true, не шлёт user, title или body и не меняет чат", async () => {
   const calls: { url: string; method: string; body: string }[] = [];
   const client = createPbClient({
     baseUrl: "https://pb.example",
@@ -81,4 +81,6 @@ test("markRead ставит read true и не отправляет user, title �
   expect(JSON.parse(calls[0]?.body ?? "{}")).toEqual({ read: true });
   expect(updated.read).toBe(true);
   expect(updated.user).toBe("user1");
+  expect(calls.some((call) => call.url.includes("/api/collections/chats/"))).toBe(false);
+  expect(calls[0]?.body).not.toContain("host_last_read");
 });

@@ -23,6 +23,8 @@ deploy/pocketbase/.env
 src/app/localDevAuth.local.ts
 # Локальный перенос ключей и секретов. В git не входит.
 .secrets/
+# Одноразовые скрипты сида. В git не входят.
+/temp/
 # Спеки и планы только локально: сеть, ящики, порядок включения.
 docs/superpowers/specs/
 docs/superpowers/plans/
