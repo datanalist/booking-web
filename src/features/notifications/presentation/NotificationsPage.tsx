@@ -1,18 +1,38 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { SESSION_KEY } from "../../../api/keys";
 import { createCabinetPbClient, resolveCabinetDataSource } from "../../../api/pocketbase";
 import type { PbNotificationRecord } from "../../chat/pocketbase";
+import { parseNotificationTab, type NotificationTabId } from "../domain/notificationTab";
 import { buildNotificationInbox } from "../pocketbase/notificationInbox";
 import { createPbNotificationSource } from "../pocketbase/createPbNotificationSource";
 import { NotificationList } from "./NotificationList";
 import { NotificationTabs } from "./NotificationTabs";
-import { EMPTY_INBOX_SUBTITLE, NotificationsEmpty } from "./NotificationsEmpty";
+import { EMPTY_INBOX_SUBTITLE, EMPTY_UNREAD_SUBTITLE, NotificationsEmpty } from "./NotificationsEmpty";
 
 export function NotificationsPage() {
+  const [params, setParams] = useSearchParams();
+  const requested = parseNotificationTab(params.get("tab"));
   const records = useNotificationRecords();
   const items = records === null
     ? null
-    : buildNotificationInbox(records, "all", new Date());
+    : buildNotificationInbox(records, requested === "unread" ? "unread" : "all", new Date());
+  const inboxEmpty = records !== null && records.length === 0;
+  const unreadEmpty = requested === "unread"
+    && records !== null
+    && records.length > 0
+    && items !== null
+    && items.length === 0;
+
+  function selectTab(tab: NotificationTabId): void {
+    const next = new URLSearchParams(params);
+    if (tab === "all") {
+      next.delete("tab");
+    } else {
+      next.set("tab", tab);
+    }
+    setParams(next);
+  }
 
   return (
     <div className="flex h-full w-full flex-col gap-8 bg-[rgba(251,192,40,0.06)] p-8 font-sans">
@@ -21,12 +41,16 @@ export function NotificationsPage() {
           Уведомления
         </h1>
       </header>
-      {items === null ? null : items.length === 0 ? (
+      {items === null ? null : inboxEmpty ? (
         <NotificationsEmpty subtitle={EMPTY_INBOX_SUBTITLE} />
       ) : (
         <div className="flex min-h-0 w-full flex-1 flex-col gap-5">
-          <NotificationTabs value="all" />
-          <NotificationList items={items} />
+          <NotificationTabs value={requested} onChange={selectTab} />
+          {unreadEmpty ? (
+            <NotificationsEmpty subtitle={EMPTY_UNREAD_SUBTITLE} />
+          ) : (
+            <NotificationList items={items} />
+          )}
         </div>
       )}
     </div>

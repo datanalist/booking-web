@@ -1,6 +1,8 @@
 export const EMPTY_INBOX_SUBTITLE =
   "Уведомления об объявлениях и бронированиях появятся здесь";
 
+export const EMPTY_UNREAD_SUBTITLE = "Все уведомления прочитаны";
+
 type NotificationsEmptyProps = {
   subtitle: string | null;
 };
