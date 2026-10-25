@@ -105,3 +105,34 @@ test("пустая вкладка непрочитанных показывае�
   expect(screen.getByRole("tab", { name: "Не прочитанные" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getByTestId("notifications-empty-art")).toBeInTheDocument();
 });
+
+test("прочитанные на своей вкладке без точки", async () => {
+  stubNotifications([readRecord, unreadRecord]);
+  render(
+    <MemoryRouter initialEntries={["/notifications?tab=read"]}>
+      <Routes>
+        <Route path="/notifications" element={<NotificationsPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+  expect(await screen.findByRole("heading", { name: readRecord.title })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: unreadRecord.title })).not.toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Прочитанные" })).toHaveAttribute("aria-selected", "true");
+  expect(document.querySelector("img[src='/notifications-unread-pin.svg']")).toBeNull();
+});
+
+test("пустая вкладка прочитанных повторяет каркас без чужой подписи", async () => {
+  stubNotifications([unreadRecord]);
+  render(
+    <MemoryRouter initialEntries={["/notifications?tab=read"]}>
+      <Routes>
+        <Route path="/notifications" element={<NotificationsPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+  expect(await screen.findByRole("heading", { name: "Нет уведомлений" })).toBeInTheDocument();
+  expect(screen.queryByText("Все уведомления прочитаны")).not.toBeInTheDocument();
+  expect(screen.queryByText("Уведомления об объявлениях и бронированиях появятся здесь")).not.toBeInTheDocument();
+  expect(screen.getByTestId("notifications-empty-art")).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Прочитанные" })).toHaveAttribute("aria-selected", "true");
+});

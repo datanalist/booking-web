@@ -16,9 +16,9 @@ export function NotificationsPage() {
   const records = useNotificationRecords();
   const items = records === null
     ? null
-    : buildNotificationInbox(records, requested === "unread" ? "unread" : "all", new Date());
+    : buildNotificationInbox(records, requested, new Date());
   const inboxEmpty = records !== null && records.length === 0;
-  const unreadEmpty = requested === "unread"
+  const filterEmpty = (requested === "unread" || requested === "read")
     && records !== null
     && records.length > 0
     && items !== null
@@ -46,8 +46,10 @@ export function NotificationsPage() {
       ) : (
         <div className="flex min-h-0 w-full flex-1 flex-col gap-5">
           <NotificationTabs value={requested} onChange={selectTab} />
-          {unreadEmpty ? (
-            <NotificationsEmpty subtitle={EMPTY_UNREAD_SUBTITLE} />
+          {filterEmpty ? (
+            <NotificationsEmpty
+              subtitle={requested === "unread" ? EMPTY_UNREAD_SUBTITLE : null}
+            />
           ) : (
             <NotificationList items={items} />
           )}
