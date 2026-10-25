@@ -109,6 +109,13 @@ test("footer logo matches mockup size and frame position", () => {
   expect(footer?.contains(logo)).toBe(true);
 });
 
+test("пункт «Уведомления» без числа не показывает постоянную двойку", () => {
+  renderSidebar("/listings");
+
+  const link = screen.getByRole("link", { name: /уведомления/i });
+  expect(within(link).queryByText("2")).not.toBeInTheDocument();
+});
+
 test("switches section inside the app instead of reloading the document", async () => {
   const user = userEvent.setup();
   render(
