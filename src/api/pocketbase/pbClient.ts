@@ -20,6 +20,8 @@ export type CreatePbClientOptions = {
   baseUrl?: string;
   fetchFn?: PbFetch;
   token?: PbTokenSource;
+  /** Вызывается, если запрос с этим токеном получил 401. */
+  onUnauthorized?: (token: string) => void;
 };
 
 export type PbListQuery = {
@@ -250,12 +252,20 @@ export function createPbClient(options: CreatePbClientOptions = {}): PbClient {
   const tokenSource = options.token ?? null;
 
   async function send(path: string, method: string, query?: Query, body?: object): Promise<unknown> {
+    const token = currentToken(tokenSource);
     const encoded = encodeBody(body);
-    return readResponse(await fetchFn(withQuery(baseUrl, path, query), {
-      method,
-      headers: buildHeaders(currentToken(tokenSource), encoded),
-      body: encoded,
-    }));
+    try {
+      return await readResponse(await fetchFn(withQuery(baseUrl, path, query), {
+        method,
+        headers: buildHeaders(token, encoded),
+        body: encoded,
+      }));
+    } catch (error) {
+      if (error instanceof PbRequestError && error.status === 401 && token !== null) {
+        options.onUnauthorized?.(token);
+      }
+      throw error;
+    }
   }
 
   return {

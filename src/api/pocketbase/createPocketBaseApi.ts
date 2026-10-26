@@ -1,8 +1,7 @@
-import { SESSION_KEY } from "../keys";
-import type { ApiBundle, Session } from "../index";
+import type { ApiBundle } from "../index";
 import { createPbAuthApi } from "./createPbAuthApi";
 import { createPbListingsApi } from "./createPbListingsApi";
-import { createCabinetPbClient } from "./pbSession";
+import { createCabinetPbClient, readCabinetSession } from "./pbSession";
 
 export function createPocketBaseApi(storage: Storage): ApiBundle {
   const client = createCabinetPbClient(storage);
@@ -11,10 +10,7 @@ export function createPocketBaseApi(storage: Storage): ApiBundle {
   return {
     auth,
     listings,
-    readSession: () => {
-      const raw = storage.getItem(SESSION_KEY);
-      return raw ? JSON.parse(raw) as Session : null;
-    },
+    readSession: () => readCabinetSession(storage),
     setCurrentUserId: () => {},
   };
 }

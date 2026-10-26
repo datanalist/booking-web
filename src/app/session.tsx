@@ -8,6 +8,9 @@ import {
   type ReactNode,
 } from "react";
 import { createApi } from "../api";
+import { resolveCabinetDataSource } from "../api/pocketbase/dataSource";
+import { dropPbSession, onPbSessionLost, readPbToken } from "../api/pocketbase/pbSession";
+import { pbTokenExpiresAtMs } from "../api/pocketbase/pbToken";
 import type { AuthApi, ListingsApi, Session } from "../api/types";
 
 type SessionContextValue = {
@@ -34,6 +37,54 @@ export function SessionProvider({ children }: SessionProviderProps) {
   useEffect(() => {
     api.setCurrentUserId(session?.userId ?? null);
   }, [api, session]);
+
+  useEffect(() => {
+    return onPbSessionLost(() => {
+      api.setCurrentUserId(null);
+      setSession(null);
+    });
+  }, [api]);
+
+  useEffect(() => {
+    if (resolveCabinetDataSource() !== "pocketbase" || session === null) {
+      return;
+    }
+    let timer = 0;
+    let stopped = false;
+
+    const arm = (): void => {
+      if (stopped) {
+        return;
+      }
+      const token = readPbToken(localStorage);
+      if (token === null) {
+        return;
+      }
+      const exp = pbTokenExpiresAtMs(token);
+      if (exp === null) {
+        return;
+      }
+      const delay = exp - Date.now();
+      if (delay <= 0) {
+        dropPbSession(localStorage);
+        return;
+      }
+      const maxWait = 2_147_483_647;
+      timer = window.setTimeout(() => {
+        if (delay > maxWait) {
+          arm();
+          return;
+        }
+        dropPbSession(localStorage);
+      }, Math.min(delay, maxWait));
+    };
+
+    arm();
+    return () => {
+      stopped = true;
+      window.clearTimeout(timer);
+    };
+  }, [session]);
 
   const reload = useCallback((): void => {
     const next = api.readSession();
