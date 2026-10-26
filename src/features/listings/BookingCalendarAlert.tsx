@@ -1,6 +1,7 @@
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import type { ReactElement } from "react";
 import { usePortalElement } from "../../app/stagePortal";
+import { resolveCabinetDataSource } from "../../api/pocketbase/dataSource";
 import { bookingCalendarDemoFor } from "./bookingCalendarDemoFor";
 import type { BookingCalendarDemo } from "./bookingCalendarDemo";
 import { bookingCalendarMarksFor } from "./bookingCalendarMarksFor";
@@ -8,6 +9,7 @@ import { BookingCalendarAlertBody } from "./BookingCalendarAlertBody";
 import { toggleSelectedBookingDay } from "./toggleSelectedBookingDay";
 import { useBookingCalendarView } from "./useBookingCalendarView";
 import { useBookingDayOverrides } from "./useBookingDayOverrides";
+import { useListingBookingCalendar } from "./useListingBookingCalendar";
 
 const CARD_SHADOW =
   "shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08),0px_8px_8px_-4px_rgba(16,24,40,0.03)]";
@@ -43,9 +45,15 @@ export function BookingCalendarAlert({
   storage = localStorage,
   demo,
 }: BookingCalendarAlertProps): ReactElement {
-  const resolvedDemo = demo ?? bookingCalendarDemoFor(today);
-  const marks = bookingCalendarMarksFor(today);
   const { view, selectDay, shiftMonth } = useBookingCalendarView(open, today);
+  const live = useListingBookingCalendar({
+    useLiveData: demo === undefined && resolveCabinetDataSource() === "pocketbase",
+    open,
+    listingId,
+    month: view.month,
+  });
+  const resolvedDemo = live?.content ?? demo ?? bookingCalendarDemoFor(today);
+  const marks = live?.marks ?? bookingCalendarMarksFor(today);
   const { overrides, toggleDay } = useBookingDayOverrides(listingId, storage);
 
   function handleOpenChange(next: boolean): void {

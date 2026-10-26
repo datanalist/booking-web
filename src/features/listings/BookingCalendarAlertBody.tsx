@@ -64,13 +64,17 @@ function ListingSummary({
 }): ReactElement {
   return (
     <div className="flex items-center gap-4">
-      <img
-        src={coverUrl}
-        alt=""
-        width={64}
-        height={64}
-        className="size-16 shrink-0 rounded-lg object-cover"
-      />
+      {coverUrl.trim() === "" ? (
+        <div className="size-16 shrink-0 rounded-lg bg-[#f6f4ef]" />
+      ) : (
+        <img
+          src={coverUrl}
+          alt=""
+          width={64}
+          height={64}
+          className="size-16 shrink-0 rounded-lg object-cover"
+        />
+      )}
       <div className="flex flex-col gap-1.5 text-[#1a1b1d]">
         <p className="m-0 text-[18px] font-bold leading-normal tracking-[0.018px]">
           {title}
