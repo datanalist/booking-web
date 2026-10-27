@@ -1,0 +1,21 @@
+services:
+  booking-web:
+    build:
+      context: ../..
+      args:
+        VITE_DATA_SOURCE: ${VITE_DATA_SOURCE:-pocketbase}
+        VITE_POCKETBASE_URL: ${VITE_POCKETBASE_URL:-https://pb.booking.vallome.ru}
+    image: booking-web:latest
+    container_name: booking-web
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      # Загруженные фото. Живут вне образа, переживают деплой.
+      - /opt/booking-web/data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

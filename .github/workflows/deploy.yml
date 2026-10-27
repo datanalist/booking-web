@@ -1,0 +1,62 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.13.0
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request'
+    # Self-hosted runner на мини-ПК (метка minipc): входящий SSH не нужен.
+    runs-on: [self-hosted, minipc]
+    env:
+      VITE_DATA_SOURCE: pocketbase
+      VITE_POCKETBASE_URL: ${{ vars.VITE_POCKETBASE_URL || 'https://pb.booking.vallome.ru' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Сохранить текущий образ для отката
+        run: docker tag booking-web:latest booking-web:previous || true
+
+      - name: Сборка и запуск
+        working-directory: deploy/app
+        run: |
+          docker compose build
+          docker compose up -d --remove-orphans
+
+      - name: Проверка здоровья
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8080/healthz; then exit 0; fi
+            sleep 2
+          done
+          echo "Приложение не поднялось, откат" >&2
+          if docker image inspect booking-web:previous >/dev/null 2>&1; then
+            docker tag booking-web:previous booking-web:latest
+            cd deploy/app && docker compose up -d --no-build
+          fi
+          exit 1
+
+      - name: Чистка старых образов
+        if: success()
+        run: docker image prune -f

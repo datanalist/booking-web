@@ -1,8 +1,8 @@
 # GlobalStay — кабинет владельца
 
-Веб-кабинет владельца жилья. Макет — секция «Веб-сайт для владельцев жилья» в [Figma Booking](https://www.figma.com/design/zqPAmK0qrRQtqMp5IP3K5u/Booking?node-id=1-16219). Прод-домен: `website.booking.vallome.ru`.
+Веб-кабинет владельца жилья. Макет — секция «Веб-сайт для владельцев жилья» в [Figma Booking](https://www.figma.com/design/zqPAmK0qrRQtqMp5IP3K5u/Booking?node-id=1-16219). Прод-домен: `app.booking.vallome.ru`.
 
-Стек: Vite + React + TypeScript + React Router + Vitest + Tailwind CSS v4. Статика отдаётся Caddy (nginx нет).
+Стек: Vite + React + TypeScript + React Router + Vitest + Tailwind CSS v4. Прод: Docker-контейнер с Node-сервером `server/server.ts` (статика `dist/` + файловое хранилище фото) за Caddy (nginx нет). См. «Прод и CI/CD».
 
 ## Первый срез
 
@@ -95,7 +95,7 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 ### Хранение данных
 
 - Список объявлений кабинета — `localStorage`, ключ `gs.allListings`; в хранилище пишутся лёгкие строки, при переполнении квоты — повторно без обложек (без исключений). Мастер при переполнении показывает ошибку про фото.
-- Фото — файловое хранилище в `./data/` через Vite middleware (`vite/dataStorePlugin.ts`): `POST /api/files` (загрузка, ответ — имя `<uuid>.<ext>`), `GET /data/<uuid>.<ext>`, `DELETE /api/files/<uuid>.<ext>`. Работает только в `npm run dev` и `npm run preview`, **не** в статической сборке `dist/` на Caddy. Содержимое `data/` в `.gitignore` (отслеживается только `data/.gitkeep`).
+- Фото — файловое хранилище в `./data/` через Vite middleware (`vite/dataStorePlugin.ts`): `POST /api/files` (загрузка, ответ — имя `<uuid>.<ext>`), `GET /data/<uuid>.<ext>`, `DELETE /api/files/<uuid>.<ext>`. Работает в `npm run dev`, `npm run preview` и на проде через `server/server.ts`; **не** в чисто статической раздаче `dist/`. Содержимое `data/` в `.gitignore` (отслеживается только `data/.gitkeep`).
 
 ### Мастер: «Назад» и степпер
 
@@ -130,6 +130,26 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 Чтобы изменить демо, правьте `chatSeeds.ts` и пересоберите. Отдельного сброса нет: сид зашит в код, в `localStorage` чаты не пишутся. Текст и фото, отправленные из поля ввода, живут только в памяти открытой страницы и пропадают при перезагрузке. Длинный текст без пробелов переносится в поле ввода и в пузыре; явные переводы строк в пузыре сохраняются.
 
+## Прод и CI/CD
+
+Кабинет работает на мини-ПК рядом с PocketBase: `https://app.booking.vallome.ru` → Caddy → `127.0.0.1:8080` (контейнер `booking-web`).
+
+- `Dockerfile` — многоэтапная сборка (`npm ci`, `npm run build`, затем Node 24.13 запускает `server/server.ts`). Версия Node зафиксирована: более новый npm отклоняет текущий `package-lock.json`. `VITE_DATA_SOURCE` и `VITE_POCKETBASE_URL` вшиваются при сборке (build-args, по умолчанию `pocketbase` и `https://pb.booking.vallome.ru`). `.env.local` в образ не попадает.
+- `server/server.ts` — отдаёт `dist/` с SPA-fallback и тем же middleware, что в Vite: `POST/DELETE /api/files`, `GET /data/:name`. `GET /healthz` — проверка здоровья.
+- `deploy/app/docker-compose.yml` — фото лежат в `/opt/booking-web/data` на хосте и переживают деплой.
+- `deploy/minipc/caddy/Caddyfile` — блок `app.booking.vallome.ru`.
+- `.github/workflows/deploy.yml` — на PR и push в `main` идут тесты и сборка на GitHub-hosted runner. После push в `main` job `deploy` запускается на self-hosted runner мини-ПК (метка `minipc`): собирает образ, поднимает контейнер, проверяет `/healthz`, при сбое возвращает образ `booking-web:previous`.
+
+Разовая настройка мини-ПК:
+
+1. `sudo mkdir -p /opt/booking-web/data && sudo chown 1000:1000 /opt/booking-web/data`.
+2. Self-hosted runner: GitHub → Settings → Actions → Runners → New runner (Linux x64), метка `minipc`, `./svc.sh install && ./svc.sh start`. Пользователь runner состоит в группе `docker`.
+3. Скопировать обновлённый `Caddyfile` в `/etc/caddy/Caddyfile`, `sudo systemctl reload caddy`.
+4. В `/opt/pocketbase/.env` задать `CABINET_URL=https://app.booking.vallome.ru` и перезапустить PocketBase (ссылка подтверждения почты).
+5. Необязательно: переменная репозитория `VITE_POCKETBASE_URL` (Settings → Variables), если адрес PB меняется.
+
+Откат вручную: `docker tag booking-web:previous booking-web:latest && cd deploy/app && docker compose up -d --no-build`.
+
 ## Секреты
 
 В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли и белый IP. Публичный URL API можно держать в коде или в `VITE_*` без секретов. Локальная папка переноса `.secrets/` закрыта `.gitignore` и в коммиты не входит.
@@ -148,7 +168,7 @@ npm install
 Файлы с секретами в git не входят, их кладут вручную:
 
 - веб-кабинет — `.env.local` в корне репозитория и `src/app/localDevAuth.local.ts` (оба закрыты `.gitignore`);
-- локальный compose PocketBase — `deploy/pocketbase/.env` из шаблона `deploy/pocketbase/.env.example`; пароль в шаблоне пустой;
+- локальный compose PocketBase — `deploy/pocketbase/.env` из шаблона `deploy/pocketbase/.env.example`; пароль в шаблоне пустой. Символ `$` в значениях пишется как `$$`: Docker Compose иначе стирает его при пересоздании контейнера.
 - пачка ключей и паролей для переноса машины — каталог `.secrets/` в корне. В git его нет.
 
 Фильтры fail2ban разбирают JSON-время Caddy так: `datepattern = {EPOCH}`. Каталог полей — [`docs/pocketbase-schema.md`](docs/pocketbase-schema.md). Runbook старого VPS с живыми адресами в репозиторий не входит.
@@ -172,7 +192,7 @@ npm test
 npm run build
 ```
 
-Сборка: `tsc -b` и `vite build` → каталог `dist/` (source maps выключены). Содержимое `dist/` выложить на Caddy; пример конфига: [`docs/caddy/Caddyfile.example`](docs/caddy/Caddyfile.example).
+Сборка: `tsc -b` и `vite build` → каталог `dist/` (source maps выключены). На проде `dist/` отдаёт `server/server.ts` (см. «Прод и CI/CD»).
 
 ```bash
 npm run preview
