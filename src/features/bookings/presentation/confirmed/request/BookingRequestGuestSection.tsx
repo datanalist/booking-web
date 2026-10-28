@@ -1,3 +1,4 @@
+import { useVisibleAccountPhoto } from "../../../../../ui/useAccountPhotoSrc";
 import { BookingRequestSection } from "./BookingRequestSection";
 import type { ConfirmedRequestBooking } from "./ConfirmedRequestBooking";
 
@@ -8,11 +9,12 @@ type BookingRequestGuestSectionProps = {
 export function BookingRequestGuestSection({
   booking,
 }: BookingRequestGuestSectionProps) {
+  const guestAvatarSrc = useVisibleAccountPhoto(booking.guestAvatarUrl);
   return (
     <BookingRequestSection title="Клиент">
       <div className="flex items-center gap-3">
         <img
-          src={booking.guestAvatarUrl}
+          src={guestAvatarSrc}
           alt=""
           className="size-12 shrink-0 rounded-full object-cover"
         />

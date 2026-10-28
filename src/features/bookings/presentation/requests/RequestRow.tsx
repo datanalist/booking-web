@@ -1,3 +1,4 @@
+import { useVisibleAccountPhoto } from "../../../../ui/useAccountPhotoSrc";
 import type { BookingRequest } from "../../domain/BookingRequest";
 import { Button } from "../../../../ui/Button";
 import { ChatEnvelopeIcon } from "./ChatEnvelopeIcon";
@@ -9,12 +10,13 @@ type RequestRowProps = {
 };
 
 export function RequestRow({ request, onAccept, onReject }: RequestRowProps) {
+  const guestAvatarSrc = useVisibleAccountPhoto(request.guestAvatarUrl);
   return (
     <tr className="h-28 border-b border-amber-400/20 bg-white">
       <td className="w-56 px-5 align-middle">
         <div className="flex items-center gap-3">
           <img
-            src={request.guestAvatarUrl}
+            src={guestAvatarSrc}
             alt=""
             width={48}
             height={48}

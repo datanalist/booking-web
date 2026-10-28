@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 const STOCK_AVATAR = "/avatar-placeholder.png";
+const ACCOUNT_PHOTO_FALLBACK = "/onboarding/avatar-placeholder.svg";
 
 function trimmedPhoto(photoUrl: string | undefined): string {
   return photoUrl?.trim() ?? "";
@@ -15,16 +16,22 @@ function cacheBusted(url: string): string {
   return `${url}${joiner}pbcache=${Date.now()}`;
 }
 
-/** Пусто и стоковый портрет — это отсутствие фото. Чужой адрес ещё не подтверждён. */
-export function immediateAccountPhoto(photoUrl: string | undefined): string | undefined {
+/** Пустая строка и стоковый файл отбрасываются. Остальной адрес — кандидат на показ. */
+export function accountPhotoCandidate(photoUrl: string | undefined): string | undefined {
   const trimmed = trimmedPhoto(photoUrl);
   if (trimmed.length === 0 || trimmed.includes(STOCK_AVATAR)) {
     return undefined;
   }
-  if (isRemotePhoto(trimmed)) {
+  return trimmed;
+}
+
+/** Пусто и стоковый портрет — это отсутствие фото. Чужой адрес ещё не подтверждён. */
+export function immediateAccountPhoto(photoUrl: string | undefined): string | undefined {
+  const candidate = accountPhotoCandidate(photoUrl);
+  if (candidate === undefined || isRemotePhoto(candidate)) {
     return undefined;
   }
-  return trimmed;
+  return candidate;
 }
 
 /**
@@ -37,16 +44,17 @@ export function useAccountPhotoSrc(photoUrl: string | undefined): string | undef
   const [src, setSrc] = useState<string | undefined>(() => immediateAccountPhoto(photoUrl));
 
   useEffect(() => {
-    if (!isRemotePhoto(trimmed) || trimmed.includes(STOCK_AVATAR)) {
-      setSrc(immediateAccountPhoto(trimmed));
+    const candidate = accountPhotoCandidate(trimmed);
+    if (candidate === undefined || !isRemotePhoto(candidate)) {
+      setSrc(candidate);
       return;
     }
     let cancelled = false;
     setSrc(undefined);
-    void fetch(trimmed, { cache: "no-store" })
+    void fetch(candidate, { cache: "no-store" })
       .then((response) => {
         if (!cancelled) {
-          setSrc(response.ok ? trimmed : undefined);
+          setSrc(response.ok ? candidate : undefined);
         }
       })
       .catch(() => {
@@ -54,7 +62,7 @@ export function useAccountPhotoSrc(photoUrl: string | undefined): string | undef
           return;
         }
         const probe = new Image();
-        const fresh = cacheBusted(trimmed);
+        const fresh = cacheBusted(candidate);
         probe.onload = () => {
           if (!cancelled) {
             setSrc(fresh);
@@ -73,4 +81,9 @@ export function useAccountPhotoSrc(photoUrl: string | undefined): string | undef
   }, [trimmed]);
 
   return src;
+}
+
+/** Портрет для картинки: удалённый файл только после проверки, иначе силуэт. */
+export function useVisibleAccountPhoto(photoUrl: string | undefined): string {
+  return useAccountPhotoSrc(photoUrl) ?? ACCOUNT_PHOTO_FALLBACK;
 }

@@ -25,4 +25,23 @@ test("пустой файл поддержки — значок поддержк
       listingThumbUrl: "",
     }),
   ).toBe("/onboarding/avatar-placeholder.svg");
+  expect(
+    visiblePeerAvatarUrl({
+      kind: "listing",
+      peerName: "Анна",
+      peerAvatarUrl: "https://pb.example/api/files/users/g1/avatar-placeholder.png",
+      listingTitle: "",
+      city: "",
+      datesLabel: "",
+      guestsLabel: "",
+      listingThumbUrl: "",
+    }),
+  ).toBe("/onboarding/avatar-placeholder.svg");
+  expect(
+    visiblePeerAvatarUrl({
+      kind: "direct",
+      peerName: "Поддержка",
+      peerAvatarUrl: "/avatar-placeholder.png",
+    }),
+  ).toBe(chatAssets.avatarSupport);
 });

@@ -1,9 +1,13 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { chatMessagesMock } from "../../data/chatMessageMocks";
 import { chatId } from "../../domain/ChatId";
+import type { ChatMessage } from "../../domain/ChatMessage";
+import { chatMessageId } from "../../domain/ChatMessageId";
 import { chatPhotoUrl } from "../../domain/ChatPhoto";
+import type { ConversationHeading } from "../../domain/ConversationHeading";
+import { messageTimeLabel } from "../../domain/MessageTimeLabel";
 import { chatAssets } from "../assets/chatAssets";
 import { ChatConversation } from "./ChatConversation";
 import {
@@ -30,6 +34,7 @@ function renderConversation() {
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
 });
 
 beforeEach(() => {
@@ -148,4 +153,96 @@ test("явный перевод строки сохраняется в пузы�
   await user.click(screen.getByRole("button", { name: "Отправить" }));
   const sent = screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "первая\nвторая");
   expect(sent).toBeInTheDocument();
+});
+
+const SILHOUETTE = "/onboarding/avatar-placeholder.svg";
+const REMOTE_PEER = "https://pb.example/api/files/users/g1/anna.jpg";
+
+function textMessage(id: string, author: "peer" | "self", body: string): ChatMessage {
+  const messageId = chatMessageId(id);
+  const timeLabel = messageTimeLabel("10:07");
+  if (messageId === null || timeLabel === null) {
+    throw new Error("мок сообщения");
+  }
+  return { kind: "text", id: messageId, author, timeLabel, body, receipt: "read" };
+}
+
+function headerAvatar(): HTMLElement {
+  const img = document.querySelector("header img.rounded-full");
+  if (!(img instanceof HTMLElement)) {
+    throw new Error("нет аватара в шапке");
+  }
+  return img;
+}
+
+function authorAvatar(author: "peer" | "self"): HTMLElement {
+  const img = document.querySelector(`[data-author='${author}'] img`);
+  if (!(img instanceof HTMLElement)) {
+    throw new Error("нет аватара сообщения");
+  }
+  return img;
+}
+
+function renderPeer(heading: ConversationHeading) {
+  return render(
+    <ChatConversation
+      chatId={chatId("chat-live")}
+      heading={heading}
+      dateLabel="10 сентября"
+      messages={[
+        textMessage("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "peer", "Привет"),
+        textMessage("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "self", "Ответ"),
+      ]}
+      selfAvatarUrl="/self.png"
+    />,
+  );
+}
+
+const listingHeading = (peerAvatarUrl: string): ConversationHeading => ({
+  kind: "listing",
+  peerName: "Анна",
+  peerAvatarUrl,
+  listingTitle: "Студия",
+  city: "Москва",
+  datesLabel: "5-10 октября",
+  guestsLabel: "2 гостя",
+  listingThumbUrl: "/cover.jpg",
+});
+
+test("макет сида оставляет локальный портрет собеседника", () => {
+  renderConversation();
+  expect(headerAvatar()).toHaveAttribute("src", chatAssets.avatarEkaterina);
+});
+
+test("стоковый аватар собеседника — силуэт, у поддержки значок поддержки", () => {
+  renderPeer(listingHeading("https://pb.example/api/files/users/g1/avatar-placeholder.png"));
+  expect(headerAvatar()).toHaveAttribute("src", SILHOUETTE);
+  expect(authorAvatar("peer")).toHaveAttribute("src", SILHOUETTE);
+  cleanup();
+  renderPeer({
+    kind: "direct",
+    peerName: "Поддержка",
+    peerAvatarUrl: "/avatar-placeholder.png",
+  });
+  expect(headerAvatar()).toHaveAttribute("src", chatAssets.avatarSupport);
+});
+
+test("недоступный аватар собеседника — силуэт, свой локальный остаётся", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 404 })));
+  renderPeer(listingHeading(REMOTE_PEER));
+  expect(headerAvatar()).toHaveAttribute("src", SILHOUETTE);
+  expect(authorAvatar("peer")).toHaveAttribute("src", SILHOUETTE);
+  expect(authorAvatar("self")).toHaveAttribute("src", "/self.png");
+  await waitFor(() => expect(fetch).toHaveBeenCalledWith(REMOTE_PEER, { cache: "no-store" }));
+  expect(headerAvatar()).toHaveAttribute("src", SILHOUETTE);
+  expect(authorAvatar("peer")).toHaveAttribute("src", SILHOUETTE);
+});
+
+test("живой аватар собеседника показываем после проверки", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 200 })));
+  renderPeer(listingHeading(REMOTE_PEER));
+  await waitFor(() => {
+    expect(headerAvatar()).toHaveAttribute("src", REMOTE_PEER);
+    expect(authorAvatar("peer")).toHaveAttribute("src", REMOTE_PEER);
+  });
 });

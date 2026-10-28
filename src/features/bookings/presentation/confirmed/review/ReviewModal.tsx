@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useVisibleAccountPhoto } from "../../../../../ui/useAccountPhotoSrc";
 import type { ConfirmedBooking } from "../ConfirmedBooking";
 import type { BookingReview } from "./BookingReview";
 import type { ReviewDraft } from "./ReviewDraft";
@@ -29,6 +30,7 @@ const BUTTON_BASE =
   "flex-1 cursor-pointer rounded-lg px-6 py-5 font-sans text-lg font-bold tracking-tight";
 
 export function ReviewModal({ booking, onClose, onSubmit }: ReviewModalProps) {
+  const guestAvatarSrc = useVisibleAccountPhoto(booking.guestAvatarUrl);
   const [draft, setDraft] = useState<ReviewDraft>(EMPTY_DRAFT);
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -92,7 +94,7 @@ export function ReviewModal({ booking, onClose, onSubmit }: ReviewModalProps) {
 
           <div className="flex flex-col items-center gap-4">
             <img
-              src={booking.guestAvatarUrl}
+              src={guestAvatarSrc}
               alt=""
               width={80}
               height={80}

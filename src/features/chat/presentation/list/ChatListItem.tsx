@@ -1,3 +1,4 @@
+import { useVisibleAccountPhoto } from "../../../../ui/useAccountPhotoSrc";
 import type { ChatId } from "../../domain/ChatId";
 import type { ChatThread, UnreadCount } from "../../domain/ChatThread";
 import { chatThreadAvatarSrc } from "./chatThreadAvatarSrc";
@@ -10,6 +11,7 @@ type ChatListItemProps = {
 };
 
 export function ChatListItem({ thread, selected, onSelect }: ChatListItemProps) {
+  const avatarSrc = useVisibleAccountPhoto(chatThreadAvatarSrc(thread));
   const unread = selected ? null : visibleUnread(thread);
   const rowClass = selected
     ? "bg-[rgba(251,192,40,0.17)]"
@@ -25,7 +27,7 @@ export function ChatListItem({ thread, selected, onSelect }: ChatListItemProps) 
       >
         <img
           alt=""
-          src={chatThreadAvatarSrc(thread)}
+          src={avatarSrc}
           className="size-12 shrink-0 rounded-full object-cover"
         />
         <span className="flex min-w-0 flex-1 flex-col gap-2">

@@ -1,4 +1,5 @@
 import { formatPhoneMask } from "../../../lib/formatPhoneMask";
+import { accountPhotoCandidate } from "../../../ui/useAccountPhotoSrc";
 import { formatRub, rub, type Rub } from "../../../lib/money";
 import { bookingStay, type BookingStay } from "../presentation/confirmed/stay/BookingStay";
 import { formatStayTable } from "../presentation/confirmed/stay/formatStayTable";
@@ -88,7 +89,8 @@ export function pbBookingCard(
   return {
     guestName: formatGuestName(guest),
     guestPhone: formatGuestPhone(guest?.phone),
-    guestAvatarUrl: pbFileUrl(baseUrl, USERS_COLLECTION, guestId, guest?.avatar),
+    guestAvatarUrl:
+      accountPhotoCandidate(pbFileUrl(baseUrl, USERS_COLLECTION, guestId, guest?.avatar)) ?? "",
     listingTitle: listing?.title?.trim() ?? "",
     listingAddress: formatListingAddress(listing),
     listingPhotoUrl: pbFileUrl(baseUrl, LISTINGS_COLLECTION, listingId, firstPhoto(listing?.photos)),

@@ -160,6 +160,25 @@ test("блокировки объявления становятся недос�
   expect(view.content.guests[0]?.avatarUrl).toBe("/onboarding/avatar-placeholder.svg");
 });
 
+test("стоковый файл аватара гостя заменяется силуэтом, живой адрес остаётся", () => {
+  const stock = bookingCalendarFromBookings(
+    data([
+      record({
+        expand: {
+          guest: {
+            id: "gst000000000001",
+            name: "Мария Соколова",
+            phone: "",
+            avatar: "avatar-placeholder.png",
+          },
+        },
+      }),
+    ]),
+    OCTOBER,
+  );
+  expect(stock.content.guests[0]?.avatarUrl).toBe("/onboarding/avatar-placeholder.svg");
+});
+
 test("в месяце без ночей карточки нет", () => {
   const view = bookingCalendarFromBookings(data([record()]), { year: 2026, month: 11 });
   expect(view.content.guests).toEqual([]);

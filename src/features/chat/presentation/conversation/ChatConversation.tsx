@@ -1,3 +1,4 @@
+import { useVisibleAccountPhoto } from "../../../../ui/useAccountPhotoSrc";
 import type { ChatId } from "../../domain/ChatId";
 import type { ChatMessage } from "../../domain/ChatMessage";
 import type { ConversationHeading } from "../../domain/ConversationHeading";
@@ -27,7 +28,8 @@ export function ChatConversation({
 }: ChatConversationProps) {
   const outgoing = useOutgoingMessages();
   const thread = onSendMessage === undefined ? [...messages, ...outgoing.outgoing] : messages;
-  const shownHeading = { ...heading, peerAvatarUrl: visiblePeerAvatarUrl(heading) };
+  const peerAvatarUrl = useVisibleAccountPhoto(visiblePeerAvatarUrl(heading));
+  const shownHeading = { ...heading, peerAvatarUrl };
 
   return (
     <section

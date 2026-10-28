@@ -68,6 +68,7 @@ beforeEach(() => {
     return `blob:preview-${n}`;
   };
   URL.revokeObjectURL = vi.fn();
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 404 })));
 });
 
 test("свой аватар в живом чате берётся из фото аккаунта", async () => {

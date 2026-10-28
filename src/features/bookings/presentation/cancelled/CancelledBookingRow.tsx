@@ -1,4 +1,5 @@
 import { formatRub } from "../../../../lib/money";
+import { useVisibleAccountPhoto } from "../../../../ui/useAccountPhotoSrc";
 import type { CancelledBooking } from "./CancelledBooking";
 import { CancelledBookingChatIcon } from "./CancelledBookingChatIcon";
 
@@ -7,12 +8,13 @@ type CancelledBookingRowProps = {
 };
 
 export function CancelledBookingRow({ booking }: CancelledBookingRowProps) {
+  const guestAvatarSrc = useVisibleAccountPhoto(booking.guestAvatarUrl);
   return (
     <tr className="h-28 border-b border-amber-400/20 bg-white last:border-b-0">
       <td className="w-56 px-5 align-middle">
         <div className="flex items-center gap-3">
           <img
-            src={booking.guestAvatarUrl}
+            src={guestAvatarSrc}
             alt=""
             width={48}
             height={48}

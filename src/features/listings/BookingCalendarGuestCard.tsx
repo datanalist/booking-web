@@ -1,5 +1,6 @@
 import { Mail } from "lucide-react";
 import type { ReactElement } from "react";
+import { useVisibleAccountPhoto } from "../../ui/useAccountPhotoSrc";
 import type { BookingCalendarGuestTone } from "./bookingCalendarDemo";
 
 const TONE_BG: Record<BookingCalendarGuestTone, string> = {
@@ -30,11 +31,12 @@ export function BookingCalendarGuestCard({
   onMessage,
   onDelete,
 }: BookingCalendarGuestCardProps): ReactElement {
+  const avatarSrc = useVisibleAccountPhoto(avatarUrl);
   return (
     <div className={`flex items-center gap-5 rounded-xl p-4 ${TONE_BG[tone]}`}>
       <div className="flex w-[260px] shrink-0 items-center gap-3">
         <img
-          src={avatarUrl}
+          src={avatarSrc}
           alt=""
           width={48}
           height={48}

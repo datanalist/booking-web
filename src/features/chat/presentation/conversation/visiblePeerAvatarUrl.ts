@@ -1,13 +1,14 @@
+import { accountPhotoCandidate } from "../../../../ui/useAccountPhotoSrc";
 import type { ConversationHeading } from "../../domain/ConversationHeading";
 import { chatAssets } from "../assets/chatAssets";
 
 const ACCOUNT_AVATAR_PLACEHOLDER = "/onboarding/avatar-placeholder.svg";
 
-/** Пустой файл аккаунта не оставляет битую картинку: у поддержки свой значок, у гостя — заглушка. */
+/** Пустой и стоковый файл не оставляют чужой портрет: у поддержки свой значок, у гостя — заглушка. */
 export function visiblePeerAvatarUrl(heading: ConversationHeading): string {
-  const url = heading.peerAvatarUrl.trim();
-  if (url.length > 0) {
-    return url;
+  const candidate = accountPhotoCandidate(heading.peerAvatarUrl);
+  if (candidate !== undefined) {
+    return candidate;
   }
   if (heading.kind === "direct") {
     return chatAssets.avatarSupport;

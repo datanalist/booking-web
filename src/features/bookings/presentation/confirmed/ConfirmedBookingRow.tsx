@@ -1,3 +1,4 @@
+import { useVisibleAccountPhoto } from "../../../../ui/useAccountPhotoSrc";
 import type { ConfirmedBooking } from "./ConfirmedBooking";
 import { CONFIRMED_BOOKINGS_GRID_CLASS } from "./confirmedBookingsGrid";
 import { ConfirmedBookingMenu } from "./menu/ConfirmedBookingMenu";
@@ -15,6 +16,7 @@ export function ConfirmedBookingRow({
   booking,
   actions,
 }: ConfirmedBookingRowProps) {
+  const guestAvatarSrc = useVisibleAccountPhoto(booking.guestAvatarUrl);
   return (
     <div
       role="row"
@@ -22,7 +24,7 @@ export function ConfirmedBookingRow({
     >
       <div role="cell" className="flex h-full min-w-0 items-center gap-3 px-5">
         <img
-          src={booking.guestAvatarUrl}
+          src={guestAvatarSrc}
           alt=""
           width={48}
           height={48}

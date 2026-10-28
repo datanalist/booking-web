@@ -1,4 +1,5 @@
 import { blockRangesToBookingOverrides } from "../../api/pocketbase/listingBlocksMapper";
+import { accountPhotoCandidate } from "../../ui/useAccountPhotoSrc";
 import { photosFromPb } from "../../api/pocketbase/listingPhotos";
 import type { PbListingBlockRecord } from "../../api/pocketbase/pbTypes";
 import {
@@ -161,7 +162,7 @@ function guestCard(
     phone: formatGuestPhone(guest?.phone),
     dates: booked === null ? "" : formatStayLong(booked),
     nights: formatNights(nights),
-    avatarUrl: avatar === "" ? AVATAR_PLACEHOLDER : avatar,
+    avatarUrl: accountPhotoCandidate(avatar) ?? AVATAR_PLACEHOLDER,
     tone,
   };
 }

@@ -116,6 +116,18 @@ describe("pbBookingToRequest", () => {
     expect(pbBookingToRequest(record())?.guestAvatarUrl).toBe("/api/files/users/g1/ava.jpg");
   });
 
+  test("стоковый портрет гостя не считается фото", () => {
+    const row = record(
+      {},
+      {
+        guest: { ...GUEST, avatar: "avatar-placeholder.png" },
+        listing: { ...LISTING },
+      },
+    );
+    expect(pbBookingToRequest(row, BASE)?.guestAvatarUrl).toBe("");
+    expect(pbBookingToRequest(row)?.guestAvatarUrl).toBe("");
+  });
+
   test("возвращает null для пустого id и несуществующей даты", () => {
     expect(pbBookingToRequest(record({ id: "  " }))).toBeNull();
     expect(pbBookingToRequest(record({ check_out: "2026-02-30" }))).toBeNull();

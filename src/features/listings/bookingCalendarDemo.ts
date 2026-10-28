@@ -52,7 +52,7 @@ export const BOOKING_CALENDAR_GUEST_TEMPLATES: readonly BookingCalendarGuestTemp
       fromDay: 5,
       toDay: 10,
       nights: "5 ночей",
-      avatarUrl: "/avatar-placeholder.png",
+      avatarUrl: "/onboarding/avatar-placeholder.svg",
       tone: "purple",
     },
     {
@@ -62,7 +62,7 @@ export const BOOKING_CALENDAR_GUEST_TEMPLATES: readonly BookingCalendarGuestTemp
       fromDay: 13,
       toDay: 14,
       nights: "1 ночь",
-      avatarUrl: "/avatar-placeholder.png",
+      avatarUrl: "/onboarding/avatar-placeholder.svg",
       tone: "green",
     },
     {
@@ -72,7 +72,7 @@ export const BOOKING_CALENDAR_GUEST_TEMPLATES: readonly BookingCalendarGuestTemp
       fromDay: 21,
       toDay: 23,
       nights: "2 ночи",
-      avatarUrl: "/avatar-placeholder.png",
+      avatarUrl: "/onboarding/avatar-placeholder.svg",
       tone: "blue",
     },
   ];

@@ -1,3 +1,4 @@
+import { accountPhotoCandidate } from "../../../../ui/useAccountPhotoSrc";
 import type { ChatThread } from "../../domain/ChatThread";
 import { chatAssets } from "../assets/chatAssets";
 import { resolveChatAvatarUrl } from "./resolveChatAvatarUrl";
@@ -9,9 +10,9 @@ export function chatThreadAvatarSrc(thread: ChatThread): string {
   if (thread.avatarUrl === undefined) {
     return resolveChatAvatarUrl(thread.avatarKey);
   }
-  const url = thread.avatarUrl.trim();
-  if (url.length > 0) {
-    return url;
+  const candidate = accountPhotoCandidate(thread.avatarUrl);
+  if (candidate !== undefined) {
+    return candidate;
   }
   if (thread.counterpartRole === "support") {
     return chatAssets.avatarSupport;

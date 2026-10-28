@@ -1,4 +1,5 @@
 import { Mail } from "lucide-react";
+import { useVisibleAccountPhoto } from "../../../../ui/useAccountPhotoSrc";
 import type { RejectedBooking } from "../../domain/RejectedBooking";
 
 type RejectedBookingRowProps = {
@@ -6,6 +7,7 @@ type RejectedBookingRowProps = {
 };
 
 export function RejectedBookingRow({ booking }: RejectedBookingRowProps) {
+  const guestAvatarSrc = useVisibleAccountPhoto(booking.guestAvatarUrl);
   return (
     <div
       role="row"
@@ -13,7 +15,7 @@ export function RejectedBookingRow({ booking }: RejectedBookingRowProps) {
     >
       <div role="cell" className="flex w-56 items-center gap-3 px-5">
         <img
-          src={booking.guestAvatarUrl}
+          src={guestAvatarSrc}
           alt=""
           width={48}
           height={48}
