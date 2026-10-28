@@ -1,14 +1,16 @@
 import type { ReactElement } from "react";
+import { useAccountPhotoSrc } from "../../../ui/useAccountPhotoSrc";
 
 type ProfileAvatarProps = {
   photoUrl: string | undefined;
 };
 
 export function ProfileAvatar({ photoUrl }: ProfileAvatarProps): ReactElement {
-  if (photoUrl !== undefined) {
+  const resolved = useAccountPhotoSrc(photoUrl);
+  if (resolved !== undefined) {
     return (
       <img
-        src={photoUrl}
+        src={resolved}
         alt=""
         className="size-[100px] rounded-full object-cover"
       />

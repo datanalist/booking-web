@@ -58,6 +58,7 @@ function sourceFor(
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
 });
 
 beforeEach(() => {
@@ -70,6 +71,7 @@ beforeEach(() => {
 });
 
 test("свой аватар в живом чате берётся из фото аккаунта", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 200 })));
   const loaded = conversation("Анна", "Первое сообщение", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
   loaded.messages = [selfText("dddddddd-dddd-4ddd-8ddd-dddddddddddd", "Мой ответ"), ...loaded.messages];
   const source = sourceFor(async () => loaded);
@@ -82,10 +84,12 @@ test("свой аватар в живом чате берётся из фото 
     />,
   );
   const mine = (await screen.findByText("Мой ответ")).closest("[data-author='self']");
-  expect(mine?.querySelector("img")).toHaveAttribute(
-    "src",
-    "https://pb.example/api/files/users/user1/me.jpg",
-  );
+  await waitFor(() => {
+    expect(mine?.querySelector("img")).toHaveAttribute(
+      "src",
+      "https://pb.example/api/files/users/user1/me.jpg",
+    );
+  });
 });
 
 test("без фото аккаунта свой аватар — общая заглушка, не портрет из макета", async () => {

@@ -11,6 +11,7 @@ import type { ComposerSend } from "./ComposerSend";
 import { conversationSelfAvatarUrl } from "./conversationHeadingMock";
 import { headingFromSeed } from "./headingFromSeed";
 import { useOutgoingMessages } from "./useOutgoingMessages";
+import { useAccountPhotoSrc } from "../../../../ui/useAccountPhotoSrc";
 
 type OpenChatConversationProps = {
   chatId: ChatId;
@@ -60,6 +61,8 @@ function LiveChatConversation({
   accountPhotoUrl,
 }: LiveChatConversationProps) {
   const [model, setModel] = useState<ChatConversationModel | null>(null);
+  const selfPhoto = useAccountPhotoSrc(accountPhotoUrl);
+  const selfAvatarUrl = selfPhoto ?? "/onboarding/avatar-placeholder.svg";
   const outgoing = useOutgoingMessages();
   const activeChatId = useRef(chatId);
   const pendingLive = useRef<readonly ChatMessage[]>([]);
@@ -107,7 +110,7 @@ function LiveChatConversation({
       heading={model.heading}
       dateLabel={model.dateLabel}
       messages={[...model.messages, ...outgoing.outgoing]}
-      selfAvatarUrl={accountAvatarUrl(accountPhotoUrl)}
+      selfAvatarUrl={selfAvatarUrl}
       onSendMessage={(draft) => {
         sendLiveText(source, hostId, chatId, draft, activeChatId, setModel, outgoing.send);
       }}
@@ -131,11 +134,6 @@ function SeedChatConversation({ chatId }: { chatId: ChatId }) {
       }
     />
   );
-}
-
-function accountAvatarUrl(photoUrl: string | undefined): string {
-  const trimmed = photoUrl?.trim() ?? "";
-  return trimmed.length > 0 ? trimmed : "/onboarding/avatar-placeholder.svg";
 }
 
 function appendMessages(

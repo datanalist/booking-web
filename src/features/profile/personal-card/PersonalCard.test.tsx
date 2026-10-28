@@ -1,9 +1,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { PersonalCard } from "./PersonalCard";
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
 });
 
 const FILLED = {
@@ -38,12 +39,13 @@ test("пустой photoUrl тоже считается отсутствием �
   expect(screen.queryByRole("img", { name: "Фото профиля" })).toBeNull();
 });
 
-test("с фото показывает снимок и скрывает иллюстрацию", () => {
+test("с фото показывает снимок и скрывает иллюстрацию", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 200 })));
   const { container } = render(
     <PersonalCard {...FILLED} photoUrl="https://example.com/photo.jpg" />,
   );
 
-  const photo = screen.getByRole("img", { name: "Фото профиля" });
+  const photo = await screen.findByRole("img", { name: "Фото профиля" });
   expect(photo).toHaveAttribute("src", "https://example.com/photo.jpg");
   expect(photo.className).toContain("object-cover");
   expect(photo.className).toContain("rounded-lg");

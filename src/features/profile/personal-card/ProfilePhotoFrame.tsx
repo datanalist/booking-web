@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { useAccountPhotoSrc } from "../../../ui/useAccountPhotoSrc";
 
 const EMPTY_ILLUSTRATION_SRC = "/profile/photo-empty-illustration.svg";
 
@@ -45,5 +46,6 @@ type ProfilePhotoFrameProps = {
 export function ProfilePhotoFrame({
   photoUrl,
 }: ProfilePhotoFrameProps): ReactElement {
-  return renderProfilePhoto(toProfilePhoto(photoUrl));
+  const resolved = useAccountPhotoSrc(photoUrl);
+  return renderProfilePhoto(toProfilePhoto(resolved));
 }

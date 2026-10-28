@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useAccountPhotoSrc } from "./useAccountPhotoSrc";
 
 type SidebarAccount = {
   name: string;
@@ -54,8 +55,8 @@ export function Sidebar({
   account,
   items = DEFAULT_ITEMS,
 }: SidebarProps) {
-  const photoUrl = account.photoUrl?.trim() ?? "";
-  const avatarSrc = photoUrl.length > 0 ? photoUrl : "/onboarding/avatar-placeholder.svg";
+  const photoUrl = useAccountPhotoSrc(account.photoUrl);
+  const avatarSrc = photoUrl ?? "/onboarding/avatar-placeholder.svg";
 
   return (
     <aside className="flex h-full w-[235px] shrink-0 flex-col gap-5 self-stretch bg-white font-sans">
