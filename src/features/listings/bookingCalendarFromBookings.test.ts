@@ -157,7 +157,7 @@ test("блокировки объявления становятся недос�
 
   expect(view.marks.unavailableDays).toEqual([16, 17, 18]);
   expect(view.content.guests[0]?.name).toBe("Гость");
-  expect(view.content.guests[0]?.avatarUrl).toBe("/avatar-placeholder.png");
+  expect(view.content.guests[0]?.avatarUrl).toBe("/onboarding/avatar-placeholder.svg");
 });
 
 test("в месяце без ночей карточки нет", () => {

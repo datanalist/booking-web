@@ -21,7 +21,7 @@ test("живой чат показывает файл аккаунта, пуст
   expect(
     chatThreadAvatarSrc(thread({ avatarUrl: "https://pb.example/api/files/users/g1/anna.jpg" })),
   ).toBe("https://pb.example/api/files/users/g1/anna.jpg");
-  expect(chatThreadAvatarSrc(thread({ avatarUrl: "" }))).toBe("/avatar-placeholder.png");
+  expect(chatThreadAvatarSrc(thread({ avatarUrl: "" }))).toBe("/onboarding/avatar-placeholder.svg");
   expect(chatThreadAvatarSrc(thread({ counterpartRole: "support", avatarUrl: "  " }))).toBe(
     chatAssets.avatarSupport,
   );

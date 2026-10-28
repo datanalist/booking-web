@@ -24,5 +24,5 @@ test("пустой файл поддержки — значок поддержк
       guestsLabel: "",
       listingThumbUrl: "",
     }),
-  ).toBe("/avatar-placeholder.png");
+  ).toBe("/onboarding/avatar-placeholder.svg");
 });

@@ -79,7 +79,7 @@ test("сохранение алерта сразу меняет имя, email и
   expect(await screen.findByText("Мария Петрова")).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(screen.getByText("maria@mail.ru")).toBeInTheDocument();
-  expect(accountAvatar()).toHaveAttribute("src", "/avatar-placeholder.png");
+  expect(accountAvatar()).toHaveAttribute("src", "/onboarding/avatar-placeholder.svg");
   expect(screen.getByLabelText("Имя")).toHaveValue("Мария Петрова");
   expect(screen.getByLabelText("Email:")).toHaveValue("maria@mail.ru");
 
@@ -87,5 +87,5 @@ test("сохранение алерта сразу меняет имя, email и
   renderCabinetProfile();
   expect(screen.getByText("Мария Петрова")).toBeInTheDocument();
   expect(screen.getByText("maria@mail.ru")).toBeInTheDocument();
-  expect(accountAvatar()).toHaveAttribute("src", "/avatar-placeholder.png");
+  expect(accountAvatar()).toHaveAttribute("src", "/onboarding/avatar-placeholder.svg");
 });

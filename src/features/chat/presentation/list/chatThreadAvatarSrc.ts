@@ -2,7 +2,7 @@ import type { ChatThread } from "../../domain/ChatThread";
 import { chatAssets } from "../assets/chatAssets";
 import { resolveChatAvatarUrl } from "./resolveChatAvatarUrl";
 
-const ACCOUNT_AVATAR_PLACEHOLDER = "/avatar-placeholder.png";
+const ACCOUNT_AVATAR_PLACEHOLDER = "/onboarding/avatar-placeholder.svg";
 
 /** Аватар строки списка: файл аккаунта, иначе заглушка. Макет без `avatarUrl` оставляет свой портрет. */
 export function chatThreadAvatarSrc(thread: ChatThread): string {

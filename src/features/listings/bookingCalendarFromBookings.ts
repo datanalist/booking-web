@@ -25,7 +25,7 @@ import type { YearMonth } from "./YearMonth";
 
 const TONES: readonly BookingCalendarGuestTone[] = ["purple", "green", "blue"];
 const USERS_COLLECTION = "users";
-const AVATAR_PLACEHOLDER = "/avatar-placeholder.png";
+const AVATAR_PLACEHOLDER = "/onboarding/avatar-placeholder.svg";
 
 /** Статусы, при которых даты брони занимают календарь хозяина. Отменённые не показываем. */
 const CALENDAR_STATUSES = new Set<PbBookingStatus>([

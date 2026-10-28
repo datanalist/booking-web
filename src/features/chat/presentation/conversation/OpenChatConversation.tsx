@@ -135,7 +135,7 @@ function SeedChatConversation({ chatId }: { chatId: ChatId }) {
 
 function accountAvatarUrl(photoUrl: string | undefined): string {
   const trimmed = photoUrl?.trim() ?? "";
-  return trimmed.length > 0 ? trimmed : "/avatar-placeholder.png";
+  return trimmed.length > 0 ? trimmed : "/onboarding/avatar-placeholder.svg";
 }
 
 function appendMessages(

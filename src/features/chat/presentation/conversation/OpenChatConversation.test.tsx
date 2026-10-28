@@ -94,7 +94,7 @@ test("без фото аккаунта свой аватар — общая за
   const source = sourceFor(async () => loaded);
   render(<OpenChatConversation chatId={chatId("chat-a")} source={source} hostId="user1" />);
   const mine = (await screen.findByText("Мой ответ")).closest("[data-author='self']");
-  expect(mine?.querySelector("img")).toHaveAttribute("src", "/avatar-placeholder.png");
+  expect(mine?.querySelector("img")).toHaveAttribute("src", "/onboarding/avatar-placeholder.svg");
 });
 
 test("непрочитанное входящее подсвечивается, отметка прочтения — после загрузки", async () => {

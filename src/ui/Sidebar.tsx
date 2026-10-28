@@ -54,7 +54,8 @@ export function Sidebar({
   account,
   items = DEFAULT_ITEMS,
 }: SidebarProps) {
-  const avatarSrc = account.photoUrl ?? "/avatar-placeholder.png";
+  const photoUrl = account.photoUrl?.trim() ?? "";
+  const avatarSrc = photoUrl.length > 0 ? photoUrl : "/onboarding/avatar-placeholder.svg";
 
   return (
     <aside className="flex h-full w-[235px] shrink-0 flex-col gap-5 self-stretch bg-white font-sans">

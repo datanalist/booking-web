@@ -1,7 +1,7 @@
 import type { ConversationHeading } from "../../domain/ConversationHeading";
 import { chatAssets } from "../assets/chatAssets";
 
-const ACCOUNT_AVATAR_PLACEHOLDER = "/avatar-placeholder.png";
+const ACCOUNT_AVATAR_PLACEHOLDER = "/onboarding/avatar-placeholder.svg";
 
 /** Пустой файл аккаунта не оставляет битую картинку: у поддержки свой значок, у гостя — заглушка. */
 export function visiblePeerAvatarUrl(heading: ConversationHeading): string {
