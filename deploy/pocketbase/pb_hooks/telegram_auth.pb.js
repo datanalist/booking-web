@@ -1,9 +1,7 @@
 // Вход хозяином по подписи Telegram Login Widget. Токен бота читается из окружения и наружу не отдаётся.
 
-const telegramLoginCheck = require(`${__hooks}/telegramLoginCheck.js`)
-const telegramAuthDecision = telegramLoginCheck.telegramAuthDecision
-
 routerAdd("POST", "/api/vallome/telegram-auth", (e) => {
+  var telegramAuthDecision = require(`${__hooks}/telegramLoginCheck.js`).telegramAuthDecision
   function str(value) {
     return value == null ? "" : String(value).trim()
   }
