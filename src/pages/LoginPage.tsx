@@ -1,39 +1,50 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "../app/session";
 import { resolveCabinetDataSource } from "../api/pocketbase/dataSource";
-import type { TelegramLoginFields } from "../api/types";
 import { Button } from "../ui/Button";
 import { ForgotPasswordModal } from "../ui/ForgotPasswordModal";
 import { Input } from "../ui/Input";
 import { EmailVerifiedInlineNotice } from "./EmailVerifiedNotice";
 import { subscribeEmailVerifiedNotice } from "./emailVerifiedNoticeChannel";
 
-const TELEGRAM_WIDGET_SRC = "https://telegram.org/js/telegram-widget.js?22";
-
-type TelegramLoginApi = {
-  auth(
-    options: { bot_id: string; request_access?: boolean },
-    callback: (data: TelegramLoginFields | false) => void,
-  ): void;
-};
+const TELEGRAM_AUTH_URL = "https://oauth.telegram.org/auth";
+const TELEGRAM_ORIGIN = "https://oauth.telegram.org";
+const TELEGRAM_REDIRECT_URI = "https://app.booking.vallome.ru/";
 
 function telegramBotId(): string {
   const value: unknown = import.meta.env.VITE_TELEGRAM_BOT_ID;
   return typeof value === "string" ? value.trim() : "";
 }
 
-function telegramLoginApi(): TelegramLoginApi | null {
-  const widget = (window as Window & { Telegram?: { Login?: TelegramLoginApi } }).Telegram?.Login;
-  return typeof widget?.auth === "function" ? widget : null;
+function telegramAuthUrl(clientId: number, nonce: string): string {
+  const url = new URL(TELEGRAM_AUTH_URL);
+  url.searchParams.set("response_type", "post_message");
+  url.searchParams.set("client_id", String(clientId));
+  url.searchParams.set("redirect_uri", TELEGRAM_REDIRECT_URI);
+  url.searchParams.set("scope", "openid profile");
+  url.searchParams.set("nonce", nonce);
+  url.searchParams.set("lang", "ru");
+  return url.toString();
 }
 
-function preloadTelegramWidget(): void {
-  if (telegramLoginApi() || document.querySelector(`script[src="${TELEGRAM_WIDGET_SRC}"]`)) return;
-  const script = document.createElement("script");
-  script.src = TELEGRAM_WIDGET_SRC;
-  script.async = true;
-  document.head.appendChild(script);
+function readAuthMessage(data: unknown): { idToken?: string; error?: boolean } | null {
+  const payload = typeof data === "string" ? parseJson(data) : data;
+  if (!payload || typeof payload !== "object") return null;
+  const event = (payload as { event?: unknown }).event;
+  if (event !== "auth_result") return null;
+  const error = (payload as { error?: unknown }).error;
+  const result = (payload as { result?: unknown }).result;
+  if (error || typeof result !== "string" || result === "") return { error: true };
+  return { idToken: result };
+}
+
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
 }
 
 type LoginLocationState = {
@@ -54,15 +65,23 @@ export function LoginPage() {
   const [fieldsInvalid, setFieldsInvalid] = useState(false);
   const [pending, setPending] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
+  const mountedRef = useRef(true);
+  const stopTelegramRef = useRef<(() => void) | null>(null);
 
   useEffect(() => subscribeEmailVerifiedNotice(() => setEmailVerified(true)), []);
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      const stopTelegram = stopTelegramRef.current;
+      stopTelegramRef.current = null;
+      stopTelegram?.();
+    };
+  }, []);
+
   const telegramEnabled = resolveCabinetDataSource() === "pocketbase";
   const botId = telegramBotId();
-
-  useEffect(() => {
-    if (telegramEnabled && botId !== "") preloadTelegramWidget();
-  }, [telegramEnabled, botId]);
 
   useEffect(() => {
     const state = location.state as LoginLocationState | null;
@@ -101,25 +120,79 @@ export function LoginPage() {
       setFormError("Вход через Telegram не настроен");
       return;
     }
-    const widget = telegramLoginApi();
-    if (!widget) {
+    const clientId = Number(botId);
+    if (!Number.isSafeInteger(clientId)) {
+      setFormError("Вход через Telegram не настроен");
+      return;
+    }
+    const popup = window.open(
+      "about:blank",
+      "telegram_oidc_login",
+      "width=550,height=650,status=0,location=0,menubar=0,toolbar=0",
+    );
+    if (!popup) {
       setFormError("Не удалось открыть вход Telegram");
       return;
     }
     setFormError("");
     setFieldsInvalid(false);
     setPending(true);
-    widget.auth({ bot_id: botId, request_access: true }, (data) => {
-      if (!data) {
-        setPending(false);
-        setFormError("Вход через Telegram отменён");
+    let finished = false;
+    let nonce = "";
+    let watch = 0;
+    let onMessage: (event: MessageEvent) => void = () => {};
+    const stopListeners = (): void => {
+      finished = true;
+      window.removeEventListener("message", onMessage);
+      window.clearInterval(watch);
+      stopTelegramRef.current = null;
+    };
+    const cancel = (message: string): void => {
+      if (finished) return;
+      stopListeners();
+      popup.close();
+      if (!mountedRef.current) return;
+      setPending(false);
+      setFormError(message);
+    };
+    onMessage = (event: MessageEvent): void => {
+      if (!mountedRef.current || finished) return;
+      if (event.origin !== TELEGRAM_ORIGIN || event.source !== popup) return;
+      const message = readAuthMessage(event.data);
+      if (!message) return;
+      if (message.error || !message.idToken) {
+        cancel("Вход через Telegram отменён");
         return;
       }
-      void auth.loginWithTelegram(data).then((session) => {
+      const idToken = message.idToken;
+      stopListeners();
+      popup.close();
+      void auth.loginWithTelegram({ id_token: idToken, nonce }).then((session) => {
+        if (!mountedRef.current) return;
         navigate(session.onboardingComplete ? "/listings" : "/onboarding");
       }).catch((error: unknown) => {
+        if (!mountedRef.current) return;
         setFormError(error instanceof Error ? error.message : "Не удалось войти через Telegram");
-      }).finally(() => setPending(false));
+      }).finally(() => {
+        if (!mountedRef.current) return;
+        setPending(false);
+      });
+    };
+    window.addEventListener("message", onMessage);
+    watch = window.setInterval(() => {
+      if (!mountedRef.current || finished) return;
+      if (popup.closed) cancel("Вход через Telegram отменён");
+    }, 400);
+    stopTelegramRef.current = (): void => {
+      stopListeners();
+      popup.close();
+    };
+    void auth.prepareTelegramLogin().then((issued) => {
+      if (finished || !mountedRef.current) return;
+      nonce = issued;
+      popup.location.href = telegramAuthUrl(clientId, issued);
+    }).catch((error: unknown) => {
+      cancel(error instanceof Error ? error.message : "Не удалось открыть вход Telegram");
     });
   }
 

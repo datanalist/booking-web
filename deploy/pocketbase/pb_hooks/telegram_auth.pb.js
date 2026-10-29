@@ -1,7 +1,24 @@
-// Вход хозяином по подписи Telegram Login Widget. Токен бота читается из окружения и наружу не отдаётся.
+// Вход хозяином по id_token Telegram OIDC. Публичный ключ зашит в проверке, oauth.telegram.org с сервера не вызывается.
+
+routerAdd("GET", "/api/vallome/telegram-nonce", (e) => {
+  var rememberNonce = require(`${__hooks}/telegramLoginCheck.js`).rememberNonce
+  function readNonceMap() {
+    try {
+      const raw = e.app.store().get("telegramNonces")
+      if (typeof raw === "string" && raw !== "") return JSON.parse(raw)
+    } catch (err) {}
+    return {}
+  }
+  const now = Math.floor(Date.now() / 1000)
+  const nonce = $security.randomString(32)
+  e.app.store().set("telegramNonces", JSON.stringify(rememberNonce(readNonceMap(), nonce, now)))
+  return e.json(200, { nonce: nonce })
+})
 
 routerAdd("POST", "/api/vallome/telegram-auth", (e) => {
-  var telegramAuthDecision = require(`${__hooks}/telegramLoginCheck.js`).telegramAuthDecision
+  var checker = require(`${__hooks}/telegramLoginCheck.js`)
+  var telegramIdTokenDecision = checker.telegramIdTokenDecision
+  var consumeNonce = checker.consumeNonce
   function str(value) {
     return value == null ? "" : String(value).trim()
   }
@@ -14,12 +31,25 @@ routerAdd("POST", "/api/vallome/telegram-auth", (e) => {
     return {}
   }
 
-  function botToken() {
+  function botAudience() {
     try {
-      return str($os.getenv("TELEGRAM_BOT_TOKEN"))
+      const token = str($os.getenv("TELEGRAM_BOT_TOKEN"))
+      const id = token.split(":")[0]
+      return /^[0-9]{6,20}$/.test(id) ? id : ""
     } catch (err) {
       return ""
     }
+  }
+
+  function takeNonce(nonce, now) {
+    let map = {}
+    try {
+      const raw = e.app.store().get("telegramNonces")
+      if (typeof raw === "string" && raw !== "") map = JSON.parse(raw)
+    } catch (err) {}
+    const taken = consumeNonce(map, nonce, now)
+    e.app.store().set("telegramNonces", JSON.stringify(taken.map))
+    return taken.ok
   }
 
   function findLinked(providerId) {
@@ -53,6 +83,7 @@ routerAdd("POST", "/api/vallome/telegram-auth", (e) => {
     record.set("name", user.name)
     record.set("first_name", user.firstName)
     record.set("last_name", user.lastName)
+    if (user.phone) record.set("phone", user.phone)
     e.app.save(record)
     const link = new Record(e.app.findCollectionByNameOrId("_externalAuths"))
     link.set("collectionRef", users.id)
@@ -68,7 +99,13 @@ routerAdd("POST", "/api/vallome/telegram-auth", (e) => {
     return record
   }
 
-  const decision = telegramAuthDecision(body(), botToken(), Math.floor(Date.now() / 1000))
+  const payload = body()
+  const now = Math.floor(Date.now() / 1000)
+  const audience = botAudience()
+  if (!audience) return e.json(503, { message: "Вход через Telegram не настроен" })
+  const nonce = str(payload.nonce)
+  if (!takeNonce(nonce, now)) return e.json(400, { message: "Telegram не подтвердил вход" })
+  const decision = telegramIdTokenDecision(payload.id_token, audience, nonce, now)
   if (!decision.ok) return e.json(decision.status, { message: decision.message })
 
   try {

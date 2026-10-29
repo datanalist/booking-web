@@ -212,6 +212,10 @@ export function createAuthApi(storage: Storage): AuthApi {
       return writeSession(user);
     },
 
+    async prepareTelegramLogin() {
+      throw new Error("Вход через Telegram доступен при подключении PocketBase");
+    },
+
     async loginWithTelegram() {
       throw new Error("Вход через Telegram доступен при подключении PocketBase");
     },

@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -10,8 +10,8 @@ afterEach(() => {
   cleanup();
 });
 
-function renderLogin(initialEntry = "/login"): void {
-  render(
+function renderLogin(initialEntry = "/login") {
+  return render(
     <SessionProvider>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
@@ -138,14 +138,19 @@ test("уже открытый вход обновляется, когда поч
   expect(note?.className).toMatch(/border-\[var\(--color-accent\)\]/);
 });
 
-test("при PocketBase кнопка Telegram открывает виджет и показывает отмену", async () => {
+test("при PocketBase кнопка Telegram открывает окно входа и показывает отмену", async () => {
   vi.stubEnv("VITE_DATA_SOURCE", "pocketbase");
   vi.stubEnv("VITE_TELEGRAM_BOT_ID", "9158776426");
   const user = userEvent.setup();
-  const auth = vi.fn((_options: { bot_id: string }, callback: (data: false) => void) => {
-    callback(false);
-  });
-  (window as Window & { Telegram?: { Login: { auth: typeof auth } } }).Telegram = { Login: { auth } };
+  const popup = { closed: false, close: vi.fn(), location: { href: "" } };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(JSON.stringify({ nonce: "nonce-1" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })),
+  );
+  const open = vi.spyOn(window, "open").mockReturnValue(popup as unknown as Window);
   try {
     renderLogin();
     expect(screen.getByText("или войдите с помощью")).toBeInTheDocument();
@@ -154,14 +159,131 @@ test("при PocketBase кнопка Telegram открывает виджет и
     expect(telegram.className).toMatch(/2AABEE/);
     expect(telegram.querySelector("svg")).not.toBeNull();
     await user.click(telegram);
-    expect(auth).toHaveBeenCalledWith(
-      { bot_id: "9158776426", request_access: true },
-      expect.any(Function),
-    );
+    expect(open).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(popup.location.href).toContain("response_type=post_message");
+      expect(popup.location.href).toContain("client_id=9158776426");
+      expect(popup.location.href).toContain("redirect_uri=https%3A%2F%2Fapp.booking.vallome.ru%2F");
+      expect(popup.location.href).toContain("scope=openid+profile");
+      expect(popup.location.href).not.toContain("phone");
+    });
+    popup.closed = true;
     expect(await screen.findByText("Вход через Telegram отменён")).toBeInTheDocument();
   } finally {
-    delete (window as Window & { Telegram?: unknown }).Telegram;
+    open.mockRestore();
+    vi.unstubAllGlobals();
     vi.unstubAllEnvs();
+  }
+});
+
+function installTelegramLogin(): {
+  popup: { closed: boolean; close: ReturnType<typeof vi.fn>; location: { href: string } };
+  calls: { url: string; body: string }[];
+  restore: () => void;
+} {
+  vi.stubEnv("VITE_DATA_SOURCE", "pocketbase");
+  vi.stubEnv("VITE_TELEGRAM_BOT_ID", "9158776426");
+  vi.stubEnv("VITE_POCKETBASE_URL", "https://pb.example");
+  const popup = { closed: false, close: vi.fn(), location: { href: "" } };
+  const calls: { url: string; body: string }[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const body = typeof init?.body === "string" ? init.body : "";
+      calls.push({ url, body });
+      if (url.includes("/api/vallome/telegram-nonce")) {
+        return new Response(JSON.stringify({ nonce: "nonce-1" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      if (url.includes("/api/vallome/telegram-auth")) {
+        return new Response(JSON.stringify({
+          token: "tg-token",
+          record: { id: "user1", email: "", name: "", phone: "" },
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response("{}", { status: 404 });
+    }),
+  );
+  const open = vi.spyOn(window, "open").mockReturnValue(popup as unknown as Window);
+  return {
+    popup,
+    calls,
+    restore(): void {
+      open.mockRestore();
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+      localStorage.clear();
+    },
+  };
+}
+
+function postTelegramAuth(popup: object, idToken: string): void {
+  window.dispatchEvent(new MessageEvent("message", {
+    origin: "https://oauth.telegram.org",
+    data: { event: "auth_result", result: idToken },
+    source: popup as unknown as Window,
+  }));
+}
+
+test("postMessage от Telegram входит с id_token и nonce", async () => {
+  const user = userEvent.setup();
+  const telegram = installTelegramLogin();
+  try {
+    renderLogin();
+    await user.click(screen.getByRole("button", { name: "Войти через Telegram" }));
+    await waitFor(() => {
+      expect(telegram.popup.location.href).toContain("nonce=nonce-1");
+    });
+    postTelegramAuth(telegram.popup, "telegram-id-token");
+    await waitFor(() => {
+      const authCall = telegram.calls.find((call) => call.url.includes("/api/vallome/telegram-auth"));
+      expect(JSON.parse(authCall?.body ?? "{}")).toEqual({
+        id_token: "telegram-id-token",
+        nonce: "nonce-1",
+      });
+    });
+    expect(await screen.findByText("onboarding-page")).toBeInTheDocument();
+  } finally {
+    telegram.restore();
+  }
+});
+
+test("уход со входа снимает слушатель Telegram и интервал", async () => {
+  const user = userEvent.setup();
+  const telegram = installTelegramLogin();
+  const addSpy = vi.spyOn(window, "addEventListener");
+  const removeSpy = vi.spyOn(window, "removeEventListener");
+  const setIntervalSpy = vi.spyOn(window, "setInterval");
+  const clearIntervalSpy = vi.spyOn(window, "clearInterval");
+  try {
+    renderLogin();
+    await user.click(screen.getByRole("button", { name: "Войти через Telegram" }));
+    await waitFor(() => {
+      expect(telegram.popup.location.href).toContain("nonce=nonce-1");
+    });
+    const messageListener = addSpy.mock.calls.find((call) => call[0] === "message")?.[1];
+    const intervalCall = setIntervalSpy.mock.calls.findIndex((call) => call[1] === 400);
+    const intervalId = setIntervalSpy.mock.results[intervalCall]?.value;
+    expect(messageListener).toEqual(expect.any(Function));
+    await user.click(screen.getByRole("link", { name: /Создать аккаунт/ }));
+    expect(screen.getByText("register-page")).toBeInTheDocument();
+    expect(removeSpy).toHaveBeenCalledWith("message", messageListener);
+    expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);
+    postTelegramAuth(telegram.popup, "telegram-id-token");
+    expect(telegram.calls.some((call) => call.url.includes("/api/vallome/telegram-auth"))).toBe(false);
+    expect(screen.queryByText("onboarding-page")).not.toBeInTheDocument();
+  } finally {
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
+    setIntervalSpy.mockRestore();
+    clearIntervalSpy.mockRestore();
+    telegram.restore();
   }
 });
 

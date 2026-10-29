@@ -1,7 +1,17 @@
-// Проверка подписи Telegram Login Widget. Секрет — SHA-256 токена бота, без запроса к oauth.telegram.org.
+// Проверка id_token нового входа Telegram (OIDC, RS256). Ключ публичный, запроса к oauth.telegram.org нет.
 
-const MAX_AGE_SECONDS = 86400
-const FIELDS = ["auth_date", "first_name", "id", "last_name", "photo_url", "username"]
+const ISSUER = "https://oauth.telegram.org"
+const CLOCK_SKEW_SECONDS = 60
+const SHA256_DIGEST_INFO = [
+  0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20,
+]
+const TELEGRAM_RS256_KEYS = [
+  {
+    kid: "oidc-1",
+    n: "5RneLtsKvVcxdv6gu6gxEQu30Cru5NiMQnY6SNr9ZyZFZ4ya-pfHNuaZXJ6QPG0JSFwoxeOkEO2-eZN_REVPm448PvjjsR1eQdZ5QpEkNxnItFcmxkHH91v5cgf52_EI9BGO-MT6f1vaBSg3uWHFlDxI7J2AYxNvd1_Nf3TkgrrR7gyJFTmEIai5RefGnA0KGNYDlRIGUzrz2F05n6gTaHFT_iHL5UHatTZA4GCiUSjIOuwqu5pE5uZge20TFv3cxXMQaFw_xv1pgQt_Rq8eoCN7TS0RQ0zjWKiad-W286BcFectXsUm03p5Nq_kY4mf_7rqwX_B8yy_bBreyKn7RQ",
+    e: "AQAB",
+  },
+]
 const K = [
   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
   0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -127,20 +137,6 @@ function bytesToHex(bytes) {
   return hex
 }
 
-function hmacSha256Hex(key, message) {
-  const block = 64
-  let normalized = key.slice()
-  if (normalized.length > block) normalized = sha256(normalized)
-  while (normalized.length < block) normalized.push(0)
-  const outer = []
-  const inner = []
-  for (let index = 0; index < block; index += 1) {
-    outer.push(normalized[index] ^ 0x5c)
-    inner.push(normalized[index] ^ 0x36)
-  }
-  return bytesToHex(sha256(outer.concat(sha256(inner.concat(message)))))
-}
-
 function str(value) {
   return value == null ? "" : String(value).trim()
 }
@@ -152,54 +148,269 @@ function decimal(value) {
   return text
 }
 
-function dataCheckString(fields) {
-  const lines = []
-  for (let index = 0; index < FIELDS.length; index += 1) {
-    const key = FIELDS[index]
-    if (!Object.prototype.hasOwnProperty.call(fields, key)) continue
-    const value = fields[key]
-    if (value == null || value === "") continue
-    lines.push(key + "=" + String(value))
-  }
-  lines.sort()
-  return lines.join("\n")
-}
+const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
 function fail(status, message) {
   return { ok: false, status: status, message: message }
 }
 
-function telegramAuthDecision(body, botToken, nowSeconds) {
-  const token = str(botToken)
-  if (!token) return fail(503, "Вход через Telegram не настроен")
-  if (!body || typeof body !== "object") return fail(400, "Telegram не подтвердил вход")
-  const id = decimal(body.id)
-  const authDate = decimal(body.auth_date)
-  const hash = str(body.hash).toLowerCase()
-  if (!id || !authDate || !/^[0-9a-f]{64}$/.test(hash)) return fail(400, "Telegram не подтвердил вход")
-  const age = Number(nowSeconds) - Number(authDate)
-  if (!Number.isFinite(age) || age < -30 || age > MAX_AGE_SECONDS) {
-    return fail(400, "Время входа через Telegram истекло")
+function b64urlToBytes(text) {
+  const cleaned = String(text).replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, "")
+  if (cleaned.length === 0 || /[^A-Za-z0-9+/]/.test(cleaned)) return null
+  const pad = cleaned.length % 4 === 0 ? "" : "====".slice(cleaned.length % 4)
+  const source = cleaned + pad
+  const out = []
+  for (let index = 0; index < source.length; index += 4) {
+    const a = B64.indexOf(source[index])
+    const b = B64.indexOf(source[index + 1])
+    const cChar = source[index + 2]
+    const dChar = source[index + 3]
+    const c = cChar === "=" ? -1 : B64.indexOf(cChar)
+    const d = dChar === "=" ? -1 : B64.indexOf(dChar)
+    if (a < 0 || b < 0 || (c < 0 && cChar !== "=") || (d < 0 && dChar !== "=")) return null
+    out.push((a << 2) | (b >> 4))
+    if (c >= 0) out.push(((b & 15) << 4) | (c >> 2))
+    if (d >= 0) out.push(((c & 3) << 6) | d)
   }
-  const signed = {
-    id: id,
-    auth_date: authDate,
+  return out
+}
+
+function bytesToUtf8(bytes) {
+  let out = ""
+  for (let index = 0; index < bytes.length; index += 1) {
+    const byte = bytes[index]
+    if (byte < 0x80) out += String.fromCharCode(byte)
+    else if ((byte & 0xe0) === 0xc0 && index + 1 < bytes.length) {
+      out += String.fromCharCode(((byte & 0x1f) << 6) | (bytes[index + 1] & 0x3f))
+      index += 1
+    } else if ((byte & 0xf0) === 0xe0 && index + 2 < bytes.length) {
+      out += String.fromCharCode(((byte & 0x0f) << 12) | ((bytes[index + 1] & 0x3f) << 6) | (bytes[index + 2] & 0x3f))
+      index += 2
+    } else if ((byte & 0xf8) === 0xf0 && index + 3 < bytes.length) {
+      const code = ((byte & 0x07) << 18) | ((bytes[index + 1] & 0x3f) << 12) | ((bytes[index + 2] & 0x3f) << 6) | (bytes[index + 3] & 0x3f)
+      const shifted = code - 0x10000
+      out += String.fromCharCode(0xd800 + (shifted >> 10), 0xdc00 + (shifted & 0x3ff))
+      index += 3
+    } else return ""
   }
-  const firstName = str(body.first_name)
-  const lastName = str(body.last_name)
-  const username = str(body.username)
-  const photoUrl = str(body.photo_url)
-  if (firstName) signed.first_name = firstName
-  if (lastName) signed.last_name = lastName
-  if (username) signed.username = username
-  if (photoUrl) signed.photo_url = photoUrl
-  const digest = hmacSha256Hex(sha256(utf8Bytes(token)), utf8Bytes(dataCheckString(signed)))
-  if (digest !== hash) return fail(400, "Telegram не подтвердил вход")
-  const name = [firstName, lastName].filter((part) => part !== "").join(" ") || username
+  return out
+}
+
+function bytesToBigInt(bytes) {
+  let value = BigInt(0)
+  const eight = BigInt(8)
+  for (let index = 0; index < bytes.length; index += 1) value = (value << eight) + BigInt(bytes[index])
+  return value
+}
+
+function bigIntToFixedBytes(value, length) {
+  const out = []
+  const eight = BigInt(8)
+  const mask = BigInt(255)
+  const zero = BigInt(0)
+  for (let index = 0; index < length; index += 1) out.push(0)
+  for (let index = length - 1; index >= 0; index -= 1) {
+    out[index] = Number(value & mask)
+    value >>= eight
+  }
+  if (value !== zero) return null
+  return out
+}
+
+function modPow(base, exp, mod) {
+  let result = BigInt(1)
+  const one = BigInt(1)
+  const zero = BigInt(0)
+  let exponent = exp
+  let value = base % mod
+  while (exponent > zero) {
+    if ((exponent & one) === one) result = (result * value) % mod
+    exponent >>= one
+    value = (value * value) % mod
+  }
+  return result
+}
+
+function bytesEqual(left, right) {
+  if (!left || !right || left.length !== right.length) return false
+  let diff = 0
+  for (let index = 0; index < left.length; index += 1) diff |= left[index] ^ right[index]
+  return diff === 0
+}
+
+function pkcs1Encode(hash, size) {
+  const infoLength = SHA256_DIGEST_INFO.length + hash.length
+  if (size < infoLength + 11) return null
+  const encoded = [0x00, 0x01]
+  const padding = size - infoLength - 3
+  for (let index = 0; index < padding; index += 1) encoded.push(0xff)
+  encoded.push(0x00)
+  for (let index = 0; index < SHA256_DIGEST_INFO.length; index += 1) encoded.push(SHA256_DIGEST_INFO[index])
+  for (let index = 0; index < hash.length; index += 1) encoded.push(hash[index])
+  return encoded
+}
+
+function verifyRs256(modulusB64, exponentB64, signingInput, signature) {
+  const modulus = b64urlToBytes(modulusB64)
+  const exponent = b64urlToBytes(exponentB64)
+  if (!modulus || !exponent || !signature || signature.length !== modulus.length) return false
+  const encoded = pkcs1Encode(sha256(utf8Bytes(signingInput)), modulus.length)
+  const decoded = bigIntToFixedBytes(
+    modPow(bytesToBigInt(signature), bytesToBigInt(exponent), bytesToBigInt(modulus)),
+    modulus.length,
+  )
+  return bytesEqual(decoded, encoded)
+}
+
+function unixSeconds(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return Math.floor(value)
+  if (typeof value === "string" && /^[0-9]+$/.test(value)) return Number(value)
+  return null
+}
+
+function audienceMatches(aud, expected) {
+  const want = str(expected)
+  if (want === "") return false
+  if (Array.isArray(aud)) {
+    for (let index = 0; index < aud.length; index += 1) {
+      if (str(aud[index]) === want) return true
+    }
+    return false
+  }
+  return str(aud) === want
+}
+
+function findKey(keys, kid) {
+  const want = str(kid)
+  for (let index = 0; index < keys.length; index += 1) {
+    if (str(keys[index].kid) === want) return keys[index]
+  }
+  return null
+}
+
+function phoneClaim(value) {
+  const digits = str(value).replace(/\D/g, "")
+  return digits === "" ? "" : "+" + digits
+}
+
+const NONCE_STORE_LIMIT = 200
+
+function blankNonceMap() {
+  return Object.create(null)
+}
+
+function nonceEntries(map) {
+  const entries = []
+  if (!map || typeof map !== "object") return entries
+  const names = Object.keys(map)
+  for (let index = 0; index < names.length; index += 1) {
+    const name = names[index]
+    const descriptor = Object.getOwnPropertyDescriptor(map, name)
+    if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, "value")) continue
+    entries.push({ name: name, expires: Number(descriptor.value) })
+  }
+  return entries
+}
+
+function rememberNonce(map, nonce, now) {
+  const next = blankNonceMap()
+  const key = String(nonce)
+  const fresh = []
+  const entries = nonceEntries(map)
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index]
+    if (!(entry.expires >= now)) continue
+    if (entry.name === key) continue
+    fresh.push(entry)
+  }
+  fresh.push({ name: key, expires: Number(now) + 600 })
+  const start = fresh.length > NONCE_STORE_LIMIT ? fresh.length - NONCE_STORE_LIMIT : 0
+  for (let index = start; index < fresh.length; index += 1) {
+    next[fresh[index].name] = fresh[index].expires
+  }
+  return next
+}
+
+function consumeNonce(map, nonce, now) {
+  const next = blankNonceMap()
+  const entries = nonceEntries(map)
+  let ok = false
+  const want = String(nonce)
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index]
+    if (!(entry.expires >= now)) continue
+    if (entry.name === want) ok = true
+    else next[entry.name] = entry.expires
+  }
+  return { ok: ok, map: next }
+}
+
+function claimPresent(value) {
+  return value != null && str(value) !== ""
+}
+
+function telegramUserId(payload) {
+  const idPresent = claimPresent(payload.id)
+  const subPresent = claimPresent(payload.sub)
+  const id = decimal(payload.id)
+  const sub = decimal(payload.sub)
+  if (idPresent && subPresent) {
+    if (id === "" || sub === "" || id !== sub) return ""
+    return id
+  }
+  if (idPresent) return id
+  if (subPresent) return sub
+  return ""
+}
+
+function telegramIdTokenDecision(idToken, audience, nonce, nowSeconds, keys) {
+  const token = str(idToken)
+  const parts = token.split(".")
+  if (parts.length !== 3 || token.length > 8192) return fail(400, "Telegram не подтвердил вход")
+  const headerBytes = b64urlToBytes(parts[0])
+  const payloadBytes = b64urlToBytes(parts[1])
+  const signature = b64urlToBytes(parts[2])
+  if (!headerBytes || !payloadBytes || !signature) return fail(400, "Telegram не подтвердил вход")
+  let header = null
+  let payload = null
+  try {
+    header = JSON.parse(bytesToUtf8(headerBytes))
+    payload = JSON.parse(bytesToUtf8(payloadBytes))
+  } catch (err) {
+    return fail(400, "Telegram не подтвердил вход")
+  }
+  if (!header || header.alg !== "RS256") return fail(400, "Telegram не подтвердил вход")
+  if (header.typ != null && header.typ !== "JWT") return fail(400, "Telegram не подтвердил вход")
+  const keyList = Array.isArray(keys) && keys.length > 0 ? keys : TELEGRAM_RS256_KEYS
+  const key = findKey(keyList, header.kid)
+  if (!key || !verifyRs256(key.n, key.e, parts[0] + "." + parts[1], signature)) {
+    return fail(400, "Telegram не подтвердил вход")
+  }
+  if (!payload || payload.iss !== ISSUER) return fail(400, "Telegram не подтвердил вход")
+  if (str(audience) === "") return fail(503, "Вход через Telegram не настроен")
+  if (!audienceMatches(payload.aud, audience)) return fail(400, "Telegram не подтвердил вход")
+  const now = Number(nowSeconds)
+  const exp = unixSeconds(payload.exp)
+  const iat = unixSeconds(payload.iat)
+  if (exp == null || exp + CLOCK_SKEW_SECONDS < now) return fail(400, "Время входа через Telegram истекло")
+  if (iat != null && iat > now + CLOCK_SKEW_SECONDS) return fail(400, "Telegram не подтвердил вход")
+  if (str(nonce) === "" || str(payload.nonce) !== str(nonce)) return fail(400, "Telegram не подтвердил вход")
+  const id = telegramUserId(payload)
+  if (!id) return fail(400, "Telegram не подтвердил вход")
+  const firstName = str(payload.given_name)
+  const lastName = str(payload.family_name)
+  const username = str(payload.preferred_username)
+  const name = str(payload.name) || [firstName, lastName].filter((part) => part !== "").join(" ") || username
   return {
     ok: true,
-    user: { id: id, firstName: firstName, lastName: lastName, name: name },
+    user: {
+      id: id,
+      firstName: firstName,
+      lastName: lastName,
+      name: name,
+      phone: phoneClaim(payload.phone_number),
+    },
   }
 }
 
-module.exports = { telegramAuthDecision, dataCheckString, hmacSha256Hex, sha256, utf8Bytes, bytesToHex }
+module.exports = { telegramIdTokenDecision, rememberNonce, consumeNonce, sha256, utf8Bytes, bytesToHex }

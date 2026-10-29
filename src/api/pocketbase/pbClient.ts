@@ -57,6 +57,7 @@ export type PbClient = {
   readonly baseUrl: string;
   authWithPassword(identity: string, password: string, collection?: string): Promise<PbAuthResult>;
   authWithTelegram(fields: TelegramLoginFields): Promise<PbAuthResult>;
+  telegramNonce(): Promise<string>;
   listRecords<TItem = unknown>(collection: string, query?: PbListQuery): Promise<PbListResult<TItem>>;
   getRecord<TItem = unknown>(collection: string, id: string): Promise<TItem>;
   createRecord<TItem = unknown>(collection: string, body: object): Promise<TItem>;
@@ -278,6 +279,17 @@ export function createPbClient(options: CreatePbClientOptions = {}): PbClient {
     },
     authWithTelegram(fields) {
       return send("/api/vallome/telegram-auth", "POST", undefined, fields).then(readAuth);
+    },
+    telegramNonce() {
+      return send("/api/vallome/telegram-nonce", "GET").then((value) => {
+        const nonce = value && typeof value === "object" && "nonce" in value
+          ? (value as { nonce?: unknown }).nonce
+          : "";
+        if (typeof nonce !== "string" || nonce.trim() === "") {
+          throw new Error("Не удалось открыть вход Telegram");
+        }
+        return nonce.trim();
+      });
     },
     listRecords<TItem = unknown>(collection: string, query?: PbListQuery) {
       return send(recordsPath(collection), "GET", listQuery(query)).then(

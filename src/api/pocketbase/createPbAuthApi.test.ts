@@ -64,10 +64,8 @@ describe("createPbAuthApi", () => {
       record: { ...user, email: "", phone: "", name: "Иван" },
     });
     const session = await createPbAuthApi({ client, storage: box }).loginWithTelegram({
-      id: 42,
-      first_name: "Иван",
-      auth_date: 1,
-      hash: "a".repeat(64),
+      id_token: "header.payload.signature",
+      nonce: "nonce-1",
     });
     expect(session.email).toBe("");
     expect(session.name).toBe("Иван");

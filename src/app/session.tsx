@@ -101,6 +101,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
         setSession(next);
         return next;
       },
+      prepareTelegramLogin: () => api.auth.prepareTelegramLogin(),
       loginWithTelegram: async (fields) => {
         const next = await api.auth.loginWithTelegram(fields);
         api.setCurrentUserId(next.userId);
