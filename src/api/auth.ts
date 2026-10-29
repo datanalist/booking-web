@@ -2,7 +2,7 @@ import { NAME_MAX, NAME_MIN, PASSWORD_MIN } from "../config";
 import { sha256Hex } from "../lib/hash";
 import { createId } from "../lib/id";
 import { SESSION_KEY, USERS_KEY } from "./keys";
-import type { AuthApi, Session, UpdateProfileInput, UserRecord } from "./types";
+import type { AuthApi, OAuthPopup, Session, UpdateProfileInput, UserRecord } from "./types";
 
 const RESET_KEY_PREFIX = "gs.reset.";
 
@@ -210,6 +210,10 @@ export function createAuthApi(storage: Storage): AuthApi {
         throw authError("EMAIL_NOT_VERIFIED", "Подтвердите почту по кнопке в письме");
       }
       return writeSession(user);
+    },
+
+    async loginWithTelegram(_popup: OAuthPopup) {
+      throw new Error("Вход через Telegram доступен при подключении PocketBase");
     },
 
     async logout() {

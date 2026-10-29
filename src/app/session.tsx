@@ -101,6 +101,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
         setSession(next);
         return next;
       },
+      loginWithTelegram: async (popup) => {
+        const next = await api.auth.loginWithTelegram(popup);
+        api.setCurrentUserId(next.userId);
+        setSession(next);
+        return next;
+      },
       logout: async () => {
         await api.auth.logout();
         api.setCurrentUserId(null);

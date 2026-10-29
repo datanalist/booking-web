@@ -1,11 +1,20 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "../app/session";
+import { resolveCabinetDataSource } from "../api/pocketbase/dataSource";
 import { Button } from "../ui/Button";
 import { ForgotPasswordModal } from "../ui/ForgotPasswordModal";
 import { Input } from "../ui/Input";
 import { EmailVerifiedInlineNotice } from "./EmailVerifiedNotice";
 import { subscribeEmailVerifiedNotice } from "./emailVerifiedNoticeChannel";
+
+function telegramLoginError(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  if (message === "Failed to fetch OAuth2 token.") {
+    return "Telegram не выдал токен. В Client Secret PocketBase вставьте секрет из Login Widget в BotFather и сохраните коллекцию users.";
+  }
+  return message || "Не удалось войти через Telegram";
+}
 
 type LoginLocationState = {
   forgot?: boolean;
@@ -22,6 +31,7 @@ export function LoginPage() {
   const [email, setEmail] = useState(() => arrival?.email ?? "");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
+  const [fieldsInvalid, setFieldsInvalid] = useState(false);
   const [pending, setPending] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
 
@@ -44,6 +54,7 @@ export function LoginPage() {
   async function onSubmit(event: FormEvent): Promise<void> {
     event.preventDefault();
     setFormError("");
+    setFieldsInvalid(false);
     setPending(true);
     try {
       const session = await auth.login(email, password);
@@ -51,13 +62,31 @@ export function LoginPage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Неверный email или пароль";
+      setFieldsInvalid(true);
       setFormError(message);
     } finally {
       setPending(false);
     }
   }
 
-  const invalid = Boolean(formError);
+  function onTelegram(): void {
+    const popup = window.open("about:blank", "pb-telegram-login", "popup,width=480,height=720");
+    if (!popup) {
+      setFormError("Браузер заблокировал окно входа Telegram");
+      return;
+    }
+    setFormError("");
+    setFieldsInvalid(false);
+    setPending(true);
+    void auth.loginWithTelegram(popup).then((session) => {
+      navigate(session.onboardingComplete ? "/listings" : "/onboarding");
+    }).catch((error: unknown) => {
+      setFormError(telegramLoginError(error));
+    }).finally(() => setPending(false));
+  }
+
+  const invalid = fieldsInvalid;
+  const telegramEnabled = resolveCabinetDataSource() === "pocketbase";
 
   return (
     <>
@@ -114,6 +143,17 @@ export function LoginPage() {
           >
             Начать работу
           </Button>
+          {telegramEnabled ? (
+            <Button
+              type="button"
+              variant="outlined"
+              disabled={pending}
+              onClick={onTelegram}
+              className="h-auto w-full !rounded-lg !px-6 !py-5"
+            >
+              Войти через Telegram
+            </Button>
+          ) : null}
           <p className="m-0 w-full text-center text-[14px] leading-[1.4]">
             <span className="text-[#525353]">Нет аккаунта?</span>
             <Link
