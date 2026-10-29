@@ -19,6 +19,7 @@ export type BookingCalendarMonthCardProps = {
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onToggleAvailability: () => void;
+  availabilityLocked?: boolean;
 };
 
 /** Карточка месяца, сетки дней и подписи выбранной даты (Figma 1:22281). */
@@ -30,6 +31,7 @@ export function BookingCalendarMonthCard({
   onPrevMonth,
   onNextMonth,
   onToggleAvailability,
+  availabilityLocked = false,
 }: BookingCalendarMonthCardProps): ReactElement {
   const weeks = buildCalendarWeeks(view.month, marks, overrides);
   const control = dayAvailabilityControl(
@@ -52,7 +54,7 @@ export function BookingCalendarMonthCard({
         label={formatCalendarDayLabel(view.month, view.selectedDay)}
         statusLabel={control.label}
         checked={control.checked}
-        disabled={control.disabled}
+        disabled={control.disabled || availabilityLocked}
         onToggle={onToggleAvailability}
       />
     </div>

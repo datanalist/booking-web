@@ -1,9 +1,15 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { bookingOverridesToBlockRanges } from "../../api/pocketbase";
+import type { PbListingBlockRecord } from "../../api/pocketbase";
+import type { PbBookingRecord } from "../bookings/pocketbase/pbBookingTypes";
 import { BookingCalendarAlert } from "./BookingCalendarAlert";
+import type { BookingCalendarPort } from "./createListingCalendarPort";
+import type { BookingCalendarListing, BookingCalendarLoad } from "./loadBookingCalendar";
 
 beforeEach(() => {
+  localStorage.clear();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2024, 11, 15, 12, 0, 0));
 });
@@ -30,11 +36,13 @@ test("при open показывает заголовок, тексты и кн�
   expect(dialog.textContent).toContain("Доступно для бронирования");
   expect(dialog.textContent).toContain("Не доступно для бронирования");
   expect(dialog.textContent).toContain("Забронировано");
-  expect(dialog.textContent).toContain("Уютная студия в центре Москвы");
-  expect(dialog.textContent).toContain("Москва, ул. Невская 48");
-  expect(dialog.textContent).toContain("Анна Иваненко");
-  expect(dialog.textContent).toContain("Леонид Фролов");
-  expect(dialog.textContent).toContain("Александра Павловская");
+  expect(dialog.textContent).not.toContain("Уютная студия в центре Москвы");
+  expect(dialog.textContent).not.toContain("Москва, ул. Невская 48");
+  expect(dialog.textContent).not.toContain("Анна Иваненко");
+  expect(dialog.textContent).not.toContain("Леонид Фролов");
+  expect(dialog.textContent).not.toContain("Александра Павловская");
+  expect(dialog.textContent).not.toContain("+7 (900) 123-45-67");
+  expect(screen.queryByRole("button", { name: /^Написать / })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Закрыть" })).toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: "Предыдущий месяц" }),
@@ -83,10 +91,28 @@ test("кнопки гостя и навигации месяца вызываю�
   const onDeleteBooking = vi.fn();
   const onPrevMonth = vi.fn();
   const onNextMonth = vi.fn();
+  const port = memoryPort({
+    bookings: [
+      stay({
+        id: "book-anna",
+        check_in: "2024-12-05",
+        check_out: "2024-12-10",
+        expand: {
+          guest: {
+            id: "guest-anna",
+            name: "Анна Ковалёва",
+            phone: "+79005556677",
+          },
+        },
+      }),
+    ],
+  });
 
   render(
     <BookingCalendarAlert
       open
+      listingId="qtxy0ehns08nrcx"
+      calendarPort={port}
       onOpenChange={() => undefined}
       onMessageGuest={onMessageGuest}
       onDeleteBooking={onDeleteBooking}
@@ -102,16 +128,16 @@ test("кнопки гостя и навигации месяца вызываю�
   expect(onNextMonth).toHaveBeenCalledTimes(1);
 
   await user.click(
-    screen.getByRole("button", { name: "Написать Анна Иваненко" }),
+    await screen.findByRole("button", { name: "Написать Анна Ковалёва" }),
   );
-  expect(onMessageGuest).toHaveBeenCalledWith("anna");
+  expect(onMessageGuest).toHaveBeenCalledWith("book-anna");
 
   await user.click(
     screen.getByRole("button", {
-      name: "Удалить бронирование Анна Иваненко",
+      name: "Удалить бронирование Анна Ковалёва",
     }),
   );
-  expect(onDeleteBooking).toHaveBeenCalledWith("anna");
+  expect(onDeleteBooking).toHaveBeenCalledWith("book-anna");
 });
 
 test("подложка алерта серая #525353, карточка белая", () => {
@@ -178,21 +204,36 @@ test("клик по дню меняет выбранный день и подп�
   expect(screen.queryByText("15 декабря")).not.toBeInTheDocument();
 
   await user.click(screen.getByRole("button", { name: "16 декабря" }));
-  const unavailable = screen.getByRole("button", { name: "16 декабря" });
-  expect(unavailable).toHaveAttribute("aria-pressed", "true");
-  expect(unavailable).toHaveClass("line-through");
-  expect(screen.getByText("16 декабря")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "5 декабря" })).toHaveClass(
-    "bg-[rgba(77,56,232,0.23)]",
+  expect(screen.getByRole("button", { name: "16 декабря" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
   );
+  expect(screen.getByText("16 декабря")).toBeInTheDocument();
 });
 
 test("для забронированного дня переключатель недоступен", async () => {
   const user = userEvent.setup();
-  render(<BookingCalendarAlert open onOpenChange={() => undefined} />);
+  const port = memoryPort({
+    bookings: [
+      stay({
+        id: "book-night",
+        check_in: "2024-12-05",
+        check_out: "2024-12-06",
+        expand: { guest: { id: "guest-1", name: "Анна Ковалёва", phone: "" } },
+      }),
+    ],
+  });
+  render(
+    <BookingCalendarAlert
+      open
+      listingId="qtxy0ehns08nrcx"
+      calendarPort={port}
+      onOpenChange={() => undefined}
+    />,
+  );
 
   await user.click(screen.getByRole("button", { name: "5 декабря" }));
-  const toggle = screen.getByRole("switch", { name: "забронировано" });
+  const toggle = await screen.findByRole("switch", { name: "забронировано" });
   expect(toggle).toBeDisabled();
   expect(toggle).toHaveAttribute("aria-checked", "false");
   expect(screen.getByRole("button", { name: "5 декабря" })).toHaveClass(
@@ -201,28 +242,150 @@ test("для забронированного дня переключатель 
   expect(screen.getByRole("button", { name: "5 декабря" })).not.toHaveClass(
     "line-through",
   );
+  expect(screen.getByRole("button", { name: "6 декабря" })).not.toHaveClass(
+    "bg-[rgba(77,56,232,0.23)]",
+  );
 });
 
-test("открывается на текущей дате и показывает демо-брони этого месяца", () => {
+test("открывается на текущей дате и показывает брони объявления", async () => {
   vi.setSystemTime(new Date(2026, 9, 1, 8, 30, 0));
-  render(<BookingCalendarAlert open onOpenChange={() => undefined} />);
+  const port = memoryPort({
+    listing: {
+      id: "qtxy0ehns08nrcx",
+      title: "Номер в центре Казани",
+      city: "Казань",
+      address: "ул. Баумана 15",
+      photos: ["cover.jpg"],
+    },
+    bookings: [
+      stay({
+        id: "book-october",
+        check_in: "2026-10-18",
+        check_out: "2026-10-25",
+        expand: {
+          guest: {
+            id: "j3zmoc7k66kogmj",
+            name: "Анна Ковалёва",
+            phone: "+79005556677",
+          },
+        },
+      }),
+      stay({
+        id: "book-cancelled",
+        status: "cancelled",
+        check_in: "2026-10-02",
+        check_out: "2026-10-04",
+        expand: { guest: { id: "guest-x", name: "Пётр Отменённый", phone: "+79001110000" } },
+      }),
+    ],
+    blocks: [
+      {
+        id: "block-16",
+        listing: "qtxy0ehns08nrcx",
+        start: "2026-10-16",
+        end: "2026-10-17",
+      },
+    ],
+  });
+  render(
+    <BookingCalendarAlert
+      open
+      listingId="qtxy0ehns08nrcx"
+      calendarPort={port}
+      onOpenChange={() => undefined}
+    />,
+  );
 
+  expect(await screen.findByText("Номер в центре Казани")).toBeInTheDocument();
+  expect(screen.getByText("Казань, ул. Баумана 15")).toBeInTheDocument();
   expect(screen.getByText("Октябрь 2026")).toBeInTheDocument();
   expect(screen.getByText("1 октября")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "1 октября" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  expect(screen.getByText("5-10 октября")).toBeInTheDocument();
-  expect(screen.getByText("13-14 октября")).toBeInTheDocument();
-  expect(screen.getByText("21-23 октября")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "5 октября" })).toHaveClass(
+  expect(screen.getByText("18-25 октября")).toBeInTheDocument();
+  expect(screen.getByText("7 ночей")).toBeInTheDocument();
+  expect(screen.getByText("+7 (900) 555-66-77")).toBeInTheDocument();
+  expect(screen.queryByText("Пётр Отменённый")).not.toBeInTheDocument();
+  expect(screen.queryByText("Анна Иваненко")).not.toBeInTheDocument();
+  expect(screen.queryByText("Леонид Фролов")).not.toBeInTheDocument();
+  expect(screen.queryByText("Александра Павловская")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "18 октября" })).toHaveClass(
+    "bg-[rgba(77,56,232,0.23)]",
+  );
+  expect(screen.getByRole("button", { name: "24 октября" })).toHaveClass(
+    "bg-[rgba(77,56,232,0.23)]",
+  );
+  expect(screen.getByRole("button", { name: "25 октября" })).not.toHaveClass(
     "bg-[rgba(77,56,232,0.23)]",
   );
   expect(screen.getByRole("button", { name: "16 октября" })).toHaveClass(
     "line-through",
   );
 });
+
+const LISTING_ID = "qtxy0ehns08nrcx";
+
+function stay(patch: Partial<PbBookingRecord> = {}): PbBookingRecord {
+  return {
+    id: "book-1",
+    listing: LISTING_ID,
+    guest: "j3zmoc7k66kogmj",
+    host: "6ekom84sgoqlzmz",
+    check_in: "2026-10-18",
+    check_out: "2026-10-25",
+    adults: 1,
+    children: 0,
+    pets: 0,
+    guest_note: "",
+    total: 0,
+    prepay: 0,
+    remainder: 0,
+    commission: 0,
+    host_amount: 0,
+    prepaid_at: "",
+    status: "confirmed",
+    cancel_reason: "",
+    cancel_comment: "",
+    host_respond_until: "",
+    prepay_until: "",
+    requested_check_in: "",
+    requested_check_out: "",
+    ...patch,
+  };
+}
+
+function memoryPort(seed: {
+  listing?: BookingCalendarListing | null;
+  bookings?: readonly PbBookingRecord[];
+  blocks?: readonly PbListingBlockRecord[];
+} = {}): BookingCalendarPort {
+  const state: BookingCalendarLoad = {
+    listing: seed.listing ?? null,
+    bookings: seed.bookings ?? [],
+    blocks: [...(seed.blocks ?? [])],
+    baseUrl: "https://pb.example",
+  };
+  return {
+    async load() {
+      return {
+        listing: state.listing,
+        bookings: state.bookings,
+        blocks: state.blocks.map((block) => ({ ...block })),
+        baseUrl: state.baseUrl,
+      };
+    },
+    async saveBlocks(listingId, overrides) {
+      state.blocks = bookingOverridesToBlockRanges(overrides).map((range, index) => ({
+        id: `block-${index}`,
+        listing: listingId,
+        start: range.start,
+        end: range.end,
+      }));
+    },
+  };
+}
 
 function dayButtons(genitiveMonth: string): HTMLElement[] {
   return screen.getAllByRole("button", {

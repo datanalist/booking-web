@@ -2,14 +2,9 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { PbBookingRecord } from "../bookings/pocketbase/pbBookingTypes";
-import type { ListingBookingCalendarData } from "./bookingCalendarFromBookings";
 import { BookingCalendarAlert } from "./BookingCalendarAlert";
-
-const load = vi.hoisted(() => vi.fn());
-
-vi.mock("./loadListingBookingCalendar", () => ({
-  loadListingBookingCalendar: (...args: unknown[]) => load(...args),
-}));
+import type { BookingCalendarPort } from "./createListingCalendarPort";
+import type { BookingCalendarLoad } from "./loadBookingCalendar";
 
 const LISTING_ID = "qtxy0ehns08nrcx";
 
@@ -45,10 +40,10 @@ function record(patch: Partial<PbBookingRecord> = {}): PbBookingRecord {
   };
 }
 
-function source(records: readonly PbBookingRecord[]): ListingBookingCalendarData {
+function source(bookings: readonly PbBookingRecord[]): BookingCalendarLoad {
   return {
     baseUrl: "https://pb.example",
-    records,
+    bookings,
     listing: {
       id: LISTING_ID,
       title: "Студия на Невской",
@@ -60,23 +55,32 @@ function source(records: readonly PbBookingRecord[]): ListingBookingCalendarData
   };
 }
 
+function port(load: BookingCalendarPort["load"]): BookingCalendarPort {
+  return {
+    load,
+    saveBlocks: async () => undefined,
+  };
+}
+
 beforeEach(() => {
-  vi.stubEnv("VITE_DATA_SOURCE", "pocketbase");
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 9, 26, 12, 0, 0));
-  load.mockReset();
 });
 
 afterEach(() => {
   cleanup();
-  vi.unstubAllEnvs();
   vi.useRealTimers();
 });
 
 test("до ответа PocketBase не показывает демо-гостей", () => {
-  load.mockReturnValue(new Promise(() => undefined));
+  const load = vi.fn(() => new Promise<BookingCalendarLoad>(() => undefined));
   render(
-    <BookingCalendarAlert open listingId={LISTING_ID} onOpenChange={() => undefined} />,
+    <BookingCalendarAlert
+      open
+      listingId={LISTING_ID}
+      calendarPort={port(load)}
+      onOpenChange={() => undefined}
+    />,
   );
 
   expect(screen.queryByText("Анна Иваненко")).not.toBeInTheDocument();
@@ -87,7 +91,7 @@ test("до ответа PocketBase не показывает демо-госте
 
 test("показывает брони выбранного объявления и сменяет их вместе с месяцем", async () => {
   const user = userEvent.setup();
-  load.mockResolvedValue(
+  const load = vi.fn(async () =>
     source([
       record(),
       record({
@@ -100,7 +104,12 @@ test("показывает брони выбранного объявления 
   );
 
   render(
-    <BookingCalendarAlert open listingId={LISTING_ID} onOpenChange={() => undefined} />,
+    <BookingCalendarAlert
+      open
+      listingId={LISTING_ID}
+      calendarPort={port(load)}
+      onOpenChange={() => undefined}
+    />,
   );
 
   expect(await screen.findByText("Мария Соколова")).toBeInTheDocument();
