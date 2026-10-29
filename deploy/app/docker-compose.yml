@@ -5,6 +5,7 @@ services:
       args:
         VITE_DATA_SOURCE: ${VITE_DATA_SOURCE:-pocketbase}
         VITE_POCKETBASE_URL: ${VITE_POCKETBASE_URL:-https://pb.booking.vallome.ru}
+        VITE_TELEGRAM_BOT_ID: ${VITE_TELEGRAM_BOT_ID:-9158776426}
     image: booking-web:latest
     container_name: booking-web
     restart: unless-stopped

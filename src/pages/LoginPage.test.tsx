@@ -138,21 +138,14 @@ test("уже открытый вход обновляется, когда поч
   expect(note?.className).toMatch(/border-\[var\(--color-accent\)\]/);
 });
 
-test("при PocketBase кнопка Telegram открывает окно до запроса", async () => {
+test("при PocketBase кнопка Telegram открывает виджет и показывает отмену", async () => {
   vi.stubEnv("VITE_DATA_SOURCE", "pocketbase");
+  vi.stubEnv("VITE_TELEGRAM_BOT_ID", "9158776426");
   const user = userEvent.setup();
-  const opened = { location: { href: "" }, closed: false, close() {} };
-  vi.spyOn(window, "open").mockReturnValue(opened as unknown as Window);
-  vi.stubGlobal("EventSource", class FailingEventSource {
-    onerror: (() => void) | null = null;
-    addEventListener(): void {}
-    close(): void {}
-    constructor() {
-      queueMicrotask(() => {
-        this.onerror?.();
-      });
-    }
+  const auth = vi.fn((_options: { bot_id: string }, callback: (data: false) => void) => {
+    callback(false);
   });
+  (window as Window & { Telegram?: { Login: { auth: typeof auth } } }).Telegram = { Login: { auth } };
   try {
     renderLogin();
     expect(screen.getByText("или войдите с помощью")).toBeInTheDocument();
@@ -161,15 +154,14 @@ test("при PocketBase кнопка Telegram открывает окно до �
     expect(telegram.className).toMatch(/2AABEE/);
     expect(telegram.querySelector("svg")).not.toBeNull();
     await user.click(telegram);
-    expect(window.open).toHaveBeenCalledWith(
-      "about:blank",
-      "pb-telegram-login",
-      "popup,width=480,height=720",
+    expect(auth).toHaveBeenCalledWith(
+      { bot_id: "9158776426", request_access: true },
+      expect.any(Function),
     );
-    expect(await screen.findByText("Не удалось открыть соединение с PocketBase")).toBeInTheDocument();
+    expect(await screen.findByText("Вход через Telegram отменён")).toBeInTheDocument();
   } finally {
-    vi.unstubAllGlobals();
-    vi.mocked(window.open).mockRestore();
+    delete (window as Window & { Telegram?: unknown }).Telegram;
+    vi.unstubAllEnvs();
   }
 });
 

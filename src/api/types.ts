@@ -61,16 +61,20 @@ export interface Listing {
 
 export type ListingDraft = Omit<Listing, "id"> & { id?: string };
 
-export type OAuthPopup = {
-  readonly closed: boolean;
-  location: { href: string };
-  close(): void;
+export type TelegramLoginFields = {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
 };
 
 export interface AuthApi {
   register(email: string, password: string): Promise<{ email: string }>;
   login(email: string, password: string): Promise<Session>;
-  loginWithTelegram(popup: OAuthPopup): Promise<Session>;
+  loginWithTelegram(fields: TelegramLoginFields): Promise<Session>;
   logout(): Promise<void>;
   completeOnboarding(input: { name: string; phone: string; photo?: string }): Promise<Session>;
   updateProfile(input: UpdateProfileInput): Promise<Session>;

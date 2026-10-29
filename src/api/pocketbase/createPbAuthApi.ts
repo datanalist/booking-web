@@ -70,8 +70,8 @@ export function createPbAuthApi(options: { client: PbClient; storage: Storage })
     return writeSession(storage, pbUserToSession(record, client.baseUrl));
   };
 
-  const loginWithTelegram: AuthApi["loginWithTelegram"] = async (popup) => {
-    const auth = await client.authWithTelegram(popup);
+  const loginWithTelegram: AuthApi["loginWithTelegram"] = async (fields) => {
+    const auth = await client.authWithTelegram(fields);
     writePbToken(storage, auth.token);
     return writeSession(storage, pbUserToSession(readUserRecord(auth.record), client.baseUrl));
   };

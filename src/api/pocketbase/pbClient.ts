@@ -1,5 +1,5 @@
+import type { TelegramLoginFields } from "../types";
 import { isRecord } from "./isRecord";
-import { completeTelegramLogin, type TelegramPopup } from "./telegramLogin";
 import type { PbOccupiedRange } from "./pbTypes";
 
 export const PUBLIC_POCKETBASE_URL = "https://pb.booking.vallome.ru";
@@ -56,7 +56,7 @@ export type PbChangeEmailResult = {
 export type PbClient = {
   readonly baseUrl: string;
   authWithPassword(identity: string, password: string, collection?: string): Promise<PbAuthResult>;
-  authWithTelegram(popup: TelegramPopup): Promise<PbAuthResult>;
+  authWithTelegram(fields: TelegramLoginFields): Promise<PbAuthResult>;
   listRecords<TItem = unknown>(collection: string, query?: PbListQuery): Promise<PbListResult<TItem>>;
   getRecord<TItem = unknown>(collection: string, id: string): Promise<TItem>;
   createRecord<TItem = unknown>(collection: string, body: object): Promise<TItem>;
@@ -276,8 +276,8 @@ export function createPbClient(options: CreatePbClientOptions = {}): PbClient {
       const path = `/api/collections/${encodeURIComponent(collection)}/auth-with-password`;
       return send(path, "POST", undefined, { identity, password }).then(readAuth);
     },
-    authWithTelegram(popup) {
-      return completeTelegramLogin({ baseUrl, fetchFn, popup });
+    authWithTelegram(fields) {
+      return send("/api/vallome/telegram-auth", "POST", undefined, fields).then(readAuth);
     },
     listRecords<TItem = unknown>(collection: string, query?: PbListQuery) {
       return send(recordsPath(collection), "GET", listQuery(query)).then(

@@ -2,18 +2,38 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "../app/session";
 import { resolveCabinetDataSource } from "../api/pocketbase/dataSource";
+import type { TelegramLoginFields } from "../api/types";
 import { Button } from "../ui/Button";
 import { ForgotPasswordModal } from "../ui/ForgotPasswordModal";
 import { Input } from "../ui/Input";
 import { EmailVerifiedInlineNotice } from "./EmailVerifiedNotice";
 import { subscribeEmailVerifiedNotice } from "./emailVerifiedNoticeChannel";
 
-function telegramLoginError(error: unknown): string {
-  const message = error instanceof Error ? error.message : "";
-  if (message === "Failed to fetch OAuth2 token.") {
-    return "Telegram не выдал токен. В Client Secret PocketBase вставьте секрет из Login Widget в BotFather и сохраните коллекцию users.";
-  }
-  return message || "Не удалось войти через Telegram";
+const TELEGRAM_WIDGET_SRC = "https://telegram.org/js/telegram-widget.js?22";
+
+type TelegramLoginApi = {
+  auth(
+    options: { bot_id: string; request_access?: boolean },
+    callback: (data: TelegramLoginFields | false) => void,
+  ): void;
+};
+
+function telegramBotId(): string {
+  const value: unknown = import.meta.env.VITE_TELEGRAM_BOT_ID;
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function telegramLoginApi(): TelegramLoginApi | null {
+  const widget = (window as Window & { Telegram?: { Login?: TelegramLoginApi } }).Telegram?.Login;
+  return typeof widget?.auth === "function" ? widget : null;
+}
+
+function preloadTelegramWidget(): void {
+  if (telegramLoginApi() || document.querySelector(`script[src="${TELEGRAM_WIDGET_SRC}"]`)) return;
+  const script = document.createElement("script");
+  script.src = TELEGRAM_WIDGET_SRC;
+  script.async = true;
+  document.head.appendChild(script);
 }
 
 type LoginLocationState = {
@@ -36,6 +56,13 @@ export function LoginPage() {
   const [forgotOpen, setForgotOpen] = useState(false);
 
   useEffect(() => subscribeEmailVerifiedNotice(() => setEmailVerified(true)), []);
+
+  const telegramEnabled = resolveCabinetDataSource() === "pocketbase";
+  const botId = telegramBotId();
+
+  useEffect(() => {
+    if (telegramEnabled && botId !== "") preloadTelegramWidget();
+  }, [telegramEnabled, botId]);
 
   useEffect(() => {
     const state = location.state as LoginLocationState | null;
@@ -70,23 +97,33 @@ export function LoginPage() {
   }
 
   function onTelegram(): void {
-    const popup = window.open("about:blank", "pb-telegram-login", "popup,width=480,height=720");
-    if (!popup) {
-      setFormError("Браузер заблокировал окно входа Telegram");
+    if (botId === "") {
+      setFormError("Вход через Telegram не настроен");
+      return;
+    }
+    const widget = telegramLoginApi();
+    if (!widget) {
+      setFormError("Не удалось открыть вход Telegram");
       return;
     }
     setFormError("");
     setFieldsInvalid(false);
     setPending(true);
-    void auth.loginWithTelegram(popup).then((session) => {
-      navigate(session.onboardingComplete ? "/listings" : "/onboarding");
-    }).catch((error: unknown) => {
-      setFormError(telegramLoginError(error));
-    }).finally(() => setPending(false));
+    widget.auth({ bot_id: botId, request_access: true }, (data) => {
+      if (!data) {
+        setPending(false);
+        setFormError("Вход через Telegram отменён");
+        return;
+      }
+      void auth.loginWithTelegram(data).then((session) => {
+        navigate(session.onboardingComplete ? "/listings" : "/onboarding");
+      }).catch((error: unknown) => {
+        setFormError(error instanceof Error ? error.message : "Не удалось войти через Telegram");
+      }).finally(() => setPending(false));
+    });
   }
 
   const invalid = fieldsInvalid;
-  const telegramEnabled = resolveCabinetDataSource() === "pocketbase";
 
   return (
     <>

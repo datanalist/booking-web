@@ -19,6 +19,7 @@ onBootstrap((e) => {
     { label: "GET /api/vallome/magic-auth", audience: "", duration: 60, maxRequests: 10 },
     { label: "GET /api/vallome/magic-wait", audience: "", duration: 60, maxRequests: 40 },
     { label: "POST /api/vallome/change-email", audience: "", duration: 3600, maxRequests: 5 },
+    { label: "POST /api/vallome/telegram-auth", audience: "", duration: 60, maxRequests: 10 },
     { label: "/api/batch", audience: "", duration: 1, maxRequests: 3 },
     { label: "/api/", audience: "", duration: 10, maxRequests: 300 },
   ]

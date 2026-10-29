@@ -63,8 +63,12 @@ describe("createPbAuthApi", () => {
       token: "tg-token",
       record: { ...user, email: "", phone: "", name: "Иван" },
     });
-    const popup = { location: { href: "" }, closed: false, close: vi.fn() };
-    const session = await createPbAuthApi({ client, storage: box }).loginWithTelegram(popup);
+    const session = await createPbAuthApi({ client, storage: box }).loginWithTelegram({
+      id: 42,
+      first_name: "Иван",
+      auth_date: 1,
+      hash: "a".repeat(64),
+    });
     expect(session.email).toBe("");
     expect(session.name).toBe("Иван");
     expect(session.onboardingComplete).toBe(false);

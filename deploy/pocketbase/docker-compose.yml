@@ -9,9 +9,6 @@ services:
     ports:
       - "127.0.0.1:8090:8090"
     env_file: .env
-    # Обмен кода Telegram идёт через прокси: с Wi-Fi мини-ПК провайдер не открывает 149.154.167.99.
-    environment:
-      HTTPS_PROXY: http://172.18.0.1:8888
     volumes:
       - ./pb_data:/pb/pb_data
       - ./pb_hooks:/pb/pb_hooks:ro
