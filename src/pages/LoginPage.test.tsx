@@ -155,7 +155,12 @@ test("при PocketBase кнопка Telegram открывает окно до �
   });
   try {
     renderLogin();
-    await user.click(screen.getByRole("button", { name: "Войти через Telegram" }));
+    expect(screen.getByText("или войдите с помощью")).toBeInTheDocument();
+    const telegram = screen.getByRole("button", { name: "Войти через Telegram" });
+    expect(telegram.className).toMatch(/rounded-\[12px\]/);
+    expect(telegram.className).toMatch(/2AABEE/);
+    expect(telegram.querySelector("svg")).not.toBeNull();
+    await user.click(telegram);
     expect(window.open).toHaveBeenCalledWith(
       "about:blank",
       "pb-telegram-login",
