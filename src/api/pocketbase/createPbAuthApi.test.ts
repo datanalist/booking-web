@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { SESSION_KEY } from "../keys";
 import { createPbClient } from "./pbClient";
 import { PB_TOKEN_KEY } from "./pbSession";
@@ -51,6 +51,24 @@ describe("createPbAuthApi", () => {
     expect(session.balance).toBe(1000);
     expect(box.getItem(PB_TOKEN_KEY)).toBe("tok");
     expect(box.getItem(SESSION_KEY)).toContain("host@example.com");
+  });
+
+  test("Telegram пишет токен без почты и оставляет онбординг", async () => {
+    const box = storage();
+    const client = createPbClient({
+      baseUrl: "https://pb.example",
+      fetchFn: async () => new Response("{}", { status: 200 }),
+    });
+    client.authWithTelegram = async () => ({
+      token: "tg-token",
+      record: { ...user, email: "", phone: "", name: "Иван" },
+    });
+    const popup = { location: { href: "" }, closed: false, close: vi.fn() };
+    const session = await createPbAuthApi({ client, storage: box }).loginWithTelegram(popup);
+    expect(session.email).toBe("");
+    expect(session.name).toBe("Иван");
+    expect(session.onboardingComplete).toBe(false);
+    expect(box.getItem(PB_TOKEN_KEY)).toBe("tg-token");
   });
 
   test("logout стирает токен и сессию", async () => {

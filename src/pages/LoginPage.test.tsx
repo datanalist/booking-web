@@ -1,6 +1,6 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { SessionProvider } from "../app/session";
 import { LoginPage } from "./LoginPage";
@@ -136,6 +136,41 @@ test("уже открытый вход обновляется, когда поч
   expect(note?.className).toMatch(/rounded-\[12px\]/);
   expect(note?.className).toMatch(/bg-white/);
   expect(note?.className).toMatch(/border-\[var\(--color-accent\)\]/);
+});
+
+test("при PocketBase кнопка Telegram открывает окно до запроса", async () => {
+  vi.stubEnv("VITE_DATA_SOURCE", "pocketbase");
+  const user = userEvent.setup();
+  const opened = { location: { href: "" }, closed: false, close() {} };
+  vi.spyOn(window, "open").mockReturnValue(opened as unknown as Window);
+  vi.stubGlobal("EventSource", class FailingEventSource {
+    onerror: (() => void) | null = null;
+    addEventListener(): void {}
+    close(): void {}
+    constructor() {
+      queueMicrotask(() => {
+        this.onerror?.();
+      });
+    }
+  });
+  try {
+    renderLogin();
+    expect(screen.getByText("или войдите с помощью")).toBeInTheDocument();
+    const telegram = screen.getByRole("button", { name: "Войти через Telegram" });
+    expect(telegram.className).toMatch(/rounded-\[12px\]/);
+    expect(telegram.className).toMatch(/2AABEE/);
+    expect(telegram.querySelector("svg")).not.toBeNull();
+    await user.click(telegram);
+    expect(window.open).toHaveBeenCalledWith(
+      "about:blank",
+      "pb-telegram-login",
+      "popup,width=480,height=720",
+    );
+    expect(await screen.findByText("Не удалось открыть соединение с PocketBase")).toBeInTheDocument();
+  } finally {
+    vi.unstubAllGlobals();
+    vi.mocked(window.open).mockRestore();
+  }
 });
 
 test("email and password fields share auth size", () => {
