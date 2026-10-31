@@ -1,0 +1,29 @@
+$kind: http-request
+order: 1000
+method: POST
+url: '{{base_url}}/api/payments'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+auth:
+  type: noauth
+body:
+  type: json
+  content: |-
+    {
+      "amount": 10
+    }
+examples: './.resources/create-without-token.resources/examples'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("без токена платёж не создаётся", function () {
+        pm.response.to.have.status(401);
+        pm.expect(pm.response.json().message).to.eql("Войдите в аккаунт");
+      });
+      pm.test("ответ не содержит стек", function () {
+        pm.expect(pm.response.text()).to.not.include("at ");
+      });

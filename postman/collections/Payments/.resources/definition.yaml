@@ -1,0 +1,20 @@
+$kind: collection
+name: Payments
+description: |-
+  Пополнение баланса через ЮKassa на том же origin, что и кабинет.
+  POST /api/payments создаёт платёж и возвращает confirmationUrl.
+  POST /api/payments/confirm сверяет его с ЮKassa.
+  POST /api/payments/webhook и JSON POST на / принимают уведомление только с адресов ЮKassa
+  и не зачисляют сумму из тела: сервер сам запрашивает платёж.
+variables:
+  - key: base_url
+    value: 'https://app.booking.vallome.ru'
+    description: Origin кабинета. Окружение Production или Local его перекрывает.
+  - key: pb_token
+    value: ''
+    description: Токен сессии PocketBase. Пустой токен не создаёт платёж. Не коммитьте заполненное значение.
+  - key: payment_id
+    value: ''
+    description: Заполняется запросом создания пополнения в этой же сессии запуска.
+auth:
+  type: noauth

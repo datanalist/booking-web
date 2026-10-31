@@ -1,0 +1,6 @@
+$kind: collection
+name: Guards
+description: Проверки без сессии и без обращения в ЮKassa. Баланс не меняется.
+order: 1000
+auth:
+  type: noauth

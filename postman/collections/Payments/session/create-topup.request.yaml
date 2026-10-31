@@ -1,0 +1,26 @@
+$kind: http-request
+order: 1000
+method: POST
+url: '{{base_url}}/api/payments'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "amount": 1
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      pm.test("сервер вернул ссылку на оплату", function () {
+        pm.response.to.have.status(200);
+        pm.expect(body.confirmationUrl).to.be.a("string").and.match(/^https:\/\//);
+        pm.expect(body.paymentId).to.match(/^[a-z0-9]{15}$/);
+      });
+      pm.collectionVariables.set("payment_id", body.paymentId);

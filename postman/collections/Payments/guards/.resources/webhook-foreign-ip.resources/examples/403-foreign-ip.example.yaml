@@ -1,0 +1,30 @@
+$kind: http-example
+name: 403 Foreign IP
+order: 1000
+request:
+  method: POST
+  url: '{{base_url}}/api/payments/webhook'
+  headers:
+    - key: Content-Type
+      value: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "event": "payment.waiting_for_capture",
+        "object": {
+          "id": "postman-foreign-ip-check"
+        }
+      }
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    - key: Content-Type
+      value: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "message": "Источник уведомления не подтверждён"
+      }

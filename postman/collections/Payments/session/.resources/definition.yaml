@@ -1,0 +1,11 @@
+$kind: collection
+name: Session
+description: |-
+  Нужен токен PocketBase текущего пользователя в pb_token.
+  Создание открывает реальный счёт ЮKassa на 1 ₽. Баланс не меняется, пока оплата не прошла сверку.
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{pb_token}}'

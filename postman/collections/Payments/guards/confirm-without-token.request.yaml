@@ -1,0 +1,25 @@
+$kind: http-request
+order: 3000
+method: POST
+url: '{{base_url}}/api/payments/confirm'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+auth:
+  type: noauth
+body:
+  type: json
+  content: |-
+    {
+      "paymentId": "pay000000000001"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("сверка без токена не читает платёж", function () {
+        pm.response.to.have.status(401);
+        pm.expect(pm.response.json().message).to.eql("Войдите в аккаунт");
+      });

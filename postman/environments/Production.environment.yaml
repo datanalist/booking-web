@@ -1,0 +1,5 @@
+name: Production
+values:
+  - key: base_url
+    value: https://app.booking.vallome.ru
+    enabled: true

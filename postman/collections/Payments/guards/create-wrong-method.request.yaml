@@ -1,0 +1,18 @@
+$kind: http-request
+order: 2000
+method: GET
+url: '{{base_url}}/api/payments'
+headers:
+  - key: Accept
+    value: application/json
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("создание платежа принимает только POST", function () {
+        pm.response.to.have.status(405);
+        pm.expect(pm.response.headers.get("Allow")).to.eql("POST");
+        pm.expect(pm.response.json().message).to.eql("Метод не поддерживается");
+      });

@@ -1,0 +1,29 @@
+$kind: http-request
+order: 4000
+method: POST
+url: '{{base_url}}/api/payments/webhook'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+auth:
+  type: noauth
+body:
+  type: json
+  content: |-
+    {
+      "event": "payment.waiting_for_capture",
+      "object": {
+        "id": "postman-foreign-ip-check"
+      }
+    }
+examples: './.resources/webhook-foreign-ip.resources/examples'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("уведомление не с адреса ЮKassa отклоняется", function () {
+        pm.response.to.have.status(403);
+        pm.expect(pm.response.json().message).to.eql("Источник уведомления не подтверждён");
+      });

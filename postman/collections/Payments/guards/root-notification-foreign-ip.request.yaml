@@ -1,0 +1,28 @@
+$kind: http-request
+order: 5000
+method: POST
+url: '{{base_url}}/'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+auth:
+  type: noauth
+body:
+  type: json
+  content: |-
+    {
+      "event": "payment.waiting_for_capture",
+      "object": {
+        "id": "postman-foreign-ip-check"
+      }
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("JSON на корень не с адреса ЮKassa отклоняется", function () {
+        pm.response.to.have.status(403);
+        pm.expect(pm.response.json().message).to.eql("Источник уведомления не подтверждён");
+      });

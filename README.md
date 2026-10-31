@@ -144,6 +144,8 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 Пополнение баланса ходит в API ЮKassa с мини-ПК. Секреты лежат в `/opt/pocketbase/booking-web.env` (в git не входит, контейнер читает файл, если он есть). Имена переменных без значений: `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `POCKETBASE_SU`, `POCKETBASE_SU_PASSWORD`. Уведомление ЮKassa принимается и на `POST https://app.booking.vallome.ru/api/payments/webhook`, и на `POST https://app.booking.vallome.ru/` — кабинет может быть настроен на корень. Сумма из тела уведомления не зачисляется: сервер повторяет `GET /v3/payments/{id}` и пишет баланс один раз. Возврат плательщика на `/profile?payment=<id>` вызывает ту же сверку.
 
+Проверка этих маршрутов из Postman — коллекция `postman/collections/Payments`. Папка `guards` бьёт в прод без токена и не создаёт платёж. Папка `session` создаёт реальный счёт на 1 ₽ и сразу сверяет его; ей нужен токен PocketBase в `pb_token`, в git он пустой. Окружение продакшена — `postman/environments/Production.environment.yaml`, локальный Vite — `Local.environment.yaml`.
+
 Разовая настройка мини-ПК:
 
 1. `sudo mkdir -p /opt/booking-web/data && sudo chown 1000:1000 /opt/booking-web/data`.
