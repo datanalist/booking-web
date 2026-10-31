@@ -2,6 +2,9 @@ import { PaymentFlowError } from "./paymentFlowError.ts";
 import { creditsCollectionDefinition, paymentsCollectionDefinition } from "./collections.ts";
 import { addRubles } from "./money.ts";
 import type { PaymentStatus, StoredPayment } from "./types.ts";
+import { withDeadline } from "./withDeadline.ts";
+
+const PB_TIMEOUT_MS = 15_000;
 
 export type PbAdminEnv = {
   pbUrl: string;
@@ -89,19 +92,24 @@ export function createPbAdmin(env: PbAdminEnv, fetchImpl: typeof fetch) {
     if (body !== undefined) {
       headers.set("Content-Type", "application/json");
     }
-    let response: Response;
+    let status = 0;
+    let text = "";
     try {
-      response = await fetchImpl(`${env.pbUrl}${path}`, {
-        method,
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-        redirect: "error",
-        signal: AbortSignal.timeout(15_000),
+      const result = await withDeadline(PB_TIMEOUT_MS, async (signal) => {
+        const response = await fetchImpl(`${env.pbUrl}${path}`, {
+          method,
+          headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+          redirect: "error",
+          signal,
+        });
+        return { status: response.status, text: await response.text() };
       });
+      status = result.status;
+      text = result.text;
     } catch {
       throw new PaymentFlowError(502, "Не удалось связаться с PocketBase");
     }
-    const text = await response.text();
     let parsed: unknown = null;
     if (text.trim().length > 0) {
       try {
@@ -110,7 +118,7 @@ export function createPbAdmin(env: PbAdminEnv, fetchImpl: typeof fetch) {
         parsed = null;
       }
     }
-    return { status: response.status, body: parsed };
+    return { status, body: parsed };
   }
 
   async function login(): Promise<string> {

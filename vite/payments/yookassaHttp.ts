@@ -2,8 +2,10 @@ import { Buffer } from "node:buffer";
 import { PaymentFlowError } from "./paymentFlowError.ts";
 import { buildCreatePaymentBody, isConfirmationUrl, parseRemotePayment } from "./yookassa.ts";
 import type { RemotePayment } from "./types.ts";
+import { withDeadline } from "./withDeadline.ts";
 
 const API = "https://api.yookassa.ru/v3";
+export const YOOKASSA_TIMEOUT_MS = 15_000;
 
 export type YookassaEnv = {
   shopId: string;
@@ -61,7 +63,11 @@ export function yookassaFailureMessage(status: number, body: unknown, secrets: r
   return "Не удалось создать платёж";
 }
 
-export function createYookassaClient(env: YookassaEnv, fetchImpl: typeof fetch) {
+export function createYookassaClient(
+  env: YookassaEnv,
+  fetchImpl: typeof fetch,
+  timeoutMs = YOOKASSA_TIMEOUT_MS,
+) {
   const secrets = [env.shopId, env.secretKey];
 
   async function call(
@@ -82,19 +88,24 @@ export function createYookassaClient(env: YookassaEnv, fetchImpl: typeof fetch) 
     if (idempotenceKey !== undefined) {
       headers.set("Idempotence-Key", idempotenceKey);
     }
-    let response: Response;
+    let status = 0;
+    let text = "";
     try {
-      response = await fetchImpl(`${API}${path}`, {
-        method,
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-        redirect: "error",
-        signal: AbortSignal.timeout(15_000),
+      const result = await withDeadline(timeoutMs, async (signal) => {
+        const response = await fetchImpl(`${API}${path}`, {
+          method,
+          headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+          redirect: "error",
+          signal,
+        });
+        return { status: response.status, text: await response.text() };
       });
+      status = result.status;
+      text = result.text;
     } catch {
       throw new PaymentFlowError(502, "Не удалось связаться с ЮKassa");
     }
-    const text = await response.text();
     let parsed: unknown = null;
     if (text.trim().length > 0) {
       try {
@@ -103,8 +114,8 @@ export function createYookassaClient(env: YookassaEnv, fetchImpl: typeof fetch) 
         parsed = null;
       }
     }
-    if (!response.ok) {
-      throw new PaymentFlowError(502, yookassaFailureMessage(response.status, parsed, secrets));
+    if (status < 200 || status >= 300) {
+      throw new PaymentFlowError(502, yookassaFailureMessage(status, parsed, secrets));
     }
     return parsed;
   }

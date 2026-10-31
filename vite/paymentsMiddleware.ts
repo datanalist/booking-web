@@ -216,6 +216,15 @@ export function createPaymentsMiddleware(
   }
 
   async function handleCreate(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const started = Date.now();
+    try {
+      await createForUser(req, res);
+    } finally {
+      console.info(`payments create ms=${Date.now() - started}`);
+    }
+  }
+
+  async function createForUser(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const userId = await requireUser(admin, req);
     const body = await readJson(req);
     const parsed = parseTopupAmount(isRecord(body) ? body.amount : undefined);

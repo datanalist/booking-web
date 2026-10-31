@@ -1,5 +1,10 @@
 import { readPbToken } from "../../../api/pocketbase/pbSession";
+import { isDeadlineError, withDeadline } from "../../../../vite/payments/withDeadline";
 import { isConfirmationUrl } from "../../../../vite/payments/yookassa";
+
+export const TOPUP_REQUEST_TIMEOUT_MS = 15_000;
+export const TOPUP_TIMEOUT_MESSAGE = "Сервер не ответил вовремя. Попробуйте ещё раз.";
+export const TOPUP_OPEN_MESSAGE = "Не удалось открыть страницу оплаты. Попробуйте ещё раз.";
 
 export type ConfirmTopupResult = {
   status: "succeeded" | "already" | "pending" | "canceled";
@@ -34,25 +39,42 @@ function authHeader(): string {
   return `Bearer ${token}`;
 }
 
-/** Создаёт платёж на сервере и возвращает ссылку ЮKassa. Сумму на баланс здесь не пишет. */
-export async function requestTopup(amountRub: number): Promise<{ confirmationUrl: string }> {
-  const response = await fetch("/api/payments", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: authHeader(),
-    },
-    body: JSON.stringify({ amount: amountRub }),
-  }).catch(() => {
-    throw new Error("Не удалось создать платёж");
-  });
-  const body = await readBody(response);
-  if (!response.ok) {
-    throw new Error(messageFrom(body, "Не удалось создать платёж"));
+function failure(error: unknown, fallback: string): Error {
+  if (isDeadlineError(error)) {
+    return new Error(TOPUP_TIMEOUT_MESSAGE);
   }
-  const confirmationUrl = isRecord(body) && typeof body.confirmationUrl === "string"
-    ? body.confirmationUrl
+  return new Error(fallback);
+}
+
+/** Создаёт платёж на сервере и возвращает ссылку ЮKassa. Сумму на баланс здесь не пишет. */
+export async function requestTopup(
+  amountRub: number,
+  timeoutMs = TOPUP_REQUEST_TIMEOUT_MS,
+): Promise<{ confirmationUrl: string }> {
+  const authorization = authHeader();
+  let outcome: { ok: boolean; body: unknown };
+  try {
+    outcome = await withDeadline(timeoutMs, async (signal) => {
+      const response = await fetch("/api/payments", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: authorization,
+        },
+        body: JSON.stringify({ amount: amountRub }),
+        signal,
+      });
+      return { ok: response.ok, body: await readBody(response) };
+    });
+  } catch (error) {
+    throw failure(error, "Не удалось создать платёж");
+  }
+  if (!outcome.ok) {
+    throw new Error(messageFrom(outcome.body, "Не удалось создать платёж"));
+  }
+  const confirmationUrl = isRecord(outcome.body) && typeof outcome.body.confirmationUrl === "string"
+    ? outcome.body.confirmationUrl
     : "";
   if (!isConfirmationUrl(confirmationUrl)) {
     throw new Error("Не удалось создать платёж");
@@ -61,20 +83,31 @@ export async function requestTopup(amountRub: number): Promise<{ confirmationUrl
 }
 
 /** Просит сервер сверить платёж с ЮKassa и зачислить его, если он успешен. */
-export async function confirmTopup(paymentId: string): Promise<ConfirmTopupResult> {
-  const response = await fetch("/api/payments/confirm", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: authHeader(),
-    },
-    body: JSON.stringify({ paymentId }),
-  }).catch(() => {
-    throw new Error("Не удалось проверить платёж");
-  });
-  const body = await readBody(response);
-  if (!response.ok) {
+export async function confirmTopup(
+  paymentId: string,
+  timeoutMs = TOPUP_REQUEST_TIMEOUT_MS,
+): Promise<ConfirmTopupResult> {
+  const authorization = authHeader();
+  let outcome: { ok: boolean; body: unknown };
+  try {
+    outcome = await withDeadline(timeoutMs, async (signal) => {
+      const response = await fetch("/api/payments/confirm", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: authorization,
+        },
+        body: JSON.stringify({ paymentId }),
+        signal,
+      });
+      return { ok: response.ok, body: await readBody(response) };
+    });
+  } catch (error) {
+    throw failure(error, "Не удалось проверить платёж");
+  }
+  const body = outcome.body;
+  if (!outcome.ok) {
     throw new Error(messageFrom(body, "Не удалось проверить платёж"));
   }
   if (!isRecord(body)) {
