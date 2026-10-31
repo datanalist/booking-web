@@ -57,6 +57,18 @@ jobs:
           fi
           exit 1
 
+      - name: Хуки и миграции PocketBase
+        run: |
+          cp -a deploy/pocketbase/pb_hooks/. /opt/pocketbase/pb_hooks/
+          cp -a deploy/pocketbase/pb_migrations/. /opt/pocketbase/pb_migrations/
+          docker restart pocketbase
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8090/api/health; then exit 0; fi
+            sleep 2
+          done
+          echo "PocketBase не поднялся" >&2
+          exit 1
+
       - name: Чистка старых образов
         if: success()
         run: docker image prune -f

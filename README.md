@@ -18,7 +18,7 @@
 
 - `personal-card/` — фото 300×244 (без фото — иллюстрация пустого состояния) и три поля только для чтения: имя, телефон, email; данные из сессии.
 - `api-key-card/` — «API Key TravelLine» в трёх состояниях: не подключено, «Подключено» (`#4aa446`), «Ошибка подключения» (`#e34043`). Кнопка «Подключить» — пилюля `rounded-[30px]`. Подключение — мок `connectApiKey`: ключ из цифр длиной от 6 → подключено, иначе ошибка (настоящего API TravelLine нет).
-- `balance-card/` — «Доступный баланс» (`session.balance ?? 34 670 ₽`, связан с `users.balance` в PocketBase) на фоне `public/profile/balance-lines.svg`, кнопка «Вывести средства» (`rounded-[30px]`) пока заглушка.
+- `balance-card/` — «Доступный баланс» (из `users.balance` в PocketBase, без подстановки демо-суммы) на фоне `public/profile/balance-lines.svg`. «Пополнить» создаёт платёж ЮKassa (`POST /api/payments`); после статуса `succeeded` хук PocketBase один раз зачисляет сумму на баланс. «Вывести средства» (`rounded-[30px]`) пока заглушка.
 - `edit-profile-modal/` — алерт «Редактировать данные профиля» (фото через кроп, «Удалить фото», имя, телефон, email, кнопка «Сохранить» с `rounded-lg`). Сохранение вызывает `auth.updateProfile`: запись пользователя и сессия в `localStorage` обновляются, карточка и сайдбар сразу показывают имя, email и фото. Занятый email (`EMAIL_TAKEN`) и другие ошибки полей оставляют алерт открытым.
 - `logout-modal/` — алерт «Выйти из аккаунта?» с равными по ширине кнопками «Вернуться» и «Да, выйти» (`rounded-lg`); подтверждение вызывает `auth.logout()` и ведёт на `/login`.
 
@@ -140,7 +140,9 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 - `server/server.ts` — отдаёт `dist/` с SPA-fallback и тем же middleware, что в Vite: `POST/DELETE /api/files`, `GET /data/:name`. `GET /healthz` — проверка здоровья.
 - `deploy/app/docker-compose.yml` — фото лежат в `/opt/booking-web/data` на хосте и переживают деплой.
 - `deploy/minipc/caddy/Caddyfile` — блок `app.booking.vallome.ru`.
-- `.github/workflows/deploy.yml` — на PR и push в `main` идут тесты и сборка на GitHub-hosted runner. После push в `main` job `deploy` запускается на self-hosted runner мини-ПК (метка `minipc`): собирает образ, поднимает контейнер, проверяет `/healthz`, при сбое возвращает образ `booking-web:previous`.
+- `.github/workflows/deploy.yml` — на PR и push в `main` идут тесты и сборка на GitHub-hosted runner. После push в `main` job `deploy` запускается на self-hosted runner мини-ПК (метка `minipc`): собирает образ, поднимает контейнер, проверяет `/healthz`, при сбое возвращает образ `booking-web:previous`. Тот же job копирует `deploy/pocketbase/pb_hooks` и `pb_migrations` в `/opt/pocketbase` и перезапускает PocketBase. Миграция `1793404800_payments.js` не создаёт заново коллекции `payments` и `payment_credits`, если они уже есть.
+
+Пополнение баланса ходит в API ЮKassa с мини-ПК. Секреты лежат в `/opt/pocketbase/booking-web.env` (в git не входит, контейнер читает файл, если он есть). Имена переменных без значений: `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `POCKETBASE_SU`, `POCKETBASE_SU_PASSWORD`. Уведомление ЮKassa: `POST https://app.booking.vallome.ru/api/payments/webhook`.
 
 Разовая настройка мини-ПК:
 
@@ -154,7 +156,7 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 ## Секреты
 
-В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли и белый IP. Публичный URL API можно держать в коде или в `VITE_*` без секретов. Локальная папка переноса `.secrets/` закрыта `.gitignore` и в коммиты не входит.
+В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли, ключи ЮKassa и белый IP. Публичный URL API можно держать в коде или в `VITE_*` без секретов. Локальная папка переноса `.secrets/` и файл `booking-web.env` закрыты `.gitignore` и в коммиты не входят. На мини-ПК имена `YOOKASSA_SHOP_ID` и `YOOKASSA_SECRET_KEY` задаются в `/opt/pocketbase/booking-web.env`.
 
 ## Новая машина
 

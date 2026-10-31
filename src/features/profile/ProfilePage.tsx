@@ -10,13 +10,12 @@ import { LogoutConfirmModal } from "./logout-modal";
 import { PersonalCard } from "./personal-card";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileLayout } from "./ProfileLayout";
+import { TopupModal } from "./topup/TopupModal";
+import { useTopupFlow } from "./topup/useTopupFlow";
 import {
   useProfilePageModel,
   type ProfilePageModel,
 } from "./useProfilePageModel";
-
-/** Вывода средств в моке нет: кнопка карточки остаётся подключённой. */
-function ignoreWithdraw(): void {}
 
 function ProfilePageAlerts({ model }: { model: ProfilePageModel }): ReactElement {
   return (
@@ -44,6 +43,7 @@ export function ProfilePage(): ReactElement {
   const navigate = useNavigate();
   const { session } = useSession();
   const model = useProfilePageModel();
+  const topup = useTopupFlow();
   const openingSupport = useRef(false);
 
   function openSupportChat(): void {
@@ -97,11 +97,19 @@ export function ProfilePage(): ReactElement {
         balance={
           <BalanceCard
             amountRub={model.balanceRub}
-            onWithdraw={ignoreWithdraw}
+            onTopUp={topup.openForm}
           />
         }
       />
       <ProfilePageAlerts model={model} />
+      <TopupModal
+        open={topup.open}
+        pending={topup.pending}
+        phase={topup.phase}
+        message={topup.message}
+        onClose={topup.close}
+        onSubmit={topup.submit}
+      />
     </div>
   );
 }

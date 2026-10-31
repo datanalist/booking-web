@@ -3,6 +3,8 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import path from "node:path";
 import { createDataStoreMiddleware } from "../vite/createDataStoreMiddleware.ts";
+import { loadServerEnv } from "../vite/loadServerEnv.ts";
+import { createPaymentsMiddleware } from "../vite/paymentsMiddleware.ts";
 
 /**
  * Прод-сервер кабинета: статика из dist (SPA-fallback) и файловое хранилище фото
@@ -29,7 +31,9 @@ const MIME: Record<string, string> = {
   ".txt": "text/plain; charset=utf-8",
 };
 
+loadServerEnv();
 const dataStore = createDataStoreMiddleware({ dataDir: DATA_DIR });
+const payments = createPaymentsMiddleware();
 
 async function fileIfExists(filePath: string): Promise<string | null> {
   try {
@@ -49,14 +53,22 @@ const server = createServer((req, res) => {
     return;
   }
 
-  dataStore(req as never, res, (err?: unknown) => {
+  payments(req as never, res, (err?: unknown) => {
     if (err !== undefined) {
-      console.error(err);
+      console.error("payments");
       if (!res.headersSent) res.writeHead(500);
       res.end();
       return;
     }
-    void serveStatic(url.pathname, req.method ?? "GET", res);
+    dataStore(req as never, res, (storeErr?: unknown) => {
+      if (storeErr !== undefined) {
+        console.error(storeErr);
+        if (!res.headersSent) res.writeHead(500);
+        res.end();
+        return;
+      }
+      void serveStatic(url.pathname, req.method ?? "GET", res);
+    });
   });
 });
 

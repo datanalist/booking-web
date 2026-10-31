@@ -56,6 +56,7 @@ export type PbChangeEmailResult = {
 export type PbClient = {
   readonly baseUrl: string;
   authWithPassword(identity: string, password: string, collection?: string): Promise<PbAuthResult>;
+  authRefresh(): Promise<PbAuthResult>;
   authWithTelegram(fields: TelegramLoginFields): Promise<PbAuthResult>;
   telegramNonce(): Promise<string>;
   listRecords<TItem = unknown>(collection: string, query?: PbListQuery): Promise<PbListResult<TItem>>;
@@ -276,6 +277,9 @@ export function createPbClient(options: CreatePbClientOptions = {}): PbClient {
     authWithPassword(identity, password, collection = USERS_COLLECTION) {
       const path = `/api/collections/${encodeURIComponent(collection)}/auth-with-password`;
       return send(path, "POST", undefined, { identity, password }).then(readAuth);
+    },
+    authRefresh() {
+      return send("/api/collections/users/auth-refresh", "POST", undefined, {}).then(readAuth);
     },
     authWithTelegram(fields) {
       return send("/api/vallome/telegram-auth", "POST", undefined, fields).then(readAuth);

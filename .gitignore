@@ -20,6 +20,8 @@ dist/
 deploy/pocketbase/pb_data/
 pb_data/
 deploy/pocketbase/.env
+# Секреты ЮKassa и суперпользователя для прод-контейнера. Файл живёт на мини-ПК.
+booking-web.env
 src/app/localDevAuth.local.ts
 # Локальный перенос ключей и секретов. В git не входит.
 .secrets/

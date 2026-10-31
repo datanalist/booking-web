@@ -49,8 +49,21 @@ test("renders personal data, api key and balance cards", () => {
   expect(screen.getByText("API Key TravelLine")).toBeInTheDocument();
   expect(screen.queryByRole("status")).not.toBeInTheDocument();
   expect(screen.getByText("Доступный баланс")).toBeInTheDocument();
-  expect(screen.getByText(/34\s670\s₽/)).toBeInTheDocument();
+  expect(screen.getByText(/0\s₽/)).toBeInTheDocument();
   expect(document.querySelector("[data-dialog]")).toBeNull();
+});
+
+test("пополнение открывает форму и без сессии PocketBase показывает ошибку", async () => {
+  const user = userEvent.setup();
+  renderProfile();
+
+  await user.click(screen.getByRole("button", { name: "Пополнить баланс" }));
+  const dialog = screen.getByRole("dialog", { name: "Пополнение баланса" });
+  await user.type(within(dialog).getByLabelText("Сумма, ₽"), "100");
+  await user.click(within(dialog).getByRole("button", { name: "Пополнить" }));
+
+  expect(await within(dialog).findByRole("alert")).toHaveTextContent("Войдите в аккаунт");
+  expect(screen.getByText(/0\s₽/)).toBeInTheDocument();
 });
 
 test("opens and closes the edit and logout alerts", async () => {

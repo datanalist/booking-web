@@ -12,6 +12,11 @@ services:
     init: true
     ports:
       - "127.0.0.1:8080:8080"
+    # Секреты только на мини-ПК, в git не входят.
+    # Имена: YOOKASSA_SHOP_ID, YOOKASSA_SECRET_KEY, POCKETBASE_SU, POCKETBASE_SU_PASSWORD.
+    env_file:
+      - path: /opt/pocketbase/booking-web.env
+        required: false
     volumes:
       # Загруженные фото. Живут вне образа, переживают деплой.
       - /opt/booking-web/data:/app/data

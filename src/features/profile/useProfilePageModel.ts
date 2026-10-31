@@ -64,7 +64,7 @@ export function useProfilePageModel(): ProfilePageModel {
   return {
     dialog,
     profile,
-    balanceRub: session?.balance ?? PROFILE_DEMO.balanceRub,
+    balanceRub: session?.balance ?? 0,
     apiKey,
     apiKeyStatus,
     logoutPending,

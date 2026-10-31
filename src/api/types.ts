@@ -23,7 +23,7 @@ export interface Session {
   name: string;
   phone: string;
   photoUrl?: string;
-  /** Сумма к выводу, поле `users.balance` в PocketBase. */
+  /** Доступный баланс в рублях, поле `users.balance` в PocketBase. */
   balance?: number;
   onboardingComplete: boolean;
 }
@@ -114,7 +114,7 @@ export type UserRecord = {
   name: string;
   phone: string;
   photoUrl?: string;
-  /** Сумма к выводу, поле `users.balance` в PocketBase. */
+  /** Доступный баланс в рублях, поле `users.balance` в PocketBase. */
   balance?: number;
   onboardingComplete: boolean;
 };
