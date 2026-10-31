@@ -66,6 +66,17 @@ test("пополнение открывает форму и без сессии 
   expect(screen.getByText(/0\s₽/)).toBeInTheDocument();
 });
 
+test("вывод средств не открывает диалог и не меняет страницу", async () => {
+  const user = userEvent.setup();
+  renderProfile();
+
+  await user.click(screen.getByRole("button", { name: "Вывести средства" }));
+
+  expect(document.querySelector("[data-dialog]")).toBeNull();
+  expect(screen.getByText("Доступный баланс")).toBeInTheDocument();
+  expect(screen.getByText(/0\s₽/)).toBeInTheDocument();
+});
+
 test("opens and closes the edit and logout alerts", async () => {
   const user = userEvent.setup();
   renderProfile();

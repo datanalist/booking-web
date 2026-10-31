@@ -38,6 +38,9 @@ function ProfilePageAlerts({ model }: { model: ProfilePageModel }): ReactElement
   );
 }
 
+/** Вывода средств в моке нет: кнопка карточки остаётся подключённой. */
+function ignoreWithdraw(): void {}
+
 /** Главная профиля: личные данные, API-ключ и баланс. */
 export function ProfilePage(): ReactElement {
   const navigate = useNavigate();
@@ -97,6 +100,7 @@ export function ProfilePage(): ReactElement {
         balance={
           <BalanceCard
             amountRub={model.balanceRub}
+            onWithdraw={ignoreWithdraw}
             onTopUp={topup.openForm}
           />
         }

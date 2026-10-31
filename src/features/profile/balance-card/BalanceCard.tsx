@@ -5,15 +5,20 @@ import { formatRubles } from "./formatRubles";
 export type BalanceCardProps = {
   /** Доступный баланс в рублях (целое число). */
   amountRub: number;
+  onWithdraw: () => void;
   onTopUp: () => void;
 };
 
+const actionClass =
+  "relative z-10 gap-2.5 leading-[1.4] whitespace-nowrap hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f88a2a]";
+
 export function BalanceCard({
   amountRub,
+  onWithdraw,
   onTopUp,
 }: BalanceCardProps): ReactElement {
   return (
-    <div className="relative flex h-[244px] flex-1 flex-col items-center justify-center gap-6 overflow-hidden rounded-xl bg-[rgba(251,192,40,0.17)] px-6 py-8 font-sans">
+    <div className="relative flex min-h-[244px] flex-1 flex-col items-center justify-center gap-6 overflow-hidden rounded-xl bg-[rgba(251,192,40,0.17)] px-6 py-8 font-sans">
       <img
         src="/profile/balance-lines.svg"
         alt=""
@@ -30,14 +35,24 @@ export function BalanceCard({
           Доступный баланс
         </p>
       </div>
-      <Button
-        size="sm"
-        variant="filled"
-        onClick={onTopUp}
-        className="relative z-10 gap-2.5 leading-[1.4] hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f88a2a]"
-      >
-        Пополнить баланс
-      </Button>
+      <div className="relative z-10 flex max-w-full flex-wrap items-center justify-center gap-2">
+        <Button
+          size="sm"
+          variant="filled"
+          onClick={onWithdraw}
+          className={actionClass}
+        >
+          Вывести средства
+        </Button>
+        <Button
+          size="sm"
+          variant="filled"
+          onClick={onTopUp}
+          className={actionClass}
+        >
+          Пополнить баланс
+        </Button>
+      </div>
     </div>
   );
 }

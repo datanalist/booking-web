@@ -28,14 +28,35 @@ function redact(text: string, secrets: readonly string[]): string {
   return safe;
 }
 
-function yookassaMessage(status: number, body: unknown, secrets: readonly string[]): string {
-  if (status === 401 || status === 403) {
-    return "ЮKassa отклонила ключи магазина";
-  }
+function safeDescription(body: unknown, secrets: readonly string[]): string {
   const description = isRecord(body) && typeof body.description === "string" ? body.description.trim() : "";
   const safe = redact(description, secrets);
   if (safe.length > 0 && safe.length <= 240 && !safe.includes("[secret]")) {
     return safe;
+  }
+  return "";
+}
+
+/** Текст для кабинета: 401 — ключи, остальные статусы не притворяются отказом ключей. */
+export function yookassaFailureMessage(status: number, body: unknown, secrets: readonly string[]): string {
+  const description = safeDescription(body, secrets);
+  if (status === 401) {
+    if (/authentication type is not allowed/i.test(description)) {
+      return "ЮKassa не приняла способ авторизации";
+    }
+    return "ЮKassa отклонила ключи магазина";
+  }
+  if (status === 403) {
+    return "ЮKassa запретила операцию";
+  }
+  if (status === 400) {
+    return description.length > 0 ? description : "ЮKassa не приняла данные платежа";
+  }
+  if (status === 429) {
+    return "ЮKassa временно ограничила запросы";
+  }
+  if (description.length > 0) {
+    return description;
   }
   return "Не удалось создать платёж";
 }
@@ -83,7 +104,7 @@ export function createYookassaClient(env: YookassaEnv, fetchImpl: typeof fetch) 
       }
     }
     if (!response.ok) {
-      throw new PaymentFlowError(502, yookassaMessage(response.status, parsed, secrets));
+      throw new PaymentFlowError(502, yookassaFailureMessage(response.status, parsed, secrets));
     }
     return parsed;
   }
