@@ -52,7 +52,24 @@ routerAdd("POST", "/api/vallome/telegram-auth", (e) => {
     return taken.ok
   }
 
+  // Прямой поиск привязки в _externalAuths: findAuthRecordByExternalAuth не находит записи с «чужим» провайдером.
+  function findLinkedDirect(providerId) {
+    try {
+      const link = e.app.findFirstRecordByFilter(
+        "_externalAuths",
+        "provider = 'telegram' && providerId = {:id}",
+        { id: providerId },
+      )
+      if (!link) return null
+      return e.app.findRecordById("users", link.getString("recordRef"))
+    } catch (err) {
+      return null
+    }
+  }
+
   function findLinked(providerId) {
+    const direct = findLinkedDirect(providerId)
+    if (direct) return direct
     const users = e.app.findCollectionByNameOrId("users")
     try {
       const found = e.app.findAuthRecordByExternalAuth(users, "telegram", providerId)
@@ -75,8 +92,12 @@ routerAdd("POST", "/api/vallome/telegram-auth", (e) => {
 
   function createHost(user) {
     const users = e.app.findCollectionByNameOrId("users")
+    // Поле email в коллекции users обязательное, а Telegram почту не отдаёт.
+    const syntheticEmail = "tg" + user.id + "@telegram.vallome.ru"
     const record = new Record(users)
     record.setRandomPassword()
+    record.set("email", syntheticEmail)
+    record.set("emailVisibility", false)
     if (typeof record.setVerified === "function") record.setVerified(true)
     record.set("roles", ["host"])
     record.set("account_status", "active")
@@ -84,14 +105,22 @@ routerAdd("POST", "/api/vallome/telegram-auth", (e) => {
     record.set("first_name", user.firstName)
     record.set("last_name", user.lastName)
     if (user.phone) record.set("phone", user.phone)
-    e.app.save(record)
+    try {
+      e.app.save(record)
+    } catch (err) {
+      // Телефон мог уже принадлежать другому аккаунту: вход важнее, повторяем без него.
+      if (!user.phone) throw err
+      record.set("phone", "")
+      e.app.save(record)
+    }
     const link = new Record(e.app.findCollectionByNameOrId("_externalAuths"))
     link.set("collectionRef", users.id)
     link.set("recordRef", record.id)
     link.set("provider", "telegram")
     link.set("providerId", user.id)
     try {
-      e.app.save(link)
+      // Telegram нет в списке провайдеров PocketBase, обычная валидация отвергает provider.
+      e.app.saveNoValidate(link)
     } catch (err) {
       try { e.app.delete(record) } catch (err2) {}
       throw err
@@ -117,6 +146,7 @@ routerAdd("POST", "/api/vallome/telegram-auth", (e) => {
     }
     return $apis.recordAuthResponse(e, record, "telegram")
   } catch (err) {
+    console.log("telegram-auth failed: " + err)
     return e.json(500, { message: "Не удалось войти через Telegram" })
   }
 })

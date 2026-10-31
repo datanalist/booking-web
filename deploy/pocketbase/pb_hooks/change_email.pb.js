@@ -122,6 +122,9 @@ routerAdd("POST", "/api/vallome/change-email", (e) => {
       email = str(body.email).trim().toLowerCase()
     } catch (err) {}
     if (!looksLikeEmail(email)) return fail(400, { message: "Введите корректный email" })
+    if (/@telegram\.vallome\.ru$/.test(email)) {
+      return fail(400, { message: "Этот адрес зарезервирован для входа через Telegram" })
+    }
 
     const record = e.app.findRecordById("users", auth.id)
     const current = recordEmail(record)

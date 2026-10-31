@@ -354,10 +354,7 @@ function telegramUserId(payload) {
   const subPresent = claimPresent(payload.sub)
   const id = decimal(payload.id)
   const sub = decimal(payload.sub)
-  if (idPresent && subPresent) {
-    if (id === "" || sub === "" || id !== sub) return ""
-    return id
-  }
+  // Telegram отдаёт в sub непрозрачный идентификатор (19 цифр), настоящий id пользователя лежит в id.
   if (idPresent) return id
   if (subPresent) return sub
   return ""

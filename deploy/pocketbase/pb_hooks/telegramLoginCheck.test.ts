@@ -95,7 +95,7 @@ test("без id принимается sub", () => {
   expect(decision.user?.id).toBe("42");
 });
 
-test("id и sub должны совпадать", () => {
+test("при расхождении id и sub берётся id, а битый id отклоняется", () => {
   const matched = telegramIdTokenDecision(
     sign({ ...payload, sub: "42" }),
     "9158776426",
@@ -113,8 +113,8 @@ test("id и sub должны совпадать", () => {
     1700000100,
     [testKey],
   );
-  expect(mismatched.ok).toBe(false);
-  expect(mismatched.message).toBe("Telegram не подтвердил вход");
+  expect(mismatched.ok).toBe(true);
+  expect(mismatched.user?.id).toBe("42");
 
   const brokenId = telegramIdTokenDecision(
     sign({ ...payload, id: "nope", sub: "42" }),
