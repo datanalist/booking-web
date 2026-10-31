@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { SESSION_KEY } from "../../../api/keys";
+import { bumpCabinetBalanceEpoch } from "../../../api/pocketbase/refreshCabinetBalance";
 import { refreshCabinetSession } from "../../../api/pocketbase/refreshCabinetSession";
 import { useSession } from "../../../app/session";
 import { isPaymentRecordId } from "../../../../vite/payments/yookassa";
@@ -45,6 +46,7 @@ export function useTopupFlow(): {
   const [message, setMessage] = useState("");
 
   async function applyBalance(balance: number | undefined): Promise<void> {
+    bumpCabinetBalanceEpoch();
     try {
       await refreshCabinetSession(localStorage);
     } catch {
@@ -52,6 +54,7 @@ export function useTopupFlow(): {
         patchStoredBalance(balance);
       }
     }
+    bumpCabinetBalanceEpoch();
     reload();
   }
 

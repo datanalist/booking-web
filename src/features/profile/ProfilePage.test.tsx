@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { MemoryRouter, Route, Routes, useSearchParams } from "react-router-dom";
 import { createApi } from "../../api";
 import { SESSION_KEY } from "../../api/keys";
+import { PB_TOKEN_KEY } from "../../api/pocketbase/pbSession";
 import { SUPPORT_STAFF_USER_ID } from "../chat";
 import { SessionProvider } from "../../app/session";
 import { ProfilePage } from "./ProfilePage";
@@ -203,9 +204,10 @@ test("при pocketbase кнопка открывает найденный ча�
     renderProfile();
     await user.click(screen.getByRole("button", { name: "Написать в поддержку" }));
     expect(await screen.findByText("chats-page:gc134dxdyo7je7w")).toBeInTheDocument();
-    expect(calls.some((call) => call.method === "POST")).toBe(false);
-    expect(decodeURIComponent(calls[0]?.url ?? "")).toContain(`host="${userId}"`);
-    expect(decodeURIComponent(calls[0]?.url ?? "")).toContain('kind="support"');
+    expect(calls.some((call) => call.method === "POST" && call.url.includes("/api/collections/chats/"))).toBe(false);
+    const listed = calls.find((call) => call.url.includes("/api/collections/chats/records"));
+    expect(decodeURIComponent(listed?.url ?? "")).toContain(`host="${userId}"`);
+    expect(decodeURIComponent(listed?.url ?? "")).toContain('kind="support"');
   } finally {
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
@@ -238,13 +240,51 @@ test("при pocketbase без чата кнопка создаёт поддер
     renderProfile();
     await user.click(screen.getByRole("button", { name: "Написать в поддержку" }));
     expect(await screen.findByText("chats-page:newsupport00001")).toBeInTheDocument();
-    const created = calls.find((call) => call.method === "POST");
+    const created = calls.find((call) => call.body.includes("\"kind\":\"support\""));
     expect(JSON.parse(created?.body ?? "{}")).toEqual({
       kind: "support",
       guest: userId,
       host: userId,
       staff: SUPPORT_STAFF_USER_ID,
     });
+  } finally {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  }
+});
+
+test("карточка берёт баланс из PocketBase, а не из старой сессии", async () => {
+  vi.stubEnv("VITE_DATA_SOURCE", "pocketbase");
+  vi.stubEnv("VITE_POCKETBASE_URL", "https://pb.example");
+  const userId = sessionUserId();
+  const raw = localStorage.getItem(SESSION_KEY);
+  const stored: unknown = raw === null ? null : JSON.parse(raw);
+  if (typeof stored !== "object" || stored === null) {
+    throw new Error("нет сессии");
+  }
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ ...stored, balance: 0 }));
+  localStorage.setItem(PB_TOKEN_KEY, "tok");
+  vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes(`/api/collections/users/records/${userId}`)) {
+      return new Response(JSON.stringify({
+        id: userId,
+        email: "hello@gmail.com",
+        name: "Анна Иваненко",
+        phone: "+79001234567",
+        verified: true,
+        balance: 4500,
+      }), { status: 200 });
+    }
+    return listResponse([]);
+  });
+  try {
+    renderProfile();
+    expect(await screen.findByText((_content, element) => (
+      element?.tagName === "P"
+      && (element.textContent ?? "").replace(/[^\d]/g, "") === "4500"
+    ))).toBeInTheDocument();
+    expect(localStorage.getItem(SESSION_KEY)).toContain("4500");
   } finally {
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();

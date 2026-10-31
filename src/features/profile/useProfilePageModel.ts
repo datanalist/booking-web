@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Session } from "../../api/types";
 import { useSession } from "../../app/session";
+import { useFreshCabinetSession } from "./useFreshCabinetSession";
 import type { ApiKeyStatus } from "./api-key-card";
 import { connectApiKey, type ConnectApiKeyResult } from "./connectApiKey";
 import type {
@@ -49,6 +50,7 @@ function apiKeyStatusFromConnect(result: ConnectApiKeyResult): ApiKeyStatus {
 /** Состояние главной профиля: диалоги, данные сессии и мок ключа. */
 export function useProfilePageModel(): ProfilePageModel {
   const { session, auth } = useSession();
+  useFreshCabinetSession(session?.userId);
   const logout = useLogout();
   const [dialog, setDialog] = useState<ProfileDialog>("none");
   const profile = profileFromSession(session);
