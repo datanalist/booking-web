@@ -64,6 +64,11 @@ function sendJson(res: ServerResponse, status: number, body: Record<string, unkn
   res.end(JSON.stringify(body));
 }
 
+function isJsonContent(req: IncomingMessage): boolean {
+  const value = header(req, "content-type") ?? "";
+  return value.toLowerCase().includes("application/json");
+}
+
 function header(req: IncomingMessage, name: string): string | undefined {
   const value = req.headers[name];
   if (typeof value === "string" && value.trim() !== "") {
@@ -150,7 +155,7 @@ function resultBody(result: { status: string; message: string; balance?: number 
   };
 }
 
-/** POST /api/payments, /confirm и /webhook. Секрет ЮKassa остаётся в процессе. */
+/** POST /api/payments, /confirm, /webhook и JSON на `/`. Секрет ЮKassa остаётся в процессе. */
 export function createPaymentsMiddleware(
   options: PaymentsMiddlewareOptions = {},
 ): Connect.NextHandleFunction {
@@ -180,6 +185,12 @@ export function createPaymentsMiddleware(
   ): Promise<void> {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     const pathname = url.pathname;
+    // Кабинет ЮKassa шлёт уведомление на корень сайта. Тело само по себе не зачисляет:
+    // handleWebhook всё равно делает GET платежа в API.
+    if (pathname === "/" && (req.method ?? "GET") === "POST" && isJsonContent(req)) {
+      await handleWebhook(req, res);
+      return;
+    }
     if (
       pathname !== "/api/payments"
       && pathname !== "/api/payments/confirm"

@@ -1,16 +1,16 @@
 // Зачисляет баланс в той же транзакции, что и строка payment_credits.
 // Повторная вставка с тем же payment откатывается уникальным индексом.
 
-const { creditBlockReason, nextBalance } = require(`${__hooks}/paymentCredit.js`)
-
-function relationId(value) {
-  if (Array.isArray(value)) {
-    return value.length ? String(value[0]) : ""
-  }
-  return value == null ? "" : String(value)
-}
-
 onRecordCreateRequest((e) => {
+  // Хелперы внутри колбэка: Goja не видит function, объявленный снаружи, и падает ReferenceError.
+  const { creditBlockReason, nextBalance } = require(`${__hooks}/paymentCredit.js`)
+  const relationId = (value) => {
+    if (Array.isArray(value)) {
+      return value.length ? String(value[0]) : ""
+    }
+    return value == null ? "" : String(value)
+  }
+
   const record = e.record
   if (!record) {
     e.next()

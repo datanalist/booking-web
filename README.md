@@ -142,7 +142,7 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 - `deploy/minipc/caddy/Caddyfile` — блок `app.booking.vallome.ru`.
 - `.github/workflows/deploy.yml` — на PR и push в `main` идут тесты и сборка на GitHub-hosted runner. После push в `main` job `deploy` запускается на self-hosted runner мини-ПК (метка `minipc`): собирает образ, поднимает контейнер, проверяет `/healthz`, при сбое возвращает образ `booking-web:previous`. Тот же job копирует `deploy/pocketbase/pb_hooks` и `pb_migrations` в `/opt/pocketbase` и перезапускает PocketBase. Миграция `1793404800_payments.js` не создаёт заново коллекции `payments` и `payment_credits`, если они уже есть.
 
-Пополнение баланса ходит в API ЮKassa с мини-ПК. Секреты лежат в `/opt/pocketbase/booking-web.env` (в git не входит, контейнер читает файл, если он есть). Имена переменных без значений: `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `POCKETBASE_SU`, `POCKETBASE_SU_PASSWORD`. Уведомление ЮKassa: `POST https://app.booking.vallome.ru/api/payments/webhook`.
+Пополнение баланса ходит в API ЮKassa с мини-ПК. Секреты лежат в `/opt/pocketbase/booking-web.env` (в git не входит, контейнер читает файл, если он есть). Имена переменных без значений: `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `POCKETBASE_SU`, `POCKETBASE_SU_PASSWORD`. Уведомление ЮKassa принимается и на `POST https://app.booking.vallome.ru/api/payments/webhook`, и на `POST https://app.booking.vallome.ru/` — кабинет может быть настроен на корень. Сумма из тела уведомления не зачисляется: сервер повторяет `GET /v3/payments/{id}` и пишет баланс один раз. Возврат плательщика на `/profile?payment=<id>` вызывает ту же сверку.
 
 Разовая настройка мини-ПК:
 

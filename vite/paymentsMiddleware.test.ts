@@ -286,6 +286,64 @@ test("succeeded зачисляет один раз, чужой платёж и �
   }
 });
 
+test("уведомление JSON на корень зачисляет один раз после GET ЮKassa", async () => {
+  const server = await listen();
+  try {
+    await post(server.base, "/api/payments", { amount: 10 }, "user-token");
+    server.state.remoteStatus = "succeeded";
+    const headers = {
+      "Content-Type": "application/json",
+      "X-Forwarded-For": "77.75.154.206",
+    };
+    const body = JSON.stringify({
+      event: "payment.succeeded",
+      object: { id: "yk-payment-1", status: "succeeded", amount: { value: "999.00", currency: "RUB" } },
+    });
+    const first = await fetch(`${server.base}/`, { method: "POST", headers, body });
+    expect(first.status).toBe(200);
+    const second = await fetch(`${server.base}/`, { method: "POST", headers, body });
+    expect(second.status).toBe(200);
+    expect(server.state.balance).toBe(10);
+    expect(server.state.userPatches).toBe(1);
+  } finally {
+    await server.close();
+  }
+});
+
+test("JSON на корень не с адреса ЮKassa баланс не меняет", async () => {
+  const server = await listen();
+  try {
+    await post(server.base, "/api/payments", { amount: 10 }, "user-token");
+    server.state.remoteStatus = "succeeded";
+    const response = await fetch(`${server.base}/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Forwarded-For": "8.8.8.8" },
+      body: JSON.stringify({ event: "payment.succeeded", object: { id: "yk-payment-1" } }),
+    });
+    expect(response.status).toBe(403);
+    expect(server.state.balance).toBe(0);
+    expect(server.state.userPatches).toBe(0);
+  } finally {
+    await server.close();
+  }
+});
+
+test("POST корня без JSON не считается уведомлением", async () => {
+  const server = await listen();
+  try {
+    const response = await fetch(`${server.base}/`, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: "hello",
+    });
+    expect(response.status).toBe(404);
+    expect(await response.text()).toBe("fallback");
+    expect(server.state.balance).toBe(0);
+  } finally {
+    await server.close();
+  }
+});
+
 test("webhook не с адреса ЮKassa отклоняется и баланс не трогает", async () => {
   const server = await listen();
   try {

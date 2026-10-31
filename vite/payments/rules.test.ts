@@ -39,6 +39,7 @@ test("правила платежей закрыты для клиента", () 
   const hook = readFileSync(path.resolve("deploy/pocketbase/pb_hooks/payments_credit.pb.js"), "utf8");
   expect(hook).toContain("payment_credits");
   expect(hook).not.toContain("YOOKASSA_SECRET_KEY");
+  expect(hook.indexOf("const relationId")).toBeGreaterThan(hook.indexOf("onRecordCreateRequest"));
 });
 
 test("хук не зачисляет чужую или повторную сумму и складывает баланс один раз", () => {

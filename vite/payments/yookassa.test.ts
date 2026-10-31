@@ -93,6 +93,9 @@ test("сложение рублей не теряет копейку на цел
 test("IP ЮKassa узнаётся, подмена X-Forwarded-For с публичного адреса — нет", () => {
   expect(isYookassaNotificationIp("185.71.76.10")).toBe(true);
   expect(isYookassaNotificationIp("185.71.76.32")).toBe(false);
+  expect(isYookassaNotificationIp("77.75.153.78")).toBe(true);
+  expect(isYookassaNotificationIp("77.75.154.206")).toBe(true);
+  expect(isYookassaNotificationIp("77.75.154.127")).toBe(false);
   expect(isYookassaNotificationIp("77.75.156.11")).toBe(true);
   expect(isYookassaNotificationIp("::ffff:77.75.156.35")).toBe(true);
   expect(isYookassaNotificationIp("2a02:5180::1")).toBe(true);
