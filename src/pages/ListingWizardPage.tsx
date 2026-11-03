@@ -1,4 +1,4 @@
-/** Единая причина изменения: UI мастера создания и редактирования объявления (6 шагов). */
+/** Единая причина изменения: мастер объявления улучшает выбранное фото через серверный хук. */
 import { useEffect, useState } from "react";
 import {
   useLocation,
@@ -38,6 +38,10 @@ import type { WizardStepNumber } from "../ui/WizardStepNumber";
 import { WizardSteps } from "../ui/WizardSteps";
 import { ListingWizardPriceStep } from "./ListingWizardPriceStep";
 import { ListingWizardRulesStep } from "./ListingWizardRulesStep";
+import {
+  UpscalePhotoError,
+  upscaleWizardPhoto,
+} from "../features/listings/upscaleWizardPhoto";
 
 type WizardStep = WizardStepNumber;
 
@@ -266,6 +270,51 @@ export function ListingWizardPage() {
     }
   }
 
+  async function onUpscalePhoto(index: number): Promise<void> {
+    const source = draft?.photos[index];
+    if (source === undefined) {
+      return;
+    }
+    try {
+      const nextUrl = await upscaleWizardPhoto(source);
+      let previous: string[] | null = null;
+      let next: string[] | null = null;
+      setDraft((current) => {
+        if (current === null) {
+          return current;
+        }
+        const at = current.photos[index] === source
+          ? index
+          : current.photos.indexOf(source);
+        if (at < 0) {
+          return current;
+        }
+        previous = current.photos;
+        const photos = current.photos.slice();
+        photos[at] = nextUrl;
+        next = photos;
+        return { ...current, photos };
+      });
+      setTouched(true);
+      if (previous !== null && next !== null) {
+        void deleteRemovedWizardPhotos(previous, next);
+      }
+      setErrors((current) => {
+        if (current.photos === undefined) {
+          return current;
+        }
+        const rest = { ...current };
+        delete rest.photos;
+        return rest;
+      });
+    } catch (error: unknown) {
+      const message = error instanceof UpscalePhotoError
+        ? error.message
+        : "Не удалось улучшить фото. Исходное фото сохранено.";
+      setErrors((current) => ({ ...current, photos: message }));
+    }
+  }
+
   function toggleAmenity(id: AmenityId): void {
     if (!draft) {
       return;
@@ -398,6 +447,7 @@ export function ListingWizardPage() {
             onFilesSelected={(files) => {
               void onPhotosSelected(files);
             }}
+            onUpscale={(index) => onUpscalePhoto(index)}
             onBack={() => {
               void goBack();
             }}

@@ -197,4 +197,48 @@ describe("WizardPhotosStep", () => {
       "rounded-lg",
     );
   });
+
+  test("показывает улучшение только на заполненном слоте и не ломает удаление", async () => {
+    const user = userEvent.setup();
+    const onPhotosChange = vi.fn();
+    const onUpscale = vi.fn(() => new Promise<void>(() => {}));
+
+    const { rerender } = render(
+      <WizardPhotosStep
+        photos={[]}
+        uploadStatus={PHOTO_UPLOAD_IDLE}
+        onPhotosChange={onPhotosChange}
+        onFilesSelected={vi.fn()}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+        onUpscale={onUpscale}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Улучшить фото" })).not.toBeInTheDocument();
+
+    rerender(
+      <WizardPhotosStep
+        photos={["data:image/png;base64,aaa"]}
+        uploadStatus={PHOTO_UPLOAD_IDLE}
+        onPhotosChange={onPhotosChange}
+        onFilesSelected={vi.fn()}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+        onUpscale={onUpscale}
+      />,
+    );
+
+    const upscale = screen.getAllByRole("button", { name: "Улучшить фото" });
+    expect(upscale).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /Добавить/ })).toHaveLength(8);
+
+    await user.click(upscale[0]!);
+    expect(screen.getByRole("button", { name: "Улучшить фото" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Улучшить фото" }));
+    expect(onUpscale).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "Удалить фото" }));
+    expect(onPhotosChange).toHaveBeenCalledWith([]);
+  });
 });

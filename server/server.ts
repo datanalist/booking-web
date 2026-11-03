@@ -5,6 +5,7 @@ import path from "node:path";
 import { createDataStoreMiddleware } from "../vite/createDataStoreMiddleware.ts";
 import { loadServerEnv } from "../vite/loadServerEnv.ts";
 import { createPaymentsMiddleware } from "../vite/paymentsMiddleware.ts";
+import { createUpscalePhotoMiddleware } from "../vite/upscalePhotoMiddleware.ts";
 
 /**
  * Прод-сервер кабинета: статика из dist (SPA-fallback) и файловое хранилище фото
@@ -34,6 +35,7 @@ const MIME: Record<string, string> = {
 loadServerEnv();
 const dataStore = createDataStoreMiddleware({ dataDir: DATA_DIR });
 const payments = createPaymentsMiddleware();
+const upscalePhoto = createUpscalePhotoMiddleware();
 
 async function fileIfExists(filePath: string): Promise<string | null> {
   try {
@@ -60,7 +62,14 @@ const server = createServer((req, res) => {
       res.end();
       return;
     }
-    dataStore(req as never, res, (storeErr?: unknown) => {
+    upscalePhoto(req as never, res, (upscaleErr?: unknown) => {
+      if (upscaleErr !== undefined) {
+        console.error("upscale");
+        if (!res.headersSent) res.writeHead(500);
+        res.end();
+        return;
+      }
+      dataStore(req as never, res, (storeErr?: unknown) => {
       if (storeErr !== undefined) {
         console.error(storeErr);
         if (!res.headersSent) res.writeHead(500);
@@ -68,6 +77,7 @@ const server = createServer((req, res) => {
         return;
       }
       void serveStatic(url.pathname, req.method ?? "GET", res);
+      });
     });
   });
 });

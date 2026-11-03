@@ -4,9 +4,10 @@ import tailwindcss from "@tailwindcss/vite";
 import { blockingDevCssPlugin } from "./vite/blockingDevCssPlugin.ts";
 import { dataStorePlugin } from "./vite/dataStorePlugin.ts";
 import { paymentsPlugin } from "./vite/paymentsPlugin.ts";
+import { upscalePhotoPlugin } from "./vite/upscalePhotoPlugin.ts";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), blockingDevCssPlugin(), paymentsPlugin(), dataStorePlugin()],
+  plugins: [react(), tailwindcss(), blockingDevCssPlugin(), paymentsPlugin(), upscalePhotoPlugin(), dataStorePlugin()],
   build: { sourcemap: false },
   test: { environment: "jsdom", setupFiles: "./src/test-setup.ts" },
 });

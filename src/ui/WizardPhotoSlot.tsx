@@ -1,6 +1,7 @@
-/** Единая причина изменения: слот фото мастера объявления (пусто / превью / DnD / удаление). */
+/** Единая причина изменения: слот фото мастера — превью, удаление и кнопка улучшения. */
 import type { DragEvent } from "react";
 import { dataTransferHasFiles } from "../lib/dataTransferHasFiles";
+import { WizardPhotoUpscaleButton } from "./WizardPhotoUpscaleButton";
 import { imageFileListFromDataTransfer } from "../lib/imageFileListFromDataTransfer";
 import { WIZARD_PHOTO_DRAG_MIME } from "../lib/wizardPhotoDragMime";
 
@@ -15,6 +16,7 @@ type WizardPhotoSlotProps = {
   onDragFromChange: (index: number | null) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
   onFilesDropped: (files: FileList) => void;
+  onUpscale?: () => Promise<void> | void;
 };
 
 export function WizardPhotoSlot({
@@ -28,6 +30,7 @@ export function WizardPhotoSlot({
   onDragFromChange,
   onReorder,
   onFilesDropped,
+  onUpscale,
 }: WizardPhotoSlotProps) {
   const isCover = variant === "cover";
   const filled = previewUrl !== null;
@@ -93,6 +96,12 @@ export function WizardPhotoSlot({
             isCover ? "rounded-[16px]" : "rounded-[8px]"
           }`}
         />
+        {onUpscale !== undefined ? (
+          <WizardPhotoUpscaleButton
+            className={isCover ? "m-3" : "m-1"}
+            onUpscale={onUpscale}
+          />
+        ) : null}
         <button
           type="button"
           aria-label="Удалить фото"

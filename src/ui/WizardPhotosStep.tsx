@@ -1,4 +1,4 @@
-/** Единая причина изменения: UI шага «2. Фото» мастера создания объявления. */
+/** Единая причина изменения: шаг фото мастера — слоты и колбэк улучшения снимка. */
 import { useRef, type DragEvent } from "react";
 import { PHOTO_MAX, PHOTO_MIN } from "../config";
 import type { PhotoUploadStatus } from "../features/listings";
@@ -16,6 +16,7 @@ type WizardPhotosStepProps = {
   uploadStatus: PhotoUploadStatus;
   onPhotosChange: (photos: string[]) => void;
   onFilesSelected: (files: FileList) => void;
+  onUpscale?: (index: number) => Promise<void> | void;
   onBack: () => void;
   onNext: () => void;
 };
@@ -27,6 +28,7 @@ export function WizardPhotosStep({
   uploadStatus,
   onPhotosChange,
   onFilesSelected,
+  onUpscale,
   onBack,
   onNext,
 }: WizardPhotosStepProps) {
@@ -121,6 +123,9 @@ export function WizardPhotosStep({
               onDragFromChange={setDragFromIndex}
               onReorder={handleReorder}
               onFilesDropped={onFilesSelected}
+              onUpscale={
+                onUpscale === undefined ? undefined : () => onUpscale(index)
+              }
             />
           ))}
         </div>
