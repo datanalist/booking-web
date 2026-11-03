@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 concurrency:
@@ -26,8 +26,9 @@ jobs:
 
   deploy:
     needs: test
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     # Self-hosted runner на мини-ПК (метка minipc): входящий SSH не нужен.
+    # Только main. Push в dev этот job не запускает и продакшен-контейнер не трогает.
     runs-on: [self-hosted, minipc]
     env:
       VITE_DATA_SOURCE: pocketbase
@@ -68,6 +69,52 @@ jobs:
           done
           echo "PocketBase не поднялся" >&2
           exit 1
+
+      - name: Чистка старых образов
+        if: success()
+        run: docker image prune -f
+
+  deploy-dev:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    # Только ветка dev: образ booking-web:dev, порт 8081, без перезапуска PocketBase.
+    runs-on: [self-hosted, minipc]
+    env:
+      VITE_DATA_SOURCE: pocketbase
+      VITE_POCKETBASE_URL: ${{ vars.VITE_POCKETBASE_URL || 'https://pb.booking.vallome.ru' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Каталог данных dev
+        run: |
+          dir="${HOME}/booking-web-dev/data"
+          mkdir -p "$dir"
+          echo "BOOKING_WEB_DEV_DATA=$dir" >> "$GITHUB_ENV"
+
+      - name: Сохранить текущий dev-образ для отката
+        run: docker tag booking-web:dev booking-web:dev-previous || true
+
+      - name: Сборка и запуск dev
+        working-directory: deploy/app
+        run: |
+          docker compose -f docker-compose.dev.yml build
+          docker compose -f docker-compose.dev.yml up -d
+
+      - name: Проверка здоровья dev
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8081/healthz; then exit 0; fi
+            sleep 2
+          done
+          echo "Dev-приложение не поднялось, откат" >&2
+          if docker image inspect booking-web:dev-previous >/dev/null 2>&1; then
+            docker tag booking-web:dev-previous booking-web:dev
+            cd deploy/app && docker compose -f docker-compose.dev.yml up -d --no-build
+          fi
+          exit 1
+
+      - name: Сайт dev в Caddy
+        run: bash deploy/minipc/caddy/ensure-dev-site.sh
 
       - name: Чистка старых образов
         if: success()

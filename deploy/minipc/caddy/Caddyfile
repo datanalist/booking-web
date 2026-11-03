@@ -47,6 +47,17 @@ app.booking.vallome.ru {
 	reverse_proxy 127.0.0.1:8080
 }
 
+dev.app.booking.vallome.ru {
+	import accesslog
+
+	request_body {
+		max_size 12MB
+	}
+	encode zstd gzip
+
+	reverse_proxy 127.0.0.1:8081
+}
+
 booking.vallome.ru {
 	import accesslog
 	root * /var/www/booking

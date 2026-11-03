@@ -1,0 +1,33 @@
+# Dev-контейнер. Не использует образ booking-web:latest и порт 8080 продакшена.
+name: booking-web-dev
+
+services:
+  booking-web:
+    build:
+      context: ../..
+      args:
+        VITE_DATA_SOURCE: ${VITE_DATA_SOURCE:-pocketbase}
+        VITE_POCKETBASE_URL: ${VITE_POCKETBASE_URL:-https://pb.booking.vallome.ru}
+        VITE_TELEGRAM_BOT_ID: ${VITE_TELEGRAM_BOT_ID:-9158776426}
+    image: booking-web:dev
+    container_name: booking-web-dev
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:8081:8080"
+    # Тот же серверный env, что у продакшена. В git его нет.
+    env_file:
+      - path: /opt/pocketbase/booking-web.env
+        required: false
+    volumes:
+      # Отдельный каталог фото. Не /opt/booking-web/data.
+      # На мини-ПК это домашний каталог пользователя runner (uid 1000),
+      # потому что /opt принадлежит root и sudo без пароля нет.
+      # Рядом с продом: sudo mkdir -p /opt/booking-web-dev/data && sudo chown 1000:1000 /opt/booking-web-dev/data
+      # и BOOKING_WEB_DEV_DATA=/opt/booking-web-dev/data
+      - ${BOOKING_WEB_DEV_DATA:-/home/mk/booking-web-dev/data}:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

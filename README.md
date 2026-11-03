@@ -139,11 +139,16 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 Кабинет работает на мини-ПК рядом с PocketBase: `https://app.booking.vallome.ru` → Caddy → `127.0.0.1:8080` (контейнер `booking-web`).
 
+Схема веток: push в `dev` выкладывает только dev-контейнер, его открывает `https://dev.app.booking.vallome.ru`. После проверки merge `dev` → `main`: push в `main` выкладывает только production на `https://app.booking.vallome.ru`. Dev не копирует хуки PocketBase и не перезапускает его. Общий PocketBase у обоих контуров один, отдельные только контейнер кабинета, каталог фото и домен.
+
+Номер в футере — поле `version` в `package.json`. Сборка вписывает его в `index.html` (`Сборка x.y.z`). Чтобы показать новую сборку, увеличьте `version` и запушьте в `dev`: на основном домене номер не меняется, пока тот же коммит не попадёт в `main`.
+
 - `Dockerfile` — многоэтапная сборка (`npm ci`, `npm run build`, затем Node 24.13 запускает `server/server.ts`). Версия Node зафиксирована: более новый npm отклоняет текущий `package-lock.json`. `VITE_DATA_SOURCE` и `VITE_POCKETBASE_URL` вшиваются при сборке (build-args, по умолчанию `pocketbase` и `https://pb.booking.vallome.ru`). `.env.local` в образ не попадает.
 - `server/server.ts` — отдаёт `dist/` с SPA-fallback и тем же middleware, что в Vite: `POST/DELETE /api/files`, `GET /data/:name`. `GET /healthz` — проверка здоровья.
 - `deploy/app/docker-compose.yml` — фото лежат в `/opt/booking-web/data` на хосте и переживают деплой.
-- `deploy/minipc/caddy/Caddyfile` — блок `app.booking.vallome.ru`.
-- `.github/workflows/deploy.yml` — на PR и push в `main` идут тесты и сборка на GitHub-hosted runner. После push в `main` job `deploy` запускается на self-hosted runner мини-ПК (метка `minipc`): собирает образ, поднимает контейнер, проверяет `/healthz`, при сбое возвращает образ `booking-web:previous`. Тот же job копирует `deploy/pocketbase/pb_hooks` и `pb_migrations` в `/opt/pocketbase` и перезапускает PocketBase. Миграция `1793404800_payments.js` не создаёт заново коллекции `payments` и `payment_credits`, если они уже есть.
+- `deploy/app/docker-compose.dev.yml` — отдельный контейнер `booking-web-dev`, образ `booking-web:dev`, порт `127.0.0.1:8081`. Фото лежат в `$HOME/booking-web-dev/data` пользователя runner (на мини-ПК это `/home/mk/booking-web-dev/data`), не в `/opt/booking-web/data`.
+- `deploy/minipc/caddy/Caddyfile` — блоки `app.booking.vallome.ru` и `dev.app.booking.vallome.ru`. `deploy/minipc/caddy/ensure-dev-site.sh` от root дописывает блок в `/etc/caddy/Caddyfile` и перезагружает Caddy. Без root скрипт добавляет тот же сайт в текущий процесс Caddy через admin API; после перезапуска Caddy нужна команда с sudo.
+- `.github/workflows/deploy.yml` — на PR и push в `main` и `dev` идут тесты и сборка на GitHub-hosted runner. После push в `main` job `deploy` запускается на self-hosted runner мини-ПК (метка `minipc`): собирает образ `booking-web:latest`, поднимает контейнер `booking-web`, проверяет `/healthz`, при сбое возвращает образ `booking-web:previous`. Тот же job копирует `deploy/pocketbase/pb_hooks` и `pb_migrations` в `/opt/pocketbase` и перезапускает PocketBase. Миграция `1793404800_payments.js` не создаёт заново коллекции `payments` и `payment_credits`, если они уже есть. После push в `dev` job `deploy-dev` собирает только `booking-web:dev` и не трогает продакшен-контейнер.
 
 Пополнение баланса ходит в API ЮKassa с мини-ПК. Секреты лежат в `/opt/pocketbase/booking-web.env` (в git не входит, контейнер читает файл, если он есть). Имена переменных без значений: `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `POCKETBASE_SU`, `POCKETBASE_SU_PASSWORD`, `OPENROUTER_API_KEY`. Уведомление ЮKassa принимается и на `POST https://app.booking.vallome.ru/api/payments/webhook`, и на `POST https://app.booking.vallome.ru/` — кабинет может быть настроен на корень. Сумма из тела уведомления не зачисляется: сервер повторяет `GET /v3/payments/{id}` и пишет баланс один раз. Возврат плательщика на `/profile?payment=<id>` вызывает ту же сверку.
 
@@ -153,11 +158,14 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 1. `sudo mkdir -p /opt/booking-web/data && sudo chown 1000:1000 /opt/booking-web/data`.
 2. Self-hosted runner: GitHub → Settings → Actions → Runners → New runner (Linux x64), метка `minipc`, `./svc.sh install && ./svc.sh start`. Пользователь runner состоит в группе `docker`.
-3. Скопировать обновлённый `Caddyfile` в `/etc/caddy/Caddyfile`, `sudo systemctl reload caddy`.
-4. В `/opt/pocketbase/.env` задать `CABINET_URL=https://app.booking.vallome.ru` и перезапустить PocketBase (ссылка подтверждения почты).
-5. Необязательно: переменная репозитория `VITE_POCKETBASE_URL` (Settings → Variables), если адрес PB меняется.
+3. Скопировать обновлённый `Caddyfile` в `/etc/caddy/Caddyfile` или выполнить `sudo bash deploy/minipc/caddy/ensure-dev-site.sh`, затем убедиться, что Caddy перезагружен. Без этой команды dev-сайт есть только в текущем процессе Caddy.
+4. Dev-каталог job создаёт сам: `$HOME/booking-web-dev/data`. Чтобы положить его рядом с продом: `sudo mkdir -p /opt/booking-web-dev/data && sudo chown 1000:1000 /opt/booking-web-dev/data` и выставить `BOOKING_WEB_DEV_DATA=/opt/booking-web-dev/data`.
+5. В `/opt/pocketbase/.env` задать `CABINET_URL=https://app.booking.vallome.ru` и перезапустить PocketBase (ссылка подтверждения почты).
+6. Необязательно: переменная репозитория `VITE_POCKETBASE_URL` (Settings → Variables), если адрес PB меняется.
 
-Откат вручную: `docker tag booking-web:previous booking-web:latest && cd deploy/app && docker compose up -d --no-build`.
+Откат продакшена: `docker tag booking-web:previous booking-web:latest && cd deploy/app && docker compose up -d --no-build`.
+
+Откат dev: `docker tag booking-web:dev-previous booking-web:dev && cd deploy/app && docker compose -f docker-compose.dev.yml up -d --no-build`.
 
 ## Секреты
 
@@ -165,12 +173,12 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 ## Новая машина
 
-Актуальная ветка — `dev-dns_local`. В неё уже влиты `feat/pb-docker-schema`, `feat/pb-jsvm-hooks` и `feat/minipc-infra`. `main` и `dev` — более ранние линии; для кабинета и мини-ПК оставаться на `dev-dns_local`.
+Схема выкладки: ветка `dev` проверяется на `https://dev.app.booking.vallome.ru`, затем вливается в `main` и попадает на `https://app.booking.vallome.ru`. Номер футера меняется в `package.json` (`version`).
 
 ```bash
 git clone git@github.com:datanalist/booking-web.git
 cd booking-web
-git checkout dev-dns_local
+git checkout dev
 npm install
 ```
 
