@@ -98,6 +98,9 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 - Список объявлений кабинета — `localStorage`, ключ `gs.allListings`; в хранилище пишутся лёгкие строки, при переполнении квоты — повторно без обложек (без исключений). Мастер при переполнении показывает ошибку про фото.
 - Фото — файловое хранилище в `./data/` через Vite middleware (`vite/dataStorePlugin.ts`): `POST /api/files` (загрузка, ответ — имя `<uuid>.<ext>`), `GET /data/<uuid>.<ext>`, `DELETE /api/files/<uuid>.<ext>`. Работает в `npm run dev`, `npm run preview` и на проде через `server/server.ts`; **не** в чисто статической раздаче `dist/`. Содержимое `data/` в `.gitignore` (отслеживается только `data/.gitkeep`).
+- На шаге фото под сеткой есть «Сгенерировать обложку». Кнопка ждёт главное фото. `POST /api/vallome/generate-cover` проверяет токен PocketBase на сервере и просит модель `bytedance-seed/seedream-5-0-flash` сохранить кадр. Плашки (название, адрес, цена, гости, кухня — только заполненные поля) собирает сервер, браузер впечатывает их в картинку и подменяет главное фото черновика. Ключ `OPENROUTER_API_KEY` лежит только в серверном `.env.local` / окружении процесса и в браузер не отдаётся.
+
+На шаге фото мастер может улучшить уже добавленный снимок. Кнопка «Улучшить фото» на заполненном слоте вызывает `POST /api/vallome/upscale-photo`. Хук пускает только вошедшего пользователя: токен PocketBase проверяется на сервере запросом `auth-refresh`, чужой адрес клиент не подставляет. Снимок увеличивается моделью `bytedance-seed/seedream-5-0-flash` через OpenRouter. Ключ `OPENROUTER_API_KEY` читается только на сервере (локально из `.env.local`, на мини-ПК из `/opt/pocketbase/booking-web.env`) и в браузер не отдаётся.
 
 ### Мастер: «Назад» и степпер
 
@@ -142,7 +145,7 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 - `deploy/minipc/caddy/Caddyfile` — блок `app.booking.vallome.ru`.
 - `.github/workflows/deploy.yml` — на PR и push в `main` идут тесты и сборка на GitHub-hosted runner. После push в `main` job `deploy` запускается на self-hosted runner мини-ПК (метка `minipc`): собирает образ, поднимает контейнер, проверяет `/healthz`, при сбое возвращает образ `booking-web:previous`. Тот же job копирует `deploy/pocketbase/pb_hooks` и `pb_migrations` в `/opt/pocketbase` и перезапускает PocketBase. Миграция `1793404800_payments.js` не создаёт заново коллекции `payments` и `payment_credits`, если они уже есть.
 
-Пополнение баланса ходит в API ЮKassa с мини-ПК. Секреты лежат в `/opt/pocketbase/booking-web.env` (в git не входит, контейнер читает файл, если он есть). Имена переменных без значений: `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `POCKETBASE_SU`, `POCKETBASE_SU_PASSWORD`. Уведомление ЮKassa принимается и на `POST https://app.booking.vallome.ru/api/payments/webhook`, и на `POST https://app.booking.vallome.ru/` — кабинет может быть настроен на корень. Сумма из тела уведомления не зачисляется: сервер повторяет `GET /v3/payments/{id}` и пишет баланс один раз. Возврат плательщика на `/profile?payment=<id>` вызывает ту же сверку.
+Пополнение баланса ходит в API ЮKassa с мини-ПК. Секреты лежат в `/opt/pocketbase/booking-web.env` (в git не входит, контейнер читает файл, если он есть). Имена переменных без значений: `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `POCKETBASE_SU`, `POCKETBASE_SU_PASSWORD`, `OPENROUTER_API_KEY`. Уведомление ЮKassa принимается и на `POST https://app.booking.vallome.ru/api/payments/webhook`, и на `POST https://app.booking.vallome.ru/` — кабинет может быть настроен на корень. Сумма из тела уведомления не зачисляется: сервер повторяет `GET /v3/payments/{id}` и пишет баланс один раз. Возврат плательщика на `/profile?payment=<id>` вызывает ту же сверку.
 
 Проверка этих маршрутов из Postman — коллекция `postman/collections/Payments`. Папка `guards` бьёт в прод без токена и не создаёт платёж. Папка `session` создаёт реальный счёт на 1 ₽ и сразу сверяет его; ей нужен токен PocketBase в `pb_token`, в git он пустой. Окружение продакшена — `postman/environments/Production.environment.yaml`, локальный Vite — `Local.environment.yaml`.
 
@@ -158,7 +161,7 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 ## Секреты
 
-В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли, ключи ЮKassa и белый IP. Публичный URL API можно держать в коде или в `VITE_*` без секретов. Локальная папка переноса `.secrets/` и файл `booking-web.env` закрыты `.gitignore` и в коммиты не входят. На мини-ПК имена `YOOKASSA_SHOP_ID` и `YOOKASSA_SECRET_KEY` задаются в `/opt/pocketbase/booking-web.env`.
+В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли, ключи ЮKassa, `OPENROUTER_API_KEY` и белый IP. Ключ генерации обложки остаётся на сервере. Публичный URL API можно держать в коде или в `VITE_*` без секретов. Локальная папка переноса `.secrets/` и файл `booking-web.env` закрыты `.gitignore` и в коммиты не входят. На мини-ПК имена `YOOKASSA_SHOP_ID` и `YOOKASSA_SECRET_KEY` задаются в `/opt/pocketbase/booking-web.env`.
 
 ## Новая машина
 
