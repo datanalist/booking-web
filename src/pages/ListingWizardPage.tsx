@@ -1,4 +1,4 @@
-/** Единая причина изменения: UI мастера создания и редактирования объявления (6 шагов). */
+/** Единая причина изменения: мастер передаёт на шаг фото уже заполненные поля черновика для обложки. */
 import { useEffect, useState } from "react";
 import {
   useLocation,
@@ -390,6 +390,11 @@ export function ListingWizardPage() {
             error={errors.photos}
             pending={pending}
             uploadStatus={photoUpload}
+            coverTitle={draft.title}
+            coverAddress={draft.address}
+            coverPriceNight={draft.priceNight}
+            coverMaxGuests={draft.maxGuests}
+            coverHasKitchen={draft.amenityIds.includes("kitchen")}
             onPhotosChange={(photos) => {
               const previous = draft.photos;
               patch({ photos });

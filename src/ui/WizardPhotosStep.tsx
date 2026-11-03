@@ -1,4 +1,4 @@
-/** Единая причина изменения: UI шага «2. Фото» мастера создания объявления. */
+/** Единая причина изменения: на шаге фото под сеткой кнопка генерации обложки. */
 import { useRef, type DragEvent } from "react";
 import { PHOTO_MAX, PHOTO_MIN } from "../config";
 import type { PhotoUploadStatus } from "../features/listings";
@@ -7,6 +7,7 @@ import { dataTransferHasFiles } from "../lib/dataTransferHasFiles";
 import { imageFileListFromDataTransfer } from "../lib/imageFileListFromDataTransfer";
 import { reorderPhotos } from "../lib/reorderPhotos";
 import { WIZARD_PHOTO_DRAG_MIME } from "../lib/wizardPhotoDragMime";
+import { GenerateCoverButton } from "./GenerateCoverButton";
 import { WizardPhotoSlot } from "./WizardPhotoSlot";
 
 type WizardPhotosStepProps = {
@@ -14,6 +15,11 @@ type WizardPhotosStepProps = {
   error?: string;
   pending?: boolean;
   uploadStatus: PhotoUploadStatus;
+  coverTitle?: string;
+  coverAddress?: string;
+  coverPriceNight?: number;
+  coverMaxGuests?: number;
+  coverHasKitchen?: boolean;
   onPhotosChange: (photos: string[]) => void;
   onFilesSelected: (files: FileList) => void;
   onBack: () => void;
@@ -25,6 +31,11 @@ export function WizardPhotosStep({
   error,
   pending = false,
   uploadStatus,
+  coverTitle = "",
+  coverAddress = "",
+  coverPriceNight = 0,
+  coverMaxGuests = 0,
+  coverHasKitchen = false,
   onPhotosChange,
   onFilesSelected,
   onBack,
@@ -124,6 +135,19 @@ export function WizardPhotosStep({
             />
           ))}
         </div>
+
+        <GenerateCoverButton
+          coverUrl={photos[0] !== undefined && photos[0].trim().length > 0 ? photos[0] : null}
+          title={coverTitle}
+          address={coverAddress}
+          priceNight={coverPriceNight}
+          maxGuests={coverMaxGuests}
+          hasKitchen={coverHasKitchen}
+          pending={pending || uploading}
+          onGenerated={(url) => {
+            onPhotosChange([url, ...photos.slice(1)]);
+          }}
+        />
 
         {uploading ? (
           <p

@@ -35,6 +35,7 @@ describe("WizardPhotosStep", () => {
     expect(screen.getByText("Минимум 6 фото")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Далее" })).toBeDisabled();
     expect(screen.getAllByRole("button", { name: /Добавить/ })).toHaveLength(9);
+    expect(screen.getByRole("button", { name: "Сгенерировать обложку" })).toBeDisabled();
   });
 
   test("shows loading indicator and keeps next disabled without enough photos", () => {
@@ -118,6 +119,7 @@ describe("WizardPhotosStep", () => {
     );
     expect(screen.getAllByRole("button", { name: "Удалить фото" }).length).toBeGreaterThanOrEqual(6);
     expect(screen.getAllByRole("button", { name: /Добавить/ }).length).toBeGreaterThanOrEqual(3);
+    expect(screen.getByRole("button", { name: "Сгенерировать обложку" })).toBeEnabled();
 
     await user.click(screen.getAllByRole("button", { name: "Удалить фото" })[0]!);
     expect(onPhotosChange).toHaveBeenCalledWith([
