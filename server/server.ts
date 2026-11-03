@@ -1,9 +1,11 @@
+/** Единая причина изменения: прод отдаёт те же хуки улучшения фото и обложки, что и Vite. */
 import { createServer } from "node:http";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import path from "node:path";
 import { createDataStoreMiddleware } from "../vite/createDataStoreMiddleware.ts";
 import { loadServerEnv } from "../vite/loadServerEnv.ts";
+import { createGenerateCoverMiddleware, readGenerateCoverEnv } from "../vite/generateCoverMiddleware.ts";
 import { createPaymentsMiddleware } from "../vite/paymentsMiddleware.ts";
 import { createUpscalePhotoMiddleware } from "../vite/upscalePhotoMiddleware.ts";
 
@@ -34,6 +36,9 @@ const MIME: Record<string, string> = {
 
 loadServerEnv();
 const dataStore = createDataStoreMiddleware({ dataDir: DATA_DIR });
+const generateCover = createGenerateCoverMiddleware({
+  env: { ...readGenerateCoverEnv(), dataDir: DATA_DIR },
+});
 const payments = createPaymentsMiddleware();
 const upscalePhoto = createUpscalePhotoMiddleware();
 
@@ -55,28 +60,36 @@ const server = createServer((req, res) => {
     return;
   }
 
-  payments(req as never, res, (err?: unknown) => {
-    if (err !== undefined) {
-      console.error("payments");
+  generateCover(req as never, res, (coverErr?: unknown) => {
+    if (coverErr !== undefined) {
+      console.error("generate-cover");
       if (!res.headersSent) res.writeHead(500);
       res.end();
       return;
     }
-    upscalePhoto(req as never, res, (upscaleErr?: unknown) => {
-      if (upscaleErr !== undefined) {
-        console.error("upscale");
+    payments(req as never, res, (err?: unknown) => {
+      if (err !== undefined) {
+        console.error("payments");
         if (!res.headersSent) res.writeHead(500);
         res.end();
         return;
       }
-      dataStore(req as never, res, (storeErr?: unknown) => {
-      if (storeErr !== undefined) {
-        console.error(storeErr);
-        if (!res.headersSent) res.writeHead(500);
-        res.end();
-        return;
-      }
-      void serveStatic(url.pathname, req.method ?? "GET", res);
+      upscalePhoto(req as never, res, (upscaleErr?: unknown) => {
+        if (upscaleErr !== undefined) {
+          console.error("upscale");
+          if (!res.headersSent) res.writeHead(500);
+          res.end();
+          return;
+        }
+        dataStore(req as never, res, (storeErr?: unknown) => {
+          if (storeErr !== undefined) {
+            console.error(storeErr);
+            if (!res.headersSent) res.writeHead(500);
+            res.end();
+            return;
+          }
+          void serveStatic(url.pathname, req.method ?? "GET", res);
+        });
       });
     });
   });

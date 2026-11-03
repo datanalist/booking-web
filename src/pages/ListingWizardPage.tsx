@@ -1,4 +1,4 @@
-/** Единая причина изменения: мастер объявления улучшает выбранное фото через серверный хук. */
+/** Единая причина изменения: мастер улучшает фото слота и передаёт черновик в генерацию обложки. */
 import { useEffect, useState } from "react";
 import {
   useLocation,
@@ -439,6 +439,11 @@ export function ListingWizardPage() {
             error={errors.photos}
             pending={pending}
             uploadStatus={photoUpload}
+            coverTitle={draft.title}
+            coverAddress={draft.address}
+            coverPriceNight={draft.priceNight}
+            coverMaxGuests={draft.maxGuests}
+            coverHasKitchen={draft.amenityIds.includes("kitchen")}
             onPhotosChange={(photos) => {
               const previous = draft.photos;
               patch({ photos });
