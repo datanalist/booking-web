@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test } from "vitest";
 import { imageSize } from "./cover/imageBytes.ts";
+import { COVER_KEY_REJECTED, COVER_NOT_CONFIGURED } from "./cover/openRouterCover.ts";
 import { createGenerateCoverMiddleware, type GenerateCoverEnv } from "./generateCoverMiddleware.ts";
 
 const USER = "user00000000001";
@@ -27,6 +28,36 @@ const dirs: string[] = [];
 
 afterEach(async () => {
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+});
+
+test("пустой ключ отвечает 503 и не зовёт OpenRouter", async () => {
+  const seen = await listen(undefined, path.join(tmpdir(), "cover-empty"), { apiKey: "" });
+  try {
+    const response = await post(seen.base, { imageBase64: PNG_B64, title: "Студия" }, USER_TOKEN);
+    expect(response.status).toBe(503);
+    expect(response.text).toContain(COVER_NOT_CONFIGURED);
+    expect(response.text).not.toContain(API_KEY);
+    expect(seen.calls.some((call) => call.url.includes("openrouter.ai"))).toBe(false);
+  } finally {
+    await seen.close();
+  }
+});
+
+test("отклонённый ключ не подменяется общей ошибкой и не попадает в ответ", async () => {
+  const seen = await listen(async (url) => {
+    if (url.startsWith("https://openrouter.ai/")) {
+      return json(401, { error: { message: API_KEY } });
+    }
+    return null;
+  });
+  try {
+    const response = await post(seen.base, { imageBase64: PNG_B64, title: "Студия" }, USER_TOKEN);
+    expect(response.status).toBe(502);
+    expect(response.text).toContain(COVER_KEY_REJECTED);
+    expect(response.text).not.toContain(API_KEY);
+  } finally {
+    await seen.close();
+  }
 });
 
 test("без токена отвечает 401 и не зовёт OpenRouter", async () => {
@@ -178,7 +209,11 @@ test("локальный файл читается из data, путь нару�
   }
 });
 
-async function listen(extra?: (url: string, init?: RequestInit) => Promise<Response | null>, dataDir = path.join(tmpdir(), "cover-empty")) {
+async function listen(
+  extra?: (url: string, init?: RequestInit) => Promise<Response | null>,
+  dataDir = path.join(tmpdir(), "cover-empty"),
+  envOverride: Partial<GenerateCoverEnv> = {},
+) {
   const calls: Call[] = [];
   const fetchImpl: typeof fetch = async (input, init) => {
     const url = String(input);
@@ -215,7 +250,7 @@ async function listen(extra?: (url: string, init?: RequestInit) => Promise<Respo
     return json(500, { message: "unexpected" });
   };
   const middleware = createGenerateCoverMiddleware({
-    env: { ...env, dataDir },
+    env: { ...env, dataDir, ...envOverride },
     fetchImpl,
   });
   const server = createServer((req, res) => {

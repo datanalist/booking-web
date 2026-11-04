@@ -1,10 +1,14 @@
-/** Единая причина изменения: апскейл через Image API OpenRouter, ключ только в этом запросе. */
+/** Единая причина изменения: пустой и отклонённый ключ OpenRouter дают разные ответы. */
 import { assertOutputRaster, type RasterMediaType } from "./imageBytes.ts";
 import { UpscaleFlowError } from "./upscaleFlowError.ts";
 
 export const UPSCALE_MODEL = "bytedance-seed/seedream-5-0-flash";
 const OPENROUTER_IMAGES = "https://openrouter.ai/api/v1/images";
 const MAX_RESPONSE_CHARS = 12_000_000;
+
+export const UPSCALE_NOT_CONFIGURED = "Улучшение фото не настроено. Задайте OPENROUTER_API_KEY в окружении сервера.";
+export const UPSCALE_KEY_REJECTED = "Ключ OPENROUTER_API_KEY отклонён. Создайте новый ключ OpenRouter.";
+export const UPSCALE_NO_CREDIT = "На счёте OpenRouter недостаточно средств для улучшения фото.";
 
 const UPSCALE_PROMPT = [
   "Increase the resolution of the reference photo.",
@@ -24,7 +28,7 @@ export async function upscaleWithOpenRouter(
 ): Promise<{ bytes: Buffer; mediaType: RasterMediaType }> {
   const key = apiKey.trim();
   if (key === "") {
-    throw new UpscaleFlowError(503, "Улучшение фото не настроено");
+    throw new UpscaleFlowError(503, UPSCALE_NOT_CONFIGURED);
   }
   const endpoint = new URL(OPENROUTER_IMAGES);
   if (endpoint.origin !== "https://openrouter.ai") {
@@ -63,7 +67,10 @@ export async function upscaleWithOpenRouter(
     throw new UpscaleFlowError(502, "Не удалось улучшить фото");
   }
   const text = await response.text();
-  if (!response.ok || text.length === 0 || text.length > MAX_RESPONSE_CHARS) {
+  if (!response.ok) {
+    throw providerFailure(response.status);
+  }
+  if (text.length === 0 || text.length > MAX_RESPONSE_CHARS) {
     throw new UpscaleFlowError(502, "Не удалось улучшить фото");
   }
   let parsed: unknown;
@@ -75,6 +82,16 @@ export async function upscaleWithOpenRouter(
   const encoded = readB64(parsed);
   const output = Buffer.from(encoded, "base64");
   return { bytes: output, mediaType: assertOutputRaster(output) };
+}
+
+function providerFailure(status: number): UpscaleFlowError {
+  if (status === 401 || status === 403) {
+    return new UpscaleFlowError(502, UPSCALE_KEY_REJECTED);
+  }
+  if (status === 402) {
+    return new UpscaleFlowError(502, UPSCALE_NO_CREDIT);
+  }
+  return new UpscaleFlowError(502, "Не удалось улучшить фото");
 }
 
 function readB64(value: unknown): string {

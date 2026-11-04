@@ -1,10 +1,14 @@
-/** Единая причина изменения: кадр обложки улучшает только Seedream, без текста цены и адреса. */
+/** Единая причина изменения: отклонённый ключ OpenRouter не маскируется общей ошибкой обложки. */
 import { withDeadline } from "../payments/withDeadline.ts";
 import { sniffImage, type CoverMediaType, MAX_COVER_IMAGE_BYTES } from "./imageBytes.ts";
 
 export const COVER_MODEL = "bytedance-seed/seedream-5-0-flash";
 const OPENROUTER_IMAGES = "https://openrouter.ai/api/v1/images";
 const OPENROUTER_TIMEOUT_MS = 55_000;
+
+export const COVER_NOT_CONFIGURED = "Генерация обложки не настроена. Задайте OPENROUTER_API_KEY в окружении сервера.";
+export const COVER_KEY_REJECTED = "Ключ OPENROUTER_API_KEY отклонён. Создайте новый ключ OpenRouter.";
+export const COVER_NO_CREDIT = "На счёте OpenRouter недостаточно средств для генерации обложки.";
 
 const PROMPT = [
   "Keep this exact interior photograph: the same room, furniture, windows, plants and lighting.",
@@ -60,7 +64,7 @@ export async function enhanceCoverPhoto(
 
   const text = await response.text();
   if (!response.ok) {
-    throw new CoverFlowError(502, "Не удалось сгенерировать обложку");
+    throw coverProviderFailure(response.status);
   }
   let payload: unknown;
   try {
@@ -84,6 +88,16 @@ export async function enhanceCoverPhoto(
     throw new CoverFlowError(502, "Не удалось сгенерировать обложку");
   }
   return { bytes, mediaType: sniffed };
+}
+
+function coverProviderFailure(status: number): CoverFlowError {
+  if (status === 401 || status === 403) {
+    return new CoverFlowError(502, COVER_KEY_REJECTED);
+  }
+  if (status === 402) {
+    return new CoverFlowError(502, COVER_NO_CREDIT);
+  }
+  return new CoverFlowError(502, "Не удалось сгенерировать обложку");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

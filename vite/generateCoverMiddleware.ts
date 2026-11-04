@@ -1,11 +1,11 @@
-/** Единая причина изменения: хук генерации обложки проверяет сессию PocketBase и не отдаёт ключ OpenRouter. */
+/** Единая причина изменения: пустой ключ OpenRouter называется в ответе генерации обложки. */
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import type { Connect } from "vite";
 import { readRequestBody } from "./readRequestBody.ts";
 import { coverBadgeLines, type CoverBadgeLine, type CoverCardInput } from "./cover/coverBadgeLines.ts";
 import { assertNoRemoteImageSource, loadCoverPhoto } from "./cover/loadCoverImage.ts";
-import { CoverFlowError, enhanceCoverPhoto } from "./cover/openRouterCover.ts";
+import { COVER_NOT_CONFIGURED, CoverFlowError, enhanceCoverPhoto } from "./cover/openRouterCover.ts";
 import { withDeadline } from "./payments/withDeadline.ts";
 
 const DEFAULT_PB_URL = "https://pb.booking.vallome.ru";
@@ -82,7 +82,7 @@ export function createGenerateCoverMiddleware(
     const body = await readJson(req);
     assertNoRemoteImageSource(body);
     if (env.apiKey.length === 0) {
-      throw new CoverFlowError(503, "Генерация обложки не настроена");
+      throw new CoverFlowError(503, COVER_NOT_CONFIGURED);
     }
     const card = readCard(body);
     const lines = coverBadgeLines(card);

@@ -2,7 +2,7 @@
 /** Единая причина изменения: апскейл не зовёт OpenRouter без сессии и не ходит по чужому URL. */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { expect, test } from "vitest";
-import { UPSCALE_MODEL } from "./upscale/openRouterUpscale.ts";
+import { UPSCALE_KEY_REJECTED, UPSCALE_MODEL, UPSCALE_NOT_CONFIGURED } from "./upscale/openRouterUpscale.ts";
 import { createUpscalePhotoMiddleware, type UpscaleEnv } from "./upscalePhotoMiddleware.ts";
 
 const USER = "user00000000001";
@@ -143,6 +143,56 @@ test("без токена апскейл отвечает 401 и не зовёт
     expect(server.calls).toHaveLength(0);
   } finally {
     await server.close();
+  }
+});
+
+test("пустой ключ отвечает 503 и не зовёт OpenRouter", async () => {
+  const server = await listen({ ...env, openRouterApiKey: "" });
+  try {
+    const response = await post(server.base, { image: dataUrl() }, "user-token");
+    expect(response.status).toBe(503);
+    expect(response.text).toContain(UPSCALE_NOT_CONFIGURED);
+    expect(response.text).not.toContain(API_KEY);
+    expect(server.calls.map((call) => call.url).join(" ")).not.toContain("openrouter.ai");
+  } finally {
+    await server.close();
+  }
+});
+
+test("отклонённый ключ не маскируется общей ошибкой и не светится в ответе", async () => {
+  const box = world();
+  const failing = createUpscalePhotoMiddleware({
+    env,
+    fetchImpl: async (input, init) => {
+      const url = String(input);
+      if (new URL(url).pathname.endsWith("/auth-refresh")) {
+        return box.fetchImpl(input, init);
+      }
+      return new Response(JSON.stringify({ error: { message: API_KEY } }), { status: 401 });
+    },
+  });
+  const local = createServer((req, res) => {
+    failing(req, res, () => {
+      res.statusCode = 404;
+      res.end();
+    });
+  });
+  await new Promise<void>((resolve) => {
+    local.listen(0, "127.0.0.1", () => resolve());
+  });
+  const address = local.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("no port");
+  }
+  try {
+    const response = await post(`http://127.0.0.1:${address.port}`, { image: dataUrl() }, "user-token");
+    expect(response.status).toBe(502);
+    expect(response.text).toContain(UPSCALE_KEY_REJECTED);
+    expect(response.text).not.toContain(API_KEY);
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      local.close((error) => (error ? reject(error) : resolve()));
+    });
   }
 });
 

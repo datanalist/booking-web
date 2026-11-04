@@ -1,10 +1,10 @@
-/** Единая причина изменения: POST /api/vallome/upscale-photo проверяет сессию до вызова OpenRouter. */
+/** Единая причина изменения: пустой ключ OpenRouter называется в ответе апскейла. */
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Connect } from "vite";
 import { readRequestBody } from "./readRequestBody.ts";
 import { assertRaster, MAX_BODY_BYTES } from "./upscale/imageBytes.ts";
 import { authenticateUser, loadOwnedListingPhoto } from "./upscale/ownedListingPhoto.ts";
-import { upscaleWithOpenRouter } from "./upscale/openRouterUpscale.ts";
+import { UPSCALE_NOT_CONFIGURED, upscaleWithOpenRouter } from "./upscale/openRouterUpscale.ts";
 import { parseUpscaleBody } from "./upscale/parseUpscaleBody.ts";
 import { UpscaleFlowError } from "./upscale/upscaleFlowError.ts";
 
@@ -125,7 +125,7 @@ export function createUpscalePhotoMiddleware(
     }
     const userId = await authenticateUser(env.pbUrl, token, fetchImpl);
     if (env.openRouterApiKey.trim() === "") {
-      throw new UpscaleFlowError(503, "Улучшение фото не настроено");
+      throw new UpscaleFlowError(503, UPSCALE_NOT_CONFIGURED);
     }
     const contentType = header(req, "content-type");
     if (contentType === undefined) {

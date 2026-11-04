@@ -1,4 +1,4 @@
-/** Единая причина изменения: клиент улучшает фото только через свой хук, без ключа OpenRouter. */
+/** Единая причина изменения: имя переменной ключа доходит до экрана, сам ключ — нет. */
 import { readPbToken } from "../../api/pocketbase/pbSession";
 import { resolvePocketBaseUrl } from "../../api/pocketbase/pbClient";
 import { uploadPhoto } from "./uploadPhoto";
@@ -137,7 +137,7 @@ function safeMessage(payload: unknown): string | null {
   if (message.length === 0 || message.length > 200) {
     return null;
   }
-  if (/sk-|bearer|openrouter|api[_-]?key|token/i.test(message)) {
+  if (/sk-|bearer\s+\S|eyJ[A-Za-z0-9_-]{10,}/i.test(message)) {
     return null;
   }
   return message;
