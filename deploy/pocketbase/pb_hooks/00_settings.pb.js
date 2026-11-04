@@ -1,4 +1,5 @@
-// Применяет сетевые и лимитные настройки после инициализации базы, не трогая SMTP и S3.
+// Применяет сетевые и лимитные настройки после инициализации базы, не трогая SMTP и S3 для бэкапов.
+// S3 для файлов отключён намеренно, см. ниже.
 
 onBootstrap((e) => {
   e.next()
@@ -27,6 +28,10 @@ onBootstrap((e) => {
 
   settings.backups.cron = "0 3 * * *"
   settings.backups.cronMaxKeep = 7
+
+  // Файлы пишутся на диск сервера. Перенос в S3 делает контейнер s3-sync,
+  // чтение из S3 — хук files_s3_fallback. Бэкапы в S3 это не затрагивает.
+  settings.s3.enabled = false
 
   settings.logs.maxDays = 7
   settings.logs.logIP = true

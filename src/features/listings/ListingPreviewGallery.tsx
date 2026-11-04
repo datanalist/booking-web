@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { ListingPreviewPhoto } from "./ListingPreviewPhoto";
 import { listingPreviewGalleryTiles } from "./listingPreviewGalleryTiles";
 
 type ListingPreviewGalleryProps = {
@@ -15,11 +16,7 @@ export function ListingPreviewGallery({
     <div className="flex w-96 shrink-0 flex-col gap-3">
       <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-amber-400/10">
         {hero ? (
-          <img
-            src={hero}
-            alt=""
-            className="absolute inset-0 size-full object-cover"
-          />
+          <ListingPreviewPhoto src={hero} />
         ) : null}
       </div>
       {tiles.length > 0 ? (
@@ -33,11 +30,7 @@ export function ListingPreviewGallery({
                 key={`thumb-${index}`}
                 className="relative aspect-square w-full overflow-hidden rounded-xl bg-amber-400/10"
               >
-                <img
-                  src={tile.src}
-                  alt=""
-                  className="absolute inset-0 size-full object-cover"
-                />
+                <ListingPreviewPhoto src={tile.src} />
               </div>
             ) : (
               <div
@@ -45,11 +38,7 @@ export function ListingPreviewGallery({
                 className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl"
                 data-testid="listing-preview-extra-photos"
               >
-                <img
-                  src={tile.src}
-                  alt=""
-                  className="absolute inset-0 size-full object-cover"
-                />
+                <ListingPreviewPhoto src={tile.src} />
                 <div className="absolute inset-0 bg-slate-600/60" />
                 <p className="relative m-0 text-base leading-normal text-white">
                   +{tile.count} фото

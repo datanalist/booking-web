@@ -21,3 +21,42 @@ services:
         max-file: "3"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8090/api/health || exit 1"]
+
+  # Переносит файлы с диска в S3 и удаляет локальную копию только после проверенной загрузки.
+  # Пока S3 недоступен, файлы остаются на диске, повтор через S3_SYNC_INTERVAL секунд.
+  # Миниатюры (thumbs_*) не переносятся: PocketBase строит их заново.
+  s3-sync:
+    image: rclone/rclone:1.68.2
+    container_name: pocketbase-s3-sync
+    restart: unless-stopped
+    user: "1000:1000"
+    init: true
+    environment:
+      RCLONE_CONFIG_S3_TYPE: s3
+      RCLONE_CONFIG_S3_PROVIDER: Other
+      RCLONE_CONFIG_S3_ENDPOINT: ${S3_ENDPOINT:-}
+      RCLONE_CONFIG_S3_REGION: ${S3_REGION:-}
+      RCLONE_CONFIG_S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+    volumes:
+      - ./pb_data/storage:/storage
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          if [ -n "$$RCLONE_CONFIG_S3_ACCESS_KEY_ID" ] && [ -n "${S3_BUCKET:-}" ]; then
+            rclone move /storage "s3:${S3_BUCKET:-}" \
+              --min-age 2m --exclude "thumbs_*/**" --exclude "*.attrs" \
+              --delete-empty-src-dirs --contimeout 10s --timeout 60s \
+              --retries 1 --low-level-retries 1 \
+              || echo "s3-sync: S3 недоступен, повторю позже"
+          else
+            echo "s3-sync: S3_ACCESS_KEY_ID или S3_BUCKET не заданы, пропускаю"
+          fi
+          sleep ${S3_SYNC_INTERVAL:-300}
+        done
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
