@@ -8,6 +8,7 @@ const OPENROUTER_TIMEOUT_MS = 55_000;
 
 export const COVER_NOT_CONFIGURED = "Генерация обложки не настроена. Задайте OPENROUTER_API_KEY в окружении сервера.";
 export const COVER_KEY_REJECTED = "Ключ OPENROUTER_API_KEY отклонён. Создайте новый ключ OpenRouter.";
+export const COVER_BLOCKED = "OpenRouter закрыл доступ с адреса сервера (регион или политика безопасности). Нужен выход через прокси.";
 export const COVER_NO_CREDIT = "На счёте OpenRouter недостаточно средств для генерации обложки.";
 
 const PROMPT = [
@@ -91,8 +92,11 @@ export async function enhanceCoverPhoto(
 }
 
 function coverProviderFailure(status: number): CoverFlowError {
-  if (status === 401 || status === 403) {
+  if (status === 401) {
     return new CoverFlowError(502, COVER_KEY_REJECTED);
+  }
+  if (status === 403) {
+    return new CoverFlowError(502, COVER_BLOCKED);
   }
   if (status === 402) {
     return new CoverFlowError(502, COVER_NO_CREDIT);

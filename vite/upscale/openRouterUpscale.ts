@@ -8,6 +8,7 @@ const MAX_RESPONSE_CHARS = 12_000_000;
 
 export const UPSCALE_NOT_CONFIGURED = "Улучшение фото не настроено. Задайте OPENROUTER_API_KEY в окружении сервера.";
 export const UPSCALE_KEY_REJECTED = "Ключ OPENROUTER_API_KEY отклонён. Создайте новый ключ OpenRouter.";
+export const UPSCALE_BLOCKED = "OpenRouter закрыл доступ с адреса сервера (регион или политика безопасности). Нужен выход через прокси.";
 export const UPSCALE_NO_CREDIT = "На счёте OpenRouter недостаточно средств для улучшения фото.";
 
 const UPSCALE_PROMPT = [
@@ -85,8 +86,11 @@ export async function upscaleWithOpenRouter(
 }
 
 function providerFailure(status: number): UpscaleFlowError {
-  if (status === 401 || status === 403) {
+  if (status === 401) {
     return new UpscaleFlowError(502, UPSCALE_KEY_REJECTED);
+  }
+  if (status === 403) {
+    return new UpscaleFlowError(502, UPSCALE_BLOCKED);
   }
   if (status === 402) {
     return new UpscaleFlowError(502, UPSCALE_NO_CREDIT);
