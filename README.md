@@ -169,6 +169,10 @@ UI-примитивы кабинета — `src/ui/`. Логотип GlobalStay 
 
 Откат dev: `docker tag booking-web:dev-previous booking-web:dev && cd deploy/app && docker compose -f docker-compose.dev.yml up -d --no-build`.
 
+## Технический долг
+
+Временные решения и способы их отката описаны в [`tech-debt/`](tech-debt/README.md). Сейчас там: OpenRouter через прокси на личном ПК.
+
 ## Секреты
 
 В репозитории секретов нет: не кладём `.env`, admin-токен PocketBase, пароли, ключи ЮKassa, `OPENROUTER_API_KEY` и белый IP. Имя ключа обложки и улучшения фото есть в `.env.example` без значения. Ключ остаётся на сервере. Публичный URL API можно держать в коде или в `VITE_*` без секретов. Локальная папка переноса `.secrets/` и файл `booking-web.env` закрыты `.gitignore` и в коммиты не входят. На мини-ПК имена `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY` и `OPENROUTER_API_KEY` задаются в `/opt/pocketbase/booking-web.env` (для dev-контейнера — в его env-файле, если compose указывает отдельный путь).
