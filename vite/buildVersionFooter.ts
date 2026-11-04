@@ -13,8 +13,11 @@ function escapeHtml(value: string): string {
  * Повторный вызов не дублирует футер: версия уже вшита.
  */
 export function injectBuildVersionFooter(html: string, version: string): string {
+  if (!html.includes("</body>")) {
+    throw new Error("В index.html нет </body>");
+  }
   if (html.includes("data-build-version=")) return html;
   const safe = escapeHtml(version.trim());
-  const footer = `<footer data-build-version="${safe}" style="position:fixed;right:16px;bottom:10px;z-index:80;margin:0;padding:2px 8px;border-radius:8px;background:rgba(255,253,248,0.92);color:#525252;font-family:'Noto Sans',sans-serif;font-size:12px;line-height:16px;pointer-events:none">Сборка ${safe}</footer>`;
-  return html.replace("</body>", `    ${footer}\n  </body>`);
+  const footer = `<footer data-build-version="${safe}" style="flex:none;position:relative;z-index:1;margin:0;padding:2px 12px;background:#fffdf8;color:#525252;font-family:'Noto Sans',sans-serif;font-size:12px;line-height:16px;text-align:right;pointer-events:none">Сборка ${safe}</footer>`;
+  return html.replace("</body>", () => `    ${footer}\n  </body>`);
 }

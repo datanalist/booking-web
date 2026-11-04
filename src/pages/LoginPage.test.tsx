@@ -163,12 +163,43 @@ test("при PocketBase кнопка Telegram открывает окно вхо
     await waitFor(() => {
       expect(popup.location.href).toContain("response_type=post_message");
       expect(popup.location.href).toContain("client_id=9158776426");
-      expect(popup.location.href).toContain("redirect_uri=https%3A%2F%2Fapp.booking.vallome.ru%2F");
+      expect(popup.location.href).toContain(
+        `redirect_uri=${encodeURIComponent(`${window.location.origin}/`)}`,
+      );
       expect(popup.location.href).toContain("scope=openid+profile");
       expect(popup.location.href).not.toContain("phone");
     });
     popup.closed = true;
     expect(await screen.findByText("Вход через Telegram отменён")).toBeInTheDocument();
+  } finally {
+    open.mockRestore();
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  }
+});
+
+test("Telegram redirect_uri берёт VITE_TELEGRAM_REDIRECT_URI, если он задан", async () => {
+  vi.stubEnv("VITE_DATA_SOURCE", "pocketbase");
+  vi.stubEnv("VITE_TELEGRAM_BOT_ID", "9158776426");
+  vi.stubEnv("VITE_TELEGRAM_REDIRECT_URI", "https://dev.app.booking.vallome.ru/");
+  const user = userEvent.setup();
+  const popup = { closed: false, close: vi.fn(), location: { href: "" } };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(JSON.stringify({ nonce: "nonce-1" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })),
+  );
+  const open = vi.spyOn(window, "open").mockReturnValue(popup as unknown as Window);
+  try {
+    renderLogin();
+    await user.click(screen.getByRole("button", { name: "Войти через Telegram" }));
+    await waitFor(() => {
+      expect(popup.location.href).toContain(
+        "redirect_uri=https%3A%2F%2Fdev.app.booking.vallome.ru%2F",
+      );
+    });
   } finally {
     open.mockRestore();
     vi.unstubAllGlobals();

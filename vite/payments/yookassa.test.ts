@@ -8,6 +8,8 @@ import {
   notificationClientIp,
   parseRemotePayment,
   readWebhookPaymentId,
+  isDevCabinetOrigin,
+  isYookassaTestSecret,
   topupReturnUrl,
 } from "./yookassa.ts";
 
@@ -102,6 +104,14 @@ test("IP ЮKassa узнаётся, подмена X-Forwarded-For с публи�
   expect(isYookassaNotificationIp("8.8.8.8")).toBe(false);
   expect(notificationClientIp("8.8.8.8", "185.71.76.10")).toBe("8.8.8.8");
   expect(notificationClientIp("127.0.0.1", "185.71.76.10")).toBe("185.71.76.10");
+});
+
+test("боевой origin dev отличается от тестового секрета", () => {
+  expect(isDevCabinetOrigin("https://dev.app.booking.vallome.ru")).toBe(true);
+  expect(isDevCabinetOrigin("https://app.booking.vallome.ru")).toBe(false);
+  expect(isDevCabinetOrigin("http://localhost:5173")).toBe(false);
+  expect(isYookassaTestSecret("test_shop")).toBe(true);
+  expect(isYookassaTestSecret("live-secret")).toBe(false);
 });
 
 test("webhook читает только id события, не сумму из тела", () => {

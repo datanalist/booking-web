@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { PaymentFlowError } from "./paymentFlowError.ts";
-import { isConfirmationUrl, topupReturnUrl } from "./yookassa.ts";
+import { isConfirmationUrl, isDevCabinetOrigin, topupReturnUrl } from "./yookassa.ts";
 import type { StoredPayment } from "./types.ts";
 
 export type StartTopupPorts = {
@@ -18,8 +18,11 @@ export type StartTopupPorts = {
 
 export async function startTopup(
   ports: StartTopupPorts,
-  input: { userId: string; amountRub: number; origin: string },
+  input: { userId: string; amountRub: number; origin: string; testShop: boolean },
 ): Promise<{ confirmationUrl: string; paymentId: string }> {
+  if (!input.testShop && isDevCabinetOrigin(input.origin)) {
+    throw new PaymentFlowError(403, "Боевой платёж с dev-хоста отключён");
+  }
   const idempotenceKey = randomUUID();
   const payment = await ports.createPayment({
     userId: input.userId,

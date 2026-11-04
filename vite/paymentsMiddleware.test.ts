@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { expect, test } from "vitest";
-import { createPaymentsMiddleware, type PaymentsEnv } from "./paymentsMiddleware.ts";
+import { createPaymentsMiddleware, readPaymentsEnv, type PaymentsEnv } from "./paymentsMiddleware.ts";
 
 const USER = "user00000000001";
 const OTHER = "user20000000002";
@@ -11,6 +11,7 @@ const env: PaymentsEnv = {
   pbUrl: "https://pb.test",
   pbAdmin: "admin@test",
   pbPassword: "pb-pass",
+  livePayments: true,
 };
 
 type Pay = {
@@ -235,6 +236,73 @@ test("создание уходит в ЮKassa от имени сессии, а 
   } finally {
     await server.close();
   }
+});
+
+test("боевой ключ с dev-хоста не создаёт платёж", async () => {
+  const server = await listen();
+  try {
+    const response = await fetch(`${server.base}/api/payments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer user-token",
+        Origin: "https://dev.app.booking.vallome.ru",
+      },
+      body: JSON.stringify({ amount: 10 }),
+    });
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ message: "Боевой платёж с dev-хоста отключён" });
+    expect(server.state.payments).toHaveLength(0);
+    expect(server.state.yookassa).toHaveLength(0);
+    expect(server.state.balance).toBe(0);
+  } finally {
+    await server.close();
+  }
+});
+
+test("на dev боевой ключ выключен, тестовый магазин с dev-хоста проходит", async () => {
+  const blocked = await listen({ ...env, livePayments: false });
+  try {
+    const response = await fetch(`${blocked.base}/api/payments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer user-token",
+        Origin: "https://app.booking.vallome.ru",
+      },
+      body: JSON.stringify({ amount: 10 }),
+    });
+    expect(response.status).toBe(403);
+    expect(blocked.state.yookassa).toHaveLength(0);
+    expect(blocked.state.payments).toHaveLength(0);
+  } finally {
+    await blocked.close();
+  }
+
+  const server = await listen({ ...env, secretKey: "test_secret", livePayments: false });
+  try {
+    const response = await fetch(`${server.base}/api/payments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer user-token",
+        Origin: "https://dev.app.booking.vallome.ru",
+      },
+      body: JSON.stringify({ amount: 10 }),
+    });
+    expect(response.status).toBe(200);
+    const call = server.state.yookassa[0];
+    expect(call?.body).toMatchObject({
+      confirmation: { type: "redirect", return_url: expect.stringContaining("https://dev.app.booking.vallome.ru/profile?payment=") },
+    });
+  } finally {
+    await server.close();
+  }
+});
+
+test("YOOKASSA_LIVE_PAYMENTS=off читается как запрет боевого магазина", () => {
+  expect(readPaymentsEnv({ YOOKASSA_LIVE_PAYMENTS: "off" }).livePayments).toBe(false);
+  expect(readPaymentsEnv({}).livePayments).toBe(true);
 });
 
 test("пока ЮKassa не подтвердила succeeded, баланс не меняется", async () => {

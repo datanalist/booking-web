@@ -110,6 +110,21 @@ export function notificationClientIp(
   return remote;
 }
 
+export const DEV_CABINET_HOST = "dev.app.booking.vallome.ru";
+
+/** Тестовый магазин ЮKassa: секретный ключ начинается с test_. */
+export function isYookassaTestSecret(secretKey: string): boolean {
+  return secretKey.startsWith("test_");
+}
+
+export function isDevCabinetOrigin(origin: string): boolean {
+  try {
+    return new URL(origin).hostname === DEV_CABINET_HOST;
+  } catch {
+    return false;
+  }
+}
+
 export function topupReturnUrl(origin: string, paymentId: string): string {
   const base = origin.replace(/\/$/, "");
   return `${base}/profile?payment=${encodeURIComponent(paymentId)}`;

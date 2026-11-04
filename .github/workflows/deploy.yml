@@ -37,7 +37,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Сохранить текущий образ для отката
-        run: docker tag booking-web:latest booking-web:previous || true
+        run: |
+          if curl -fsS http://127.0.0.1:8080/healthz >/dev/null \
+            && [ "$(docker inspect -f '{{.State.Running}}' booking-web 2>/dev/null || true)" = "true" ]; then
+            docker tag "$(docker inspect -f '{{.Image}}' booking-web)" booking-web:previous
+          else
+            echo "Текущий прод нездоров или не запущен, тег previous не перезаписан"
+          fi
 
       - name: Сборка и запуск
         working-directory: deploy/app
@@ -92,7 +98,13 @@ jobs:
           echo "BOOKING_WEB_DEV_DATA=$dir" >> "$GITHUB_ENV"
 
       - name: Сохранить текущий dev-образ для отката
-        run: docker tag booking-web:dev booking-web:dev-previous || true
+        run: |
+          if curl -fsS http://127.0.0.1:8081/healthz >/dev/null \
+            && [ "$(docker inspect -f '{{.State.Running}}' booking-web-dev 2>/dev/null || true)" = "true" ]; then
+            docker tag "$(docker inspect -f '{{.Image}}' booking-web-dev)" booking-web:dev-previous
+          else
+            echo "Текущий dev нездоров или не запущен, тег dev-previous не перезаписан"
+          fi
 
       - name: Сборка и запуск dev
         working-directory: deploy/app

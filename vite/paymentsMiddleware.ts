@@ -12,6 +12,7 @@ import {
   isPaymentRecordId,
   isYookassaNotificationIp,
   isYookassaPaymentId,
+  isYookassaTestSecret,
   notificationClientIp,
   readWebhookPaymentId,
   requestOrigin,
@@ -26,6 +27,8 @@ export type PaymentsEnv = {
   pbUrl: string;
   pbAdmin: string;
   pbPassword: string;
+  /** false на dev: боевой магазин не вызывается, пока секрет не тестовый (test_). */
+  livePayments: boolean;
 };
 
 export type PaymentsMiddlewareOptions = {
@@ -50,6 +53,7 @@ export function readPaymentsEnv(source: NodeJS.ProcessEnv = process.env): Paymen
     pbUrl: firstNonEmpty(source.VITE_POCKETBASE_URL, source.POCKETBASE_URL, DEFAULT_PB_URL).replace(/\/+$/, ""),
     pbAdmin: source.POCKETBASE_SU?.trim() ?? "",
     pbPassword: source.POCKETBASE_SU_PASSWORD?.trim() ?? "",
+    livePayments: source.YOOKASSA_LIVE_PAYMENTS?.trim() !== "off",
   };
 }
 
@@ -234,6 +238,7 @@ export function createPaymentsMiddleware(
     if (env.shopId === "" || env.secretKey === "") {
       throw new PaymentFlowError(503, "Платёжная система не настроена");
     }
+    rejectLiveShop();
     await admin.ensureSchema();
     const origin = requestOrigin(
       header(req, "origin"),
@@ -251,11 +256,20 @@ export function createPaymentsMiddleware(
       userId,
       amountRub: parsed.rubles,
       origin,
+      testShop: isYookassaTestSecret(env.secretKey),
     });
     sendJson(res, 200, created);
   }
 
+  function rejectLiveShop(): void {
+    if (env.livePayments || isYookassaTestSecret(env.secretKey)) {
+      return;
+    }
+    throw new PaymentFlowError(403, "Боевые платежи на dev отключены");
+  }
+
   async function handleConfirm(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    rejectLiveShop();
     const userId = await requireUser(admin, req);
     const body = await readJson(req);
     const paymentId = isRecord(body) && typeof body.paymentId === "string" ? body.paymentId : "";
@@ -277,6 +291,7 @@ export function createPaymentsMiddleware(
   }
 
   async function handleWebhook(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    rejectLiveShop();
     const ip = notificationClientIp(req.socket.remoteAddress, header(req, "x-forwarded-for"));
     if (!isYookassaNotificationIp(ip)) {
       throw new PaymentFlowError(403, "Источник уведомления не подтверждён");

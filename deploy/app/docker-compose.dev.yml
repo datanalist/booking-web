@@ -15,17 +15,19 @@ services:
     init: true
     ports:
       - "127.0.0.1:8081:8080"
-    # Тот же серверный env, что у продакшена. В git его нет.
+    # Не боевой /opt/pocketbase/booking-web.env: там ключи ЮKassa прода.
+    # Файл dev создаётся на мини-ПК и в git не входит. Пока в нём нет
+    # тестового магазина, YOOKASSA_LIVE_PAYMENTS=off не пускает боевой платёж.
+    environment:
+      YOOKASSA_LIVE_PAYMENTS: "off"
     env_file:
-      - path: /opt/pocketbase/booking-web.env
+      - path: /opt/pocketbase/booking-web.dev.env
         required: false
     volumes:
       # Отдельный каталог фото. Не /opt/booking-web/data.
-      # На мини-ПК это домашний каталог пользователя runner (uid 1000),
-      # потому что /opt принадлежит root и sudo без пароля нет.
-      # Рядом с продом: sudo mkdir -p /opt/booking-web-dev/data && sudo chown 1000:1000 /opt/booking-web-dev/data
-      # и BOOKING_WEB_DEV_DATA=/opt/booking-web-dev/data
-      - ${BOOKING_WEB_DEV_DATA:-/home/mk/booking-web-dev/data}:/app/data
+      # CI задаёт BOOKING_WEB_DEV_DATA=$HOME/booking-web-dev/data.
+      # Без переменной compose не стартует и не пишет в чужой домашний каталог.
+      - ${BOOKING_WEB_DEV_DATA:?Задайте BOOKING_WEB_DEV_DATA}:/app/data
     logging:
       driver: json-file
       options:

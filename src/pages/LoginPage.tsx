@@ -10,18 +10,29 @@ import { subscribeEmailVerifiedNotice } from "./emailVerifiedNoticeChannel";
 
 const TELEGRAM_AUTH_URL = "https://oauth.telegram.org/auth";
 const TELEGRAM_ORIGIN = "https://oauth.telegram.org";
-const TELEGRAM_REDIRECT_URI = "https://app.booking.vallome.ru/";
 
 function telegramBotId(): string {
   const value: unknown = import.meta.env.VITE_TELEGRAM_BOT_ID;
   return typeof value === "string" ? value.trim() : "";
 }
 
+function telegramRedirectUri(): string {
+  const configured: unknown = import.meta.env.VITE_TELEGRAM_REDIRECT_URI;
+  if (typeof configured === "string" && configured.trim() !== "") {
+    return configured.trim();
+  }
+  const origin = window.location.origin;
+  if (origin.startsWith("http://") || origin.startsWith("https://")) {
+    return `${origin}/`;
+  }
+  return "https://app.booking.vallome.ru/";
+}
+
 function telegramAuthUrl(clientId: number, nonce: string): string {
   const url = new URL(TELEGRAM_AUTH_URL);
   url.searchParams.set("response_type", "post_message");
   url.searchParams.set("client_id", String(clientId));
-  url.searchParams.set("redirect_uri", TELEGRAM_REDIRECT_URI);
+  url.searchParams.set("redirect_uri", telegramRedirectUri());
   url.searchParams.set("scope", "openid profile");
   url.searchParams.set("nonce", nonce);
   url.searchParams.set("lang", "ru");
